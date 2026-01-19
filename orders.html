@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заявки на ремонт - Система управления</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+        }
+        .sidebar a {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 12px 20px;
+            display: block;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+            color: white;
+            border-left: 4px solid #3498db;
+        }
+        .sidebar .active {
+            background-color: #34495e;
+            border-left: 4px solid #3498db;
+            font-weight: 600;
+        }
+        .table th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+        .status-badge {
+            font-size: 0.85em;
+            padding: 5px 10px;
+        }
+        .filter-box {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .action-btn {
+            margin: 2px;
+            min-width: 80px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar (одинаковый для всех страниц) -->
+            <div class="col-md-3 col-lg-2 sidebar d-md-block">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="mb-0"><i class="text-center mt-3 mb-4"></i>РемонтТех</h5>
+                    </div>
+                    
+                    <ul class="nav flex-column mb-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">
+                                <i class="fas fa-tachometer-alt me-2"></i>Главная
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="orders.html">
+                                <i class="fas fa-tools me-2"></i>Заявки на ремонт
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="clients.html">
+                                <i class="fas fa-users me-2"></i>Клиенты
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="devices.html">
+                                <i class="fas fa-laptop me-2"></i>Устройства
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="masters.html">
+                                <i class="fas fa-user-cog me-2"></i>Мастера
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="reports.html">
+                                <i class="fas fa-chart-bar me-2"></i>Отчеты
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <hr class="text-white-50">
+                    
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                            <strong>Администратор</strong>
+                            <span class="badge bg-success ms-2">Online</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                            <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>Профиль</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">
+                        <i class="fas fa-clipboard-list text-primary me-2"></i>
+                        Заявки на ремонт
+                    </h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#newOrderModal">
+                            <i class="fas fa-plus me-1"></i> Новая заявка
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="printOrders()">
+                            <i class="fas fa-print me-1"></i> Печать
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filter-box mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Статус</label>
+                            <select class="form-select" id="filterStatus">
+                                <option value="">Все статусы</option>
+                                <option value="new">Новая</option>
+                                <option value="in_progress">В работе</option>
+                                <option value="waiting">Ожидает запчасти</option>
+                                <option value="ready">Готов</option>
+                                <option value="completed">Выдано</option>
+                                <option value="cancelled">Отменено</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Мастер</label>
+                            <select class="form-select" id="filterMaster">
+                                <option value="">Все мастера</option>
+                                <option value="1">Петров И.В.</option>
+                                <option value="2">Сидоров А.К.</option>
+                                <option value="3">Иванова М.П.</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Дата с</label>
+                            <input type="date" class="form-control" id="filterDateFrom">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">По</label>
+                            <input type="date" class="form-control" id="filterDateTo">
+                        </div>
+                        <div class="col-md-12">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Поиск по номеру, клиенту или устройству..." id="searchInput">
+                                <button class="btn btn-primary" type="button" onclick="searchOrders()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" type="button" onclick="clearFilters()">
+                                    <i class="fas fa-times"></i> Сбросить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-2 col-6">
+                        <div class="card border-primary">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">Всего</h6>
+                                <h4 class="card-title text-primary" id="totalOrders">48</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <div class="card border-warning">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">Новые</h6>
+                                <h4 class="card-title text-warning" id="newOrders">12</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <div class="card border-info">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">В работе</h6>
+                                <h4 class="card-title text-info" id="inProgressOrders">24</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <div class="card border-success">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">Готово</h6>
+                                <h4 class="card-title text-success" id="readyOrders">8</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <div class="card border-secondary">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">За месяц</h6>
+                                <h4 class="card-title text-secondary" id="monthOrders">156</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <div class="card border-danger">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">Срочные</h6>
+                                <h4 class="card-title text-danger" id="urgentOrders">3</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orders Table -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th width="80">№</th>
+                                        <th>Клиент / Устройство</th>
+                                        <th width="150">Дата приёма</th>
+                                        <th width="150">Дата готовности</th>
+                                        <th width="120">Статус</th>
+                                        <th width="120">Стоимость</th>
+                                        <th width="200">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ordersTableBody">
+                                    <!-- Заявки будут загружены через JS -->
+                                    <tr>
+                                        <td><span class="badge bg-secondary">#1001</span></td>
+                                        <td>
+                                            <strong>Иванов Алексей</strong><br>
+                                            <small class="text-muted">Ноутбук ASUS X543MA</small>
+                                        </td>
+                                        <td>10.11.2023</td>
+                                        <td>13.11.2023</td>
+                                        <td><span class="badge bg-warning status-badge">В работе</span></td>
+                                        <td>3 500 ₽</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary action-btn" onclick="viewOrder(1001)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning action-btn" onclick="editOrder(1001)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-success action-btn" onclick="completeOrder(1001)">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-secondary">#1002</span></td>
+                                        <td>
+                                            <strong>Сидорова Мария</strong><br>
+                                            <small class="text-muted">Смартфон iPhone 12</small>
+                                        </td>
+                                        <td>09.11.2023</td>
+                                        <td>12.11.2023</td>
+                                        <td><span class="badge bg-success status-badge">Готов</span></td>
+                                        <td>8 900 ₽</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary action-btn" onclick="viewOrder(1002)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-info action-btn" onclick="printReceipt(1002)">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-success action-btn" onclick="issueOrder(1002)">
+                                                <i class="fas fa-box"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-secondary">#1003</span></td>
+                                        <td>
+                                            <strong>ООО "Вектор"</strong><br>
+                                            <small class="text-muted">ПК Dell OptiPlex</small>
+                                        </td>
+                                        <td>08.11.2023</td>
+                                        <td>15.11.2023</td>
+                                        <td><span class="badge bg-primary status-badge">Новый</span></td>
+                                        <td>2 200 ₽</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary action-btn" onclick="viewOrder(1003)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning action-btn" onclick="assignMaster(1003)">
+                                                <i class="fas fa-user-cog"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1">Предыдущая</a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">Следующая</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal: New Order -->
+    <div class="modal fade" id="newOrderModal" tabindex="-1" aria-labelledby="newOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newOrderModalLabel">
+                        <i class="fas fa-plus-circle me-2"></i>Новая заявка на ремонт
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newOrderForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="clientName" class="form-label">Клиент *</label>
+                                <input type="text" class="form-control" id="clientName" required placeholder="ФИО клиента">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="clientPhone" class="form-label">Телефон *</label>
+                                <input type="tel" class="form-control" id="clientPhone" required placeholder="+7 (XXX) XXX-XX-XX">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="deviceType" class="form-label">Тип устройства *</label>
+                                <select class="form-select" id="deviceType" required>
+                                    <option value="">Выберите тип...</option>
+                                    <option value="notebook">Ноутбук</option>
+                                    <option value="pc">Стационарный ПК</option>
+                                    <option value="smartphone">Смартфон</option>
+                                    <option value="tablet">Планшет</option>
+                                    <option value="monitor">Монитор</option>
+                                    <option value="printer">Принтер/МФУ</option>
+                                    <option value="other">Другое</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="deviceBrand" class="form-label">Бренд/Модель *</label>
+                                <input type="text" class="form-control" id="deviceBrand" required placeholder="Например: ASUS X543MA">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="problem" class="form-label">Описание проблемы *</label>
+                            <textarea class="form-control" id="problem" rows="3" required placeholder="Подробно опишите неисправность..."></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="serialNumber" class="form-label">Серийный номер</label>
+                                <input type="text" class="form-control" id="serialNumber" placeholder="SN123456789">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="urgency" class="form-label">Срочность</label>
+                                <select class="form-select" id="urgency">
+                                    <option value="normal">Обычная</option>
+                                    <option value="urgent">Срочный ремонт (+15%)</option>
+                                    <option value="express">Экспресс (+35%)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveNewOrder()">
+                        <i class="fas fa-save me-1"></i> Создать заявку
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Orders JS -->
+    <script>
+        // Загрузка данных из localStorage
+        let orders = JSON.parse(localStorage.getItem('repair_orders')) || [];
+        
+        // Статусы и их цвета
+        const statusConfig = {
+            'new': { text: 'Новый', class: 'bg-primary' },
+            'in_progress': { text: 'В работе', class: 'bg-warning' },
+            'waiting': { text: 'Ожидает', class: 'bg-info' },
+            'ready': { text: 'Готов', class: 'bg-success' },
+            'completed': { text: 'Выдан', class: 'bg-secondary' },
+            'cancelled': { text: 'Отменен', class: 'bg-danger' }
+        };
+        
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOrders();
+            updateStats();
+            setCurrentDate();
+        });
+        
+        function setCurrentDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('filterDateFrom').value = today;
+            document.getElementById('filterDateTo').value = today;
+        }
+        
+        function loadOrders() {
+            // В будущем здесь будет загрузка из базы данных
+            // Пока используем статические данные
+            updateOrdersTable();
+        }
+        
+        function updateOrdersTable() {
+            const tableBody = document.getElementById('ordersTableBody');
+            if (orders.length > 0) {
+                // Генерируем строки из данных
+                tableBody.innerHTML = orders.map(order => `
+                    <tr>
+                        <td><span class="badge bg-secondary">#${order.id}</span></td>
+                        <td>
+                            <strong>${order.clientName}</strong><br>
+                            <small class="text-muted">${order.deviceType}: ${order.deviceBrand}</small>
+                        </td>
+                        <td>${order.createdDate}</td>
+                        <td>${order.estimatedDate || '-'}</td>
+                        <td><span class="badge ${statusConfig[order.status]?.class || 'bg-secondary'} status-badge">
+                            ${statusConfig[order.status]?.text || order.status}
+                        </span></td>
+                        <td>${order.cost ? order.cost.toLocaleString() + ' ₽' : 'Не оценена'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary action-btn" onclick="viewOrder(${order.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning action-btn" onclick="editOrder(${order.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ${order.status === 'ready' ? 
+                                `<button class="btn btn-sm btn-success action-btn" onclick="issueOrder(${order.id})">
+                                    <i class="fas fa-box"></i>
+                                </button>` : 
+                                `<button class="btn btn-sm btn-success action-btn" onclick="completeOrder(${order.id})">
+                                    <i class="fas fa-check"></i>
+                                </button>`
+                            }
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+        
+        function updateStats() {
+            // Расчет статистики
+            const total = orders.length;
+            const newOrders = orders.filter(o => o.status === 'new').length;
+            const inProgress = orders.filter(o => o.status === 'in_progress').length;
+            const ready = orders.filter(o => o.status === 'ready').length;
+            const urgent = orders.filter(o => o.urgency === 'urgent' || o.urgency === 'express').length;
+            
+            document.getElementById('totalOrders').textContent = total;
+            document.getElementById('newOrders').textContent = newOrders;
+            document.getElementById('inProgressOrders').textContent = inProgress;
+            document.getElementById('readyOrders').textContent = ready;
+            document.getElementById('urgentOrders').textContent = urgent;
+            document.getElementById('monthOrders').textContent = orders.filter(o => {
+                const orderDate = new Date(o.createdDate);
+                const monthAgo = new Date();
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+                return orderDate > monthAgo;
+            }).length;
+        }
+        
+        function searchOrders() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatus').value;
+            const masterFilter = document.getElementById('filterMaster').value;
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            
+            // Здесь будет фильтрация
+            alert(`Поиск: ${searchText}\nСтатус: ${statusFilter}\nМастер: ${masterFilter}\nДата с: ${dateFrom} по: ${dateTo}`);
+        }
+        
+        function clearFilters() {
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterMaster').value = '';
+            document.getElementById('filterDateFrom').value = '';
+            document.getElementById('filterDateTo').value = '';
+            document.getElementById('searchInput').value = '';
+            loadOrders();
+        }
+        
+        function saveNewOrder() {
+            const clientName = document.getElementById('clientName').value;
+            const clientPhone = document.getElementById('clientPhone').value;
+            const deviceType = document.getElementById('deviceType').value;
+            const deviceBrand = document.getElementById('deviceBrand').value;
+            const problem = document.getElementById('problem').value;
+            const serialNumber = document.getElementById('serialNumber').value;
+            const urgency = document.getElementById('urgency').value;
+            
+            // Валидация
+            if (!clientName || !clientPhone || !deviceType || !deviceBrand || !problem) {
+                alert('Пожалуйста, заполните все обязательные поля (отмечены *)');
+                return;
+            }
+            
+            // Создание новой заявки
+            const newOrder = {
+                id: orders.length > 0 ? Math.max(...orders.map(o => o.id)) + 1 : 1001,
+                clientName: clientName,
+                clientPhone: clientPhone,
+                deviceType: deviceType,
+                deviceBrand: deviceBrand,
+                problem: problem,
+                serialNumber: serialNumber,
+                urgency: urgency,
+                status: 'new',
+                createdDate: new Date().toLocaleDateString('ru-RU'),
+                masterId: null,
+                cost: 0,
+                works: [],
+                parts: []
+            };
+            
+            // Сохранение в localStorage
+            orders.unshift(newOrder);
+            localStorage.setItem('repair_orders', JSON.stringify(orders));
+            
+            // Закрытие модального окна
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newOrderModal'));
+            modal.hide();
+            
+            // Обновление интерфейса
+            updateOrdersTable();
+            updateStats();
+            
+            // Очистка формы
+            document.getElementById('newOrderForm').reset();
+            
+            alert(`Заявка #${newOrder.id} успешно создана!`);
+        }
+        
+        function viewOrder(orderId) {
+            window.location.href = `order-detail.html?id=${orderId}`;
+        }
+        
+        function editOrder(orderId) {
+            alert(`Редактирование заявки #${orderId}`);
+        }
+        
+        function completeOrder(orderId) {
+            if (confirm(`Отметить заявку #${orderId} как выполненную?`)) {
+                const orderIndex = orders.findIndex(o => o.id === orderId);
+                if (orderIndex !== -1) {
+                    orders[orderIndex].status = 'ready';
+                    localStorage.setItem('repair_orders', JSON.stringify(orders));
+                    updateOrdersTable();
+                    updateStats();
+                    alert(`Заявка #${orderId} отмечена как готовая`);
+                }
+            }
+        }
+        
+        function issueOrder(orderId) {
+            if (confirm(`Выдать устройство по заявке #${orderId} клиенту?`)) {
+                const orderIndex = orders.findIndex(o => o.id === orderId);
+                if (orderIndex !== -1) {
+                    orders[orderIndex].status = 'completed';
+                    localStorage.setItem('repair_orders', JSON.stringify(orders));
+                    updateOrdersTable();
+                    updateStats();
+                    alert(`Заявка #${orderId} закрыта. Устройство выдано клиенту.`);
+                }
+            }
+        }
+        
+        function printOrders() {
+            window.print();
+        }
+        
+        function printReceipt(orderId) {
+            alert(`Печать квитанции для заявки #${orderId}`);
+        }
+        
+        function assignMaster(orderId) {
+            const master = prompt('Введите имя мастера для заявки #' + orderId);
+            if (master) {
+                const orderIndex = orders.findIndex(o => o.id === orderId);
+                if (orderIndex !== -1) {
+                    orders[orderIndex].master = master;
+                    orders[orderIndex].status = 'in_progress';
+                    localStorage.setItem('repair_orders', JSON.stringify(orders));
+                    updateOrdersTable();
+                    updateStats();
+                    alert(`Мастер ${master} назначен на заявку #${orderId}`);
+                }
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedData = localStorage.getItem('currentUser');
+            if (savedData) {
+                const user = JSON.parse(savedData);
+                if (user.avatar) {
+                    // Ищем все картинки с классом sidebar-avatar и ставим им сохраненное фото
+                    const avatars = document.querySelectorAll('.sidebar-avatar');
+                    avatars.forEach(img => {
+                        img.src = user.avatar;
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

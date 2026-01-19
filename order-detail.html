@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заявка #1001 - Система управления</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+        }
+        .sidebar a {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 12px 20px;
+            display: block;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+            color: white;
+            border-left: 4px solid #3498db;
+        }
+        .sidebar .active {
+            background-color: #34495e;
+            border-left: 4px solid #3498db;
+            font-weight: 600;
+        }
+        .order-header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .info-card {
+            border-left: 4px solid #3498db;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e0e0e0;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #3498db;
+            border: 2px solid white;
+            box-shadow: 0 0 0 3px #3498db;
+        }
+        .status-badge {
+            font-size: 0.85em;
+            padding: 5px 10px;
+        }
+        .tab-content {
+            background: white;
+            border-radius: 0 0 10px 10px;
+            padding: 20px;
+        }
+        .nav-tabs .nav-link.active {
+            background: white;
+            border-bottom-color: white;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar (одинаковый для всех страниц) -->
+            <div class="col-md-3 col-lg-2 sidebar d-md-block">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="mb-0"><i class="text-center mt-3 mb-4"></i>РемонтТех</h5>
+                    </div>
+                    
+                    <ul class="nav flex-column mb-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">
+                                <i class="fas fa-tachometer-alt me-2"></i>Главная
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="orders.html">
+                                <i class="fas fa-tools me-2"></i>Заявки на ремонт
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="clients.html">
+                                <i class="fas fa-users me-2"></i>Клиенты
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="devices.html">
+                                <i class="fas fa-laptop me-2"></i>Устройства
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="masters.html">
+                                <i class="fas fa-user-cog me-2"></i>Мастера
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="reports.html">
+                                <i class="fas fa-chart-bar me-2"></i>Отчеты
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <hr class="text-white-50">
+                    
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2">
+                            <strong>Администратор</strong>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                            <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>Профиль</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+                    <div>
+                        <a href="orders.html" class="btn btn-outline-secondary btn-sm mb-2">
+                            <i class="fas fa-arrow-left me-1"></i> Назад к списку
+                        </a>
+                        <h1 class="h2 mb-0">Заявка на ремонт <span id="orderNumber">#1001</span></h1>
+                    </div>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="printOrder()">
+                                <i class="fas fa-print me-1"></i> Печать
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="emailClient()">
+                                <i class="fas fa-envelope me-1"></i> Email
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="editOrder()">
+                            <i class="fas fa-edit me-1"></i> Редактировать
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Order Header -->
+                <div class="order-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="mb-1" id="deviceTitle">Ноутбук ASUS X543MA</h3>
+                            <p class="mb-0" id="clientInfo">Иванов Алексей Сергеевич • +7 (912) 345-67-89</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge bg-light text-dark fs-6 p-2" id="orderStatus">В работе</span>
+                            <p class="mb-0 mt-2" id="orderDates">Принят: 10.11.2023 • План: 13.11.2023</p>
+                        </div>
+                    </div>
+                </div>
+                
+
+                <!-- Tabs -->
+                <ul class="nav nav-tabs" id="orderTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
+                            <i class="fas fa-info-circle me-1"></i> Информация
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="works-tab" data-bs-toggle="tab" data-bs-target="#works" type="button" role="tab">
+                            <i class="fas fa-tools me-1"></i> Работы
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="parts-tab" data-bs-toggle="tab" data-bs-target="#parts" type="button" role="tab">
+                            <i class="fas fa-microchip me-1"></i> Запчасти
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
+                            <i class="fas fa-history me-1"></i> История
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="finance-tab" data-bs-toggle="tab" data-bs-target="#finance" type="button" role="tab">
+                            <i class="fas fa-ruble-sign me-1"></i> Финансы
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="orderTabsContent">
+                    <!-- Информация -->
+                    <div class="tab-pane fade show active" id="info" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-card">
+                                    <h6><i class="fas fa-user text-primary me-2"></i>Данные клиента</h6>
+                                    <div class="row mt-3">
+                                        <div class="col-6">
+                                            <small class="text-muted">ФИО</small>
+                                            <p class="mb-2"><strong id="clientName">Иванов Алексей Сергеевич</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Телефон</small>
+                                            <p class="mb-2"><strong id="clientPhone">+7 (912) 345-67-89</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Email</small>
+                                            <p class="mb-2"><strong id="clientEmail">ivanov@example.com</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Примечание</small>
+                                            <p class="mb-2"><strong id="clientNote">Постоянный клиент</strong></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-card">
+                                    <h6><i class="fas fa-desktop text-primary me-2"></i>Устройство</h6>
+                                    <div class="row mt-3">
+                                        <div class="col-6">
+                                            <small class="text-muted">Тип</small>
+                                            <p class="mb-2"><strong id="deviceType">Ноутбук</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Бренд/Модель</small>
+                                            <p class="mb-2"><strong id="deviceModel">ASUS X543MA</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Серийный номер</small>
+                                            <p class="mb-2"><strong id="serialNumber">SN123456789</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Год выпуска</small>
+                                            <p class="mb-2"><strong id="deviceYear">2020</strong></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="info-card">
+                                    <h6><i class="fas fa-exclamation-triangle text-warning me-2"></i>Проблема</h6>
+                                    <p class="mt-3" id="problemDescription">
+                                        Ноутбук не включается. При нажатии на кнопку питания ничего не происходит, индикаторы не горят. 
+                                        Клиент сообщает, что незадолго до поломки было сообщение о низком заряде батареи.
+                                    </p>
+                                    <div class="row mt-3">
+                                        <div class="col-6">
+                                            <small class="text-muted">Комплектность</small>
+                                            <p class="mb-2"><strong>Ноутбук, блок питания, сумка</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Внешний вид</small>
+                                            <p class="mb-2"><strong>Хороший, небольшие потертости</strong></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-card">
+                                    <h6><i class="fas fa-user-cog text-primary me-2"></i>Ответственные</h6>
+                                    <div class="row mt-3">
+                                        <div class="col-6">
+                                            <small class="text-muted">Мастер</small>
+                                            <p class="mb-2"><strong id="masterName">Петров Иван Васильевич</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Принял</small>
+                                            <p class="mb-2"><strong id="acceptedBy">Сидоров А.К.</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Дата приёма</small>
+                                            <p class="mb-2"><strong id="acceptDate">10.11.2023 14:30</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">План готовности</small>
+                                            <p class="mb-2"><strong id="plannedDate">13.11.2023 18:00</strong></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Работы -->
+                    <div class="tab-pane fade" id="works" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5>Выполненные работы</h5>
+                            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addWorkModal">
+                                <i class="fas fa-plus me-1"></i> Добавить работу
+                            </button>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>№</th>
+                                        <th>Наименование работы</th>
+                                        <th>Мастер</th>
+                                        <th>Время</th>
+                                        <th>Стоимость</th>
+                                        <th>Дата</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="worksTable">
+                                    <tr>
+                                        <td>1</td>
+                                        <td>Диагностика неисправности</td>
+                                        <td>Петров И.В.</td>
+                                        <td>1 час</td>
+                                        <td>500 ₽</td>
+                                        <td>10.11.2023</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-warning" onclick="editWork(1)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteWork(1)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>Замена разъёма питания</td>
+                                        <td>Петров И.В.</td>
+                                        <td>2 часа</td>
+                                        <td>1 500 ₽</td>
+                                        <td>11.11.2023</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-warning" onclick="editWork(2)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteWork(2)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-light">
+                                        <td colspan="4" class="text-end"><strong>Итого работ:</strong></td>
+                                        <td><strong id="totalWorksCost">2 000 ₽</strong></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Запчасти -->
+                    <div class="tab-pane fade" id="parts" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5>Использованные запчасти</h5>
+                            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addPartModal">
+                                <i class="fas fa-plus me-1"></i> Добавить запчасть
+                            </button>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>№</th>
+                                        <th>Наименование запчасти</th>
+                                        <th>Код детали</th>
+                                        <th>Количество</th>
+                                        <th>Цена за шт.</th>
+                                        <th>Сумма</th>
+                                        <th>Дата</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="partsTable">
+                                    <tr>
+                                        <td>1</td>
+                                        <td>Разъём питания DC Jack</td>
+                                        <td>DC-ASUS-543</td>
+                                        <td>1</td>
+                                        <td>800 ₽</td>
+                                        <td>800 ₽</td>
+                                        <td>10.11.2023</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-warning" onclick="editPart(1)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deletePart(1)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>Термопаста</td>
+                                        <td>TP-MX4</td>
+                                        <td>1</td>
+                                        <td>300 ₽</td>
+                                        <td>300 ₽</td>
+                                        <td>11.11.2023</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-warning" onclick="editPart(2)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deletePart(2)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-light">
+                                        <td colspan="5" class="text-end"><strong>Итого запчастей:</strong></td>
+                                        <td><strong id="totalPartsCost">1 100 ₽</strong></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- История -->
+                    <div class="tab-pane fade" id="history" role="tabpanel">
+                        <h5 class="mb-3">История изменений</h5>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Статус изменен на "В работе"</strong>
+                                            <small class="text-muted">11.11.2023 10:15</small>
+                                        </div>
+                                        <p class="mb-0">Мастер: Петров И.В.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Добавлена работа: "Замена разъёма питания"</strong>
+                                            <small class="text-muted">11.11.2023 09:30</small>
+                                        </div>
+                                        <p class="mb-0">Стоимость: 1 500 ₽</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Назначен мастер: Петров И.В.</strong>
+                                            <small class="text-muted">10.11.2023 16:45</small>
+                                        </div>
+                                        <p class="mb-0">Администратор: Сидоров А.К.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Заявка создана</strong>
+                                            <small class="text-muted">10.11.2023 14:30</small>
+                                        </div>
+                                        <p class="mb-0">Статус: Новый</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Финансы -->
+                    <div class="tab-pane fade" id="finance" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Расчет стоимости</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tbody>
+                                                <tr>
+                                                    <td>Стоимость работ:</td>
+                                                    <td class="text-end">2 000 ₽</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Стоимость запчастей:</td>
+                                                    <td class="text-end">1 100 ₽</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Срочность (20%):</td>
+                                                    <td class="text-end">620 ₽</td>
+                                                </tr>
+                                                <tr class="table-light">
+                                                    <td><strong>Итого:</strong></td>
+                                                    <td class="text-end"><strong id="totalCost">3 720 ₽</strong></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Предоплата:</td>
+                                                    <td class="text-end">1 000 ₽</td>
+                                                </tr>
+                                                <tr class="table-light">
+                                                    <td><strong>К оплате:</strong></td>
+                                                    <td class="text-end"><strong id="toPayCost">2 720 ₽</strong></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Платежи</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Дата</th>
+                                                        <th>Сумма</th>
+                                                        <th>Тип</th>
+                                                        <th>Примечание</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>10.11.2023</td>
+                                                        <td>1 000 ₽</td>
+                                                        <td><span class="badge bg-success">Предоплата</span></td>
+                                                        <td>Наличные</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <button class="btn btn-sm btn-primary w-100 mt-2" onclick="addPayment()">
+                                            <i class="fas fa-plus me-1"></i> Добавить платеж
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5>Документы</h5>
+                                <div class="d-flex justify-content-center gap-3 mt-3">
+                                    <button class="btn btn-outline-primary" onclick="printAct()">
+                                        <i class="fas fa-file-contract me-1"></i> Акт приема
+                                    </button>
+                                    <button class="btn btn-outline-success" onclick="printInvoice()">
+                                        <i class="fas fa-file-invoice me-1"></i> Счет
+                                    </button>
+                                    <button class="btn btn-outline-info" onclick="printReceipt()">
+                                        <i class="fas fa-receipt me-1"></i> Квитанция
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal fade" id="addWorkModal" tabindex="-1" aria-labelledby="addWorkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addWorkModalLabel">Добавить работу</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="workForm">
+                        <div class="mb-3">
+                            <label for="workName" class="form-label">Наименование работы *</label>
+                            <input type="text" class="form-control" id="workName" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="workTime" class="form-label">Время (часы)</label>
+                                <input type="number" class="form-control" id="workTime" min="0.5" step="0.5" value="1">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="workCost" class="form-label">Стоимость (₽) *</label>
+                                <input type="number" class="form-control" id="workCost" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="workMaster" class="form-label">Мастер</label>
+                            <select class="form-select" id="workMaster">
+                                <option value="1">Петров И.В.</option>
+                                <option value="2">Сидоров А.К.</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveWork()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addPartModal" tabindex="-1" aria-labelledby="addPartModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPartModalLabel">Добавить запчасть</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="partForm">
+                        <div class="mb-3">
+                            <label for="partName" class="form-label">Наименование запчасти *</label>
+                            <input type="text" class="form-control" id="partName" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="partCode" class="form-label">Код детали</label>
+                                <input type="text" class="form-control" id="partCode">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="partQuantity" class="form-label">Количество</label>
+                                <input type="number" class="form-control" id="partQuantity" min="1" value="1">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="partPrice" class="form-label">Цена за шт. (₽) *</label>
+                            <input type="number" class="form-control" id="partPrice" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="savePart()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Order Detail JS -->
+    <script>
+        // Получение ID заявки из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id') || 1001;
+        
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOrderDetails(orderId);
+            updateCalculations();
+        });
+        
+        function loadOrderDetails(orderId) {
+            // В будущем здесь будет загрузка данных с сервера
+            // Пока используем демо-данные
+            document.getElementById('orderNumber').textContent = `#${orderId}`;
+            
+            // Здесь будет AJAX запрос для получения данных заявки
+            // const order = getOrderById(orderId);
+            // updateOrderUI(order);
+        }
+        
+        function updateCalculations() {
+            // Расчет итоговых сумм
+            const worksCost = 2000;
+            const partsCost = 1100;
+            const urgency = 620;
+            const prepayment = 1000;
+            
+            const total = worksCost + partsCost + urgency;
+            const toPay = total - prepayment;
+            
+            document.getElementById('totalWorksCost').textContent = worksCost.toLocaleString() + ' ₽';
+            document.getElementById('totalPartsCost').textContent = partsCost.toLocaleString() + ' ₽';
+            document.getElementById('totalCost').textContent = total.toLocaleString() + ' ₽';
+            document.getElementById('toPayCost').textContent = toPay.toLocaleString() + ' ₽';
+        }
+        
+        function saveWork() {
+            const workName = document.getElementById('workName').value;
+            const workCost = document.getElementById('workCost').value;
+            
+            if (!workName || !workCost) {
+                alert('Заполните обязательные поля');
+                return;
+            }
+            
+            alert(`Работа "${workName}" добавлена`);
+            
+            // Закрытие модального окна
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addWorkModal'));
+            modal.hide();
+            
+            // Обновление расчетов
+            updateCalculations();
+            
+            // Очистка формы
+            document.getElementById('workForm').reset();
+        }
+        
+        function savePart() {
+            const partName = document.getElementById('partName').value;
+            const partPrice = document.getElementById('partPrice').value;
+            
+            if (!partName || !partPrice) {
+                alert('Заполните обязательные поля');
+                return;
+            }
+            
+            alert(`Запчасть "${partName}" добавлена`);
+            
+            // Закрытие модального окна
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addPartModal'));
+            modal.hide();
+            
+            // Обновление расчетов
+            updateCalculations();
+            
+            // Очистка формы
+            document.getElementById('partForm').reset();
+        }
+        
+        function editWork(workId) {
+            alert(`Редактирование работы #${workId}`);
+        }
+        
+        function deleteWork(workId) {
+            if (confirm('Удалить эту работу?')) {
+                alert(`Работа #${workId} удалена`);
+            }
+        }
+        
+        function editPart(partId) {
+            alert(`Редактирование запчасти #${partId}`);
+        }
+        
+        function deletePart(partId) {
+            if (confirm('Удалить эту запчасть?')) {
+                alert(`Запчасть #${partId} удалена`);
+            }
+        }
+        
+        function addPayment() {
+            const amount = prompt('Введите сумму платежа:');
+            if (amount && !isNaN(amount)) {
+                alert(`Платеж на сумму ${amount} ₽ добавлен`);
+            }
+        }
+        
+        function editOrder() {
+            alert('Редактирование заявки');
+        }
+        
+        function printOrder() {
+            window.print();
+        }
+        
+        function printAct() {
+            alert('Печать акта приема-передачи');
+        }
+        
+        function printInvoice() {
+            alert('Печать счета');
+        }
+        
+        function printReceipt() {
+            alert('Печать квитанции');
+        }
+        
+        function emailClient() {
+            const email = prompt('Введите email клиента:', 'ivanov@example.com');
+            if (email) {
+                alert(`Письмо отправлено на ${email}`);
+            }
+        }
+    </script>
+</body>
+</html>

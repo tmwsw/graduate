@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в систему - РемонтТех</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .login-left {
+            background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+            color: white;
+            padding: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+        }
+        
+        .login-right {
+            padding: 50px;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo h1 {
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .logo p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .form-control {
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .input-group-text {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-right: none;
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+            border: none;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .form-check-input:checked {
+            background-color: #3498db;
+            border-color: #3498db;
+        }
+        
+        .forgot-link {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: #e9ecef;
+        }
+        
+        .divider span {
+            padding: 0 15px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .social-login {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .social-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            background: white;
+            color: #2c3e50;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .social-btn:hover {
+            border-color: #3498db;
+            color: #3498db;
+            transform: translateY(-2px);
+        }
+        
+        .register-link {
+            text-align: center;
+            color: #7f8c8d;
+            margin-top: 20px;
+        }
+        
+        .register-link a {
+            color: #3498db;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .feature-list li {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .feature-list i {
+            font-size: 1.5rem;
+            color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .feature-list h4 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .feature-list p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        
+        .system-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        
+        .system-info h5 {
+            margin-bottom: 10px;
+        }
+        
+        .system-info p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .password-toggle {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .language-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        
+        .language-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .language-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .demo-credentials {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .demo-credentials h6 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .demo-credentials p {
+            margin: 5px 0;
+        }
+        
+        @media (max-width: 991px) {
+            .login-left {
+                padding: 30px;
+            }
+            
+            .login-right {
+                padding: 30px;
+            }
+            
+            body {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 767px) {
+            .login-left {
+                display: none;
+            }
+            
+            .login-container {
+                max-width: 450px;
+                margin: 0 auto;
+            }
+        }
+        
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="login-container">
+                    <div class="row g-0">
+                        <!-- Левая часть с информацией -->
+                        <div class="col-lg-6 d-none d-lg-block">
+                            <div class="login-left">
+                                <div class="mb-5">
+                                    <h2 class="mb-3">Добро пожаловать в <strong>РемонтТех</strong></h2>
+                                    <p>Система управления сервисным центром по ремонту электроники</p>
+                                </div>
+                                
+                                <ul class="feature-list">
+                                    <li>
+                                        <i class="fas fa-tools"></i>
+                                        <div>
+                                            <h4>Управление заявками</h4>
+                                            <p>Отслеживайте все заявки на ремонт в реальном времени</p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-chart-bar"></i>
+                                        <div>
+                                            <h4>Аналитика и отчеты</h4>
+                                            <p>Детальная аналитика по всем процессам сервисного центра</p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-users"></i>
+                                        <div>
+                                            <h4>База клиентов</h4>
+                                            <p>Управление клиентской базой и история обращений</p>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- Правая часть с формой -->
+                        <div class="col-lg-6">
+                            <div class="login-right">
+                                <div class="logo">
+                                    <h1><i class="text-center mt-3 mb-4"></i>РемонтТех</h1>
+                                </div>
+                                
+                                <!-- Сообщения об ошибках/успехе -->
+                                <div class="alert alert-danger d-none" id="errorAlert">
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                    <span id="errorMessage"></span>
+                                </div>
+                                
+                                <div class="alert alert-success d-none" id="successAlert">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <span id="successMessage"></span>
+                                </div>
+                                
+                                <!-- Форма входа -->
+                                <form id="loginForm">
+                                    <div class="form-group">
+                                        <label for="username" class="form-label">
+                                            <i class="fas fa-user me-1"></i> Логин или Email
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-at"></i>
+                                            </span>
+                                            <input type="text" class="form-control" id="username" placeholder="Введите логин или email" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="password" class="form-label">
+                                            <i class="fas fa-lock me-1"></i> Пароль
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-key"></i>
+                                            </span>
+                                            <input type="password" class="form-control" id="password" placeholder="Введите пароль" required>
+                                            <span class="input-group-text password-toggle" id="togglePassword">
+                                                <i class="fas fa-eye"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="remember-forgot">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="rememberMe">
+                                            <label class="form-check-label" for="rememberMe">
+                                                Запомнить меня
+                                            </label>
+                                        </div>
+                                        <a href="#forgotPasswordModal" class="forgot-link" data-bs-toggle="modal">
+                                            Забыли пароль?
+                                        </a>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn-login" id="loginButton">
+                                        <span id="loginText">Войти в систему</span>
+                                        <div class="loader" id="loginLoader"></div>
+                                    </button>
+                                </form>
+                                
+                                <!-- <div class="demo-credentials">
+                                    <h6><i class="fas fa-key me-1"></i> Тестовые учетные данные:</h6>
+                                    <p><strong>Администратор:</strong> admin / admin123</p>
+                                    <p><strong>Менеджер:</strong> manager / manager123</p>
+                                    <p><strong>Мастер:</strong> master / master123</p>
+                                </div> -->
+                                
+                                <div class="register-link">
+                                    <p>Нет аккаунта? <a href="#registerModal" data-bs-toggle="modal">Зарегистрироваться</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно восстановления пароля -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-key me-2"></i>Восстановление пароля
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-4">Введите email, указанный при регистрации. Мы отправим ссылку для восстановления пароля.</p>
+                    
+                    <form id="forgotPasswordForm">
+                        <div class="mb-3">
+                            <label for="recoveryEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="recoveryEmail" placeholder="example@mail.ru" required>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Ссылка для восстановления будет активна в течение 24 часов.
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i> Отправить ссылку
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно регистрации -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus me-2"></i>Регистрация нового пользователя
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="regFirstName" class="form-label">Имя</label>
+                                <input type="text" class="form-control" id="regFirstName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="regLastName" class="form-label">Фамилия</label>
+                                <input type="text" class="form-control" id="regLastName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="middleName" class="form-label">Отчество</label>
+                                <input type="text" class="form-control" id="middleName" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="regEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="regEmail" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="regPhone" class="form-label">Телефон</label>
+                            <input type="tel" class="form-control" id="regPhone" placeholder="+7 (999) 123-45-67">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="regRole" class="form-label">Роль в системе</label>
+                            <select class="form-select" id="regRole">
+                                <option value="manager">Менеджер</option>
+                                <option value="master">Мастер</option>
+                                <option value="admin">Администратор</option>
+                                <option value="viewer">Наблюдатель</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="regPassword" class="form-label">Пароль</label>
+                            <input type="password" class="form-control" id="regPassword" required>
+                            <div class="form-text">Пароль должен содержать не менее 8 символов</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="regConfirmPassword" class="form-label">Подтверждение пароля</label>
+                            <input type="password" class="form-control" id="regConfirmPassword" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="regAgreement" required>
+                                <label class="form-check-label" for="regAgreement">
+                                    Я согласен с <a href="#" class="text-decoration-none">политикой конфиденциальности</a>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-user-check me-1"></i> Зарегистрироваться
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Данные пользователей по умолчанию
+        const defaultUsers = [
+            {
+                id: 1,
+                username: 'admin',
+                email: 'admin@remonttech.ru',
+                password: 'admin123',
+                fullName: 'Иванов Иван Иванович',
+                firstName: 'Иван',
+                lastName: 'Иванов',
+                middleName: 'Иванович',
+                phone: '+7 (999) 123-45-67',
+                role: 'admin',
+                position: 'Администратор системы',
+                department: 'service',
+                joinDate: '15.03.2023',
+                lastLogin: new Date().toLocaleString('ru-RU'),
+                avatar: 'https://via.placeholder.com/150',
+                bio: 'Администратор системы управления ремонтами',
+                isActive: true,
+                permissions: ['all'],
+                theme: 'light',
+                language: 'ru'
+            },
+            {
+                id: 2,
+                username: 'manager',
+                email: 'manager@remonttech.ru',
+                password: 'manager123',
+                fullName: 'Петрова Анна Сергеевна',
+                firstName: 'Анна',
+                lastName: 'Петрова',
+                middleName: 'Сергеевна',
+                phone: '+7 (999) 987-65-43',
+                role: 'manager',
+                position: 'Менеджер по работе с клиентами',
+                department: 'sales',
+                joinDate: '20.05.2023',
+                lastLogin: new Date().toLocaleString('ru-RU'),
+                avatar: 'https://via.placeholder.com/150',
+                bio: 'Менеджер по работе с клиентами',
+                isActive: true,
+                permissions: ['orders', 'clients', 'reports'],
+                theme: 'light',
+                language: 'ru'
+            },
+            {
+                id: 3,
+                username: 'master',
+                email: 'master@remonttech.ru',
+                password: 'master123',
+                fullName: 'Сидоров Алексей Владимирович',
+                firstName: 'Алексей',
+                lastName: 'Сидоров',
+                middleName: 'Владимирович',
+                phone: '+7 (999) 456-78-90',
+                role: 'master',
+                position: 'Мастер по ремонту',
+                department: 'service',
+                joinDate: '10.08.2023',
+                lastLogin: new Date().toLocaleString('ru-RU'),
+                avatar: 'https://via.placeholder.com/150',
+                bio: 'Мастер по ремонту ноутбуков и ПК',
+                isActive: true,
+                permissions: ['orders', 'devices'],
+                theme: 'light',
+                language: 'ru'
+            }
+        ];
+        
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            initLoginPage();
+        });
+        
+        // Инициализация страницы входа
+        function initLoginPage() {
+            // Инициализируем пользователей, если их еще нет
+            initUsersStorage();
+            
+            // Настройка обработчиков событий
+            setupEventHandlers();
+            
+            // Проверяем, есть ли сохраненный логин
+            checkRememberedUser();
+            
+            // Настройка переключения языка
+            setupLanguageSwitcher();
+        }
+        
+        // Инициализация хранилища пользователей
+        function initUsersStorage() {
+            const storedUsers = localStorage.getItem('users');
+            if (!storedUsers) {
+                localStorage.setItem('users', JSON.stringify(defaultUsers));
+            }
+            
+            // Создаем пользователя для текущей сессии, если его нет
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser) {
+                localStorage.setItem('currentUser', JSON.stringify({}));
+            }
+        }
+        
+        // Настройка обработчиков событий
+        function setupEventHandlers() {
+            // Форма входа
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Форма восстановления пароля
+            document.getElementById('forgotPasswordForm').addEventListener('submit', handlePasswordRecovery);
+            
+            // Форма регистрации
+            document.getElementById('registerForm').addEventListener('submit', handleRegistration);
+            
+            // Переключение видимости пароля
+            document.getElementById('togglePassword').addEventListener('click', togglePasswordVisibility);
+            
+            // Переключение языка
+            document.getElementById('languageToggle').addEventListener('click', toggleLanguage);
+            
+            // Социальный логин
+            document.querySelectorAll('.social-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                });
+            });
+        }
+        
+        // Проверка сохраненного пользователя
+        function checkRememberedUser() {
+            const rememberMe = localStorage.getItem('rememberMe');
+            if (rememberMe === 'true') {
+                const savedUsername = localStorage.getItem('savedUsername');
+                if (savedUsername) {
+                    document.getElementById('username').value = savedUsername;
+                    document.getElementById('rememberMe').checked = true;
+                }
+            }
+        }
+        
+        // Обработка входа
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            
+            // Показываем загрузку
+            showLoading(true);
+            
+            // Очищаем предыдущие сообщения
+            hideAlerts();
+            
+            // Валидация
+            if (!username || !password) {
+                showError('Пожалуйста, заполните все поля');
+                showLoading(false);
+                return;
+            }
+            
+            // Имитация задержки сети
+            setTimeout(() => {
+                const user = authenticateUser(username, password);
+                
+                if (user) {
+                    // Сохраняем данные для запоминания
+                    if (rememberMe) {
+                        localStorage.setItem('rememberMe', 'true');
+                        localStorage.setItem('savedUsername', username);
+                    } else {
+                        localStorage.removeItem('rememberMe');
+                        localStorage.removeItem('savedUsername');
+                    }
+                    
+                    // Обновляем время последнего входа
+                    user.lastLogin = new Date().toLocaleString('ru-RU');
+                    updateUser(user);
+                    
+                    // Сохраняем текущего пользователя
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    
+                    // Создаем активную сессию
+                    createSession(user);
+                    
+                    // Показываем успех
+                    showSuccess('Вход выполнен успешно! Перенаправление...');
+                    
+                    // Перенаправляем на главную страницу через 1.5 секунды
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                    
+                } else {
+                    showError('Неверный логин или пароль');
+                    showLoading(false);
+                    
+                    // Анимация ошибки
+                    shakeLoginForm();
+                }
+            }, 1000); // Имитация задержки сети
+        }
+        
+        // Аутентификация пользователя
+        function authenticateUser(username, password) {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            
+            // Ищем пользователя по username или email
+            const user = users.find(u => 
+                (u.username === username || u.email === username) && 
+                u.password === password &&
+                u.isActive === true
+            );
+            
+            return user || null;
+        }
+        
+        // Обновление данных пользователя
+        function updateUser(updatedUser) {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const index = users.findIndex(u => u.id === updatedUser.id);
+            
+            if (index !== -1) {
+                users[index] = updatedUser;
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+        }
+        
+        // Создание сессии
+        function createSession(user) {
+            const session = {
+                userId: user.id,
+                loginTime: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                ip: '192.168.1.1' // В реальном приложении получаем с сервера
+            };
+            
+            localStorage.setItem('currentSession', JSON.stringify(session));
+            
+            // Добавляем в историю сессий
+            const sessions = JSON.parse(localStorage.getItem('userSessions')) || [];
+            sessions.unshift(session);
+            if (sessions.length > 10) sessions.pop(); // Ограничиваем 10 сессиями
+            localStorage.setItem('userSessions', JSON.stringify(sessions));
+        }
+        
+        // Обработка восстановления пароля
+        function handlePasswordRecovery(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('recoveryEmail').value.trim();
+            
+            if (!email) {
+                showError('Пожалуйста, введите email');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const user = users.find(u => u.email === email);
+            
+            if (user) {
+                // В реальном приложении здесь отправляется email
+                showSuccess('Ссылка для восстановления пароля отправлена на указанный email');
+                
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal'));
+                modal.hide();
+                
+                // Очищаем форму
+                document.getElementById('forgotPasswordForm').reset();
+                
+            } else {
+                showError('Пользователь с таким email не найден');
+            }
+        }
+        
+        // Обработка регистрации
+        function handleRegistration(e) {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('regFirstName').value.trim();
+            const lastName = document.getElementById('regLastName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const role = document.getElementById('regRole').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            const agreement = document.getElementById('regAgreement').checked;
+            
+            // Валидация
+            if (!firstName || !lastName || !email || !password || !confirmPassword) {
+                showError('Пожалуйста, заполните все обязательные поля');
+                return;
+            }
+            
+            if (!agreement) {
+                showError('Необходимо согласиться с политикой конфиденциальности');
+                return;
+            }
+            
+            if (password.length < 8) {
+                showError('Пароль должен содержать не менее 8 символов');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showError('Пароли не совпадают');
+                return;
+            }
+            
+            // Проверка уникальности email
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const emailExists = users.some(u => u.email === email);
+            
+            if (emailExists) {
+                showError('Пользователь с таким email уже существует');
+                return;
+            }
+            
+            // Создание нового пользователя
+            const newUser = {
+                id: users.length + 1,
+                username: email.split('@')[0],
+                email: email,
+                password: password,
+                fullName: `${lastName} ${firstName}`,
+                firstName: firstName,
+                lastName: lastName,
+                middleName: '',
+                phone: phone,
+                role: role,
+                position: getRoleTitle(role),
+                department: getRoleDepartment(role),
+                joinDate: new Date().toLocaleDateString('ru-RU'),
+                lastLogin: new Date().toLocaleString('ru-RU'),
+                avatar: 'https://via.placeholder.com/150',
+                bio: 'Новый пользователь системы',
+                isActive: true,
+                permissions: getRolePermissions(role),
+                theme: 'light',
+                language: 'ru'
+            };
+            
+            // Добавляем пользователя
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            // Показываем успех
+            showSuccess('Регистрация успешно завершена! Теперь вы можете войти в систему.');
+            
+            // Закрываем модальное окно
+            const modal = bootstrap.Modal.getInstance(document.getElementById('registerModal'));
+            modal.hide();
+            
+            // Очищаем форму
+            document.getElementById('registerForm').reset();
+            
+            // Автоматически заполняем форму входа
+            document.getElementById('username').value = email;
+            document.getElementById('password').value = password;
+        }
+        
+        // Вспомогательные функции для регистрации
+        function getRoleTitle(role) {
+            const titles = {
+                'admin': 'Администратор системы',
+                'manager': 'Менеджер',
+                'master': 'Мастер',
+                'viewer': 'Наблюдатель'
+            };
+            return titles[role] || 'Пользователь';
+        }
+        
+        function getRoleDepartment(role) {
+            const departments = {
+                'admin': 'admin',
+                'manager': 'sales',
+                'master': 'service',
+                'viewer': 'view'
+            };
+            return departments[role] || 'view';
+        }
+        
+        function getRolePermissions(role) {
+            const permissions = {
+                'admin': ['all'],
+                'manager': ['orders', 'clients', 'reports'],
+                'master': ['orders', 'devices'],
+                'viewer': ['view']
+            };
+            return permissions[role] || ['view'];
+        }
+        
+        // Переключение видимости пароля
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.querySelector('#togglePassword i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+        
+        // Настройка переключателя языка
+        function setupLanguageSwitcher() {
+            const currentLanguage = localStorage.getItem('language') || 'ru';
+            updateLanguageUI(currentLanguage);
+        }
+        
+        // Переключение языка
+        function toggleLanguage() {
+            const current = localStorage.getItem('language') || 'ru';
+            const newLang = current === 'ru' ? 'en' : 'ru';
+            
+            localStorage.setItem('language', newLang);
+            updateLanguageUI(newLang);
+            
+            // Показываем уведомление
+            showSuccess(newLang === 'ru' ? 'Язык изменен на Русский' : 'Language changed to English');
+        }
+        
+        // Обновление интерфейса языка
+        function updateLanguageUI(lang) {
+            const toggleBtn = document.getElementById('languageToggle');
+            const icon = toggleBtn.querySelector('i');
+            const textSpan = toggleBtn.querySelector('span');
+            
+            if (lang === 'ru') {
+                textSpan.textContent = 'Русский';
+                icon.className = 'fas fa-globe';
+            } else {
+                textSpan.textContent = 'English';
+                icon.className = 'fas fa-globe-americas';
+            }
+            
+            // Здесь можно добавить перевод интерфейса
+            updateTexts(lang);
+        }
+        
+        // Обновление текстов интерфейса (базовый перевод)
+        function updateTexts(lang) {
+            const translations = {
+                ru: {
+                    welcome: 'Добро пожаловать в РемонтТех',
+                    systemDesc: 'Система управления сервисным центром по ремонту электроники',
+                    loginPlaceholder: 'Введите логин или email',
+                    passwordPlaceholder: 'Введите пароль',
+                    rememberMe: 'Запомнить меня',
+                    forgotPassword: 'Забыли пароль?',
+                    loginButton: 'Войти в систему',
+                    orLoginWith: 'Или войдите с помощью',
+                    noAccount: 'Нет аккаунта?',
+                    register: 'Зарегистрироваться',
+                    demoTitle: 'Тестовые учетные данные:',
+                    adminDemo: 'Администратор: admin / admin123',
+                    managerDemo: 'Менеджер: manager / manager123',
+                    masterDemo: 'Мастер: master / master123'
+                },
+                en: {
+                    welcome: 'Welcome to RepairTech',
+                    systemDesc: 'Service center management system for electronics repair',
+                    loginPlaceholder: 'Enter username or email',
+                    passwordPlaceholder: 'Enter password',
+                    rememberMe: 'Remember me',
+                    forgotPassword: 'Forgot password?',
+                    loginButton: 'Sign in',
+                    orLoginWith: 'Or sign in with',
+                    noAccount: 'No account?',
+                    register: 'Register',
+                    demoTitle: 'Demo credentials:',
+                    adminDemo: 'Admin: admin / admin123',
+                    managerDemo: 'Manager: manager / manager123',
+                    masterDemo: 'Master: master / master123'
+                }
+            };
+            
+            const t = translations[lang] || translations.ru;
+            
+            // Обновляем тексты
+            document.querySelector('.login-left h2').textContent = t.welcome;
+            document.querySelector('.login-left p').textContent = t.systemDesc;
+            document.getElementById('username').placeholder = t.loginPlaceholder;
+            document.getElementById('password').placeholder = t.passwordPlaceholder;
+            document.querySelector('label[for="rememberMe"]').textContent = t.rememberMe;
+            document.querySelector('.forgot-link').textContent = t.forgotPassword;
+            document.getElementById('loginText').textContent = t.loginButton;
+            document.querySelector('.divider span').textContent = t.orLoginWith;
+            document.querySelector('.register-link p').innerHTML = `${t.noAccount} <a href="#registerModal" data-bs-toggle="modal">${t.register}</a>`;
+            document.querySelector('.demo-credentials h6').innerHTML = `<i class="fas fa-key me-1"></i> ${t.demoTitle}`;
+            
+            const demoCreds = document.querySelectorAll('.demo-credentials p');
+            demoCreds[0].textContent = t.adminDemo;
+            demoCreds[1].textContent = t.managerDemo;
+            demoCreds[2].textContent = t.masterDemo;
+        }
+        
+        // Социальный логин (имитация)
+        function socialLogin(provider) {
+            showLoading(true);
+            hideAlerts();
+            
+            setTimeout(() => {
+                // В реальном приложении здесь была бы интеграция с OAuth
+                showSuccess(`Авторизация через ${provider} в разработке`);
+                showLoading(false);
+            }, 1500);
+        }
+        
+        // Показать/скрыть загрузку
+        function showLoading(show) {
+            const loginText = document.getElementById('loginText');
+            const loginLoader = document.getElementById('loginLoader');
+            const loginButton = document.getElementById('loginButton');
+            
+            if (show) {
+                loginText.style.display = 'none';
+                loginLoader.style.display = 'block';
+                loginButton.disabled = true;
+            } else {
+                loginText.style.display = 'block';
+                loginLoader.style.display = 'none';
+                loginButton.disabled = false;
+            }
+        }
+        
+        // Показать ошибку
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            errorMessage.textContent = message;
+            errorAlert.classList.remove('d-none');
+            
+            // Автоматически скрыть через 5 секунд
+            setTimeout(() => {
+                errorAlert.classList.add('d-none');
+            }, 5000);
+        }
+        
+        // Показать успех
+        function showSuccess(message) {
+            const successAlert = document.getElementById('successAlert');
+            const successMessage = document.getElementById('successMessage');
+            
+            successMessage.textContent = message;
+            successAlert.classList.remove('d-none');
+            
+            // Автоматически скрыть через 5 секунд
+            setTimeout(() => {
+                successAlert.classList.add('d-none');
+            }, 5000);
+        }
+        
+        // Скрыть все уведомления
+        function hideAlerts() {
+            document.getElementById('errorAlert').classList.add('d-none');
+            document.getElementById('successAlert').classList.add('d-none');
+        }
+        
+        // Анимация тряски формы при ошибке
+        function shakeLoginForm() {
+            const loginForm = document.getElementById('loginForm');
+            loginForm.style.transform = 'translateX(0)';
+            
+            // Анимация тряски
+            loginForm.animate([
+                { transform: 'translateX(0)' },
+                { transform: 'translateX(-10px)' },
+                { transform: 'translateX(10px)' },
+                { transform: 'translateX(-10px)' },
+                { transform: 'translateX(10px)' },
+                { transform: 'translateX(0)' }
+            ], {
+                duration: 500,
+                iterations: 1
+            });
+        }
+        
+        // Автоматический вход для демо
+        function demoLogin(role) {
+            let credentials;
+            
+            switch(role) {
+                case 'admin':
+                    credentials = { username: 'admin', password: 'admin123' };
+                    break;
+                case 'manager':
+                    credentials = { username: 'manager', password: 'manager123' };
+                    break;
+                case 'master':
+                    credentials = { username: 'master', password: 'master123' };
+                    break;
+            }
+            
+            if (credentials) {
+                document.getElementById('username').value = credentials.username;
+                document.getElementById('password').value = credentials.password;
+                document.getElementById('rememberMe').checked = true;
+                
+                // Автоматически отправляем форму через 0.5 секунды
+                setTimeout(() => {
+                    document.getElementById('loginForm').submit();
+                }, 500);
+            }
+        }
+        
+        // Добавляем кнопки быстрого входа для демо (опционально)
+        function addQuickLoginButtons() {
+            const demoSection = document.querySelector('.demo-credentials');
+            
+            const quickButtons = document.createElement('div');
+            quickButtons.className = 'mt-3';
+            quickButtons.innerHTML = `
+                <h6 class="mb-2">Быстрый вход:</h6>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="demoLogin('admin')">
+                        <i class="fas fa-user-shield me-1"></i> Админ
+                    </button>
+                    <button class="btn btn-sm btn-outline-success flex-grow-1" onclick="demoLogin('manager')">
+                        <i class="fas fa-user-tie me-1"></i> Менеджер
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning flex-grow-1" onclick="demoLogin('master')">
+                        <i class="fas fa-tools me-1"></i> Мастер
+                    </button>
+                </div>
+            `;
+            
+            demoSection.appendChild(quickButtons);
+        }
+        
+        // Инициализируем быстрые кнопки входа (раскомментировать если нужно)
+        // addQuickLoginButtons();
+    </script>
+</body>
+</html>

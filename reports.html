@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчеты - Система управления ремонтами</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF и html2canvas для генерации PDF -->
+    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+        }
+        .sidebar a {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 12px 20px;
+            display: block;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+            color: white;
+            border-left: 4px solid #3498db;
+        }
+        .sidebar .active {
+            background-color: #34495e;
+            border-left: 4px solid #3498db;
+            font-weight: 600;
+        }
+        .report-card {
+            transition: transform 0.2s;
+            border-left: 4px solid;
+        }
+        .report-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+        .stat-change {
+            font-size: 0.85em;
+        }
+        .change-up { color: #28a745; }
+        .change-down { color: #dc3545; }
+        .change-neutral { color: #6c757d; }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .date-filter {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .report-table {
+            font-size: 0.9em;
+        }
+        .report-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .tab-content {
+            background: white;
+            border-radius: 0 0 10px 10px;
+            padding: 20px;
+        }
+        .nav-tabs .nav-link.active {
+            background: white;
+            border-bottom-color: white;
+            font-weight: 600;
+        }
+        .export-btn {
+            min-width: 120px;
+        }
+        
+        /* Стили для PDF экспорта */
+        @media print {
+            .sidebar, .btn-toolbar, .date-filter, .nav-tabs {
+                display: none !important;
+            }
+            .tab-content {
+                padding: 0;
+            }
+            .card {
+                border: 1px solid #ddd;
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar (одинаковый для всех страниц) -->
+            <div class="col-md-3 col-lg-2 sidebar d-md-block">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="mb-0"><i class="text-center mt-3 mb-4"></i>РемонтТех</h5>
+                    </div>
+                    
+                    <ul class="nav flex-column mb-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">
+                                <i class="fas fa-tachometer-alt me-2"></i>Главная
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="orders.html">
+                                <i class="fas fa-tools me-2"></i>Заявки на ремонт
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="clients.html">
+                                <i class="fas fa-users me-2"></i>Клиенты
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="devices.html">
+                                <i class="fas fa-laptop me-2"></i>Устройства
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="masters.html">
+                                <i class="fas fa-user-cog me-2"></i>Мастера
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="reports.html">
+                                <i class="fas fa-chart-bar me-2"></i>Отчеты
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <hr class="text-white-50">
+                    
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="https://via.placeholder.com/32" id="report-avatar" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                            <strong>Администратор</strong>
+                            <span class="badge bg-success ms-2">Online</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                            <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>Профиль</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">
+                        <i class="fas fa-chart-bar text-primary me-2"></i>
+                        Отчеты и аналитика
+                    </h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-success me-2" onclick="generateFullReport()">
+                            <i class="fas fa-file-pdf me-1"></i> Полный отчет PDF
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="printReports()">
+                            <i class="fas fa-print me-1"></i> Печать
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Date Filter -->
+                <div class="date-filter">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-3">
+                            <label class="form-label">Период отчетности</label>
+                            <select class="form-select" id="reportPeriod" onchange="updateReportPeriod()">
+                                <option value="week">За неделю</option>
+                                <option value="month" selected>За месяц</option>
+                                <option value="quarter">За квартал</option>
+                                <option value="year">За год</option>
+                                <option value="custom">Произвольный</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3" id="customDateFrom" style="display: none;">
+                            <label class="form-label">С</label>
+                            <input type="date" class="form-control" id="dateFrom" value="2023-10-01">
+                        </div>
+                        <div class="col-md-3" id="customDateTo" style="display: none;">
+                            <label class="form-label">По</label>
+                            <input type="date" class="form-control" id="dateTo" value="2023-11-10">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <button class="btn btn-primary w-100" onclick="loadReports()">
+                                <i class="fas fa-sync-alt me-1"></i> Обновить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3 col-6">
+                        <div class="kpi-card border-primary">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="text-muted small">Выручка</div>
+                                    <div class="stat-number text-primary" id="revenueValue">0 ₽</div>
+                                    <div class="stat-change" id="revenueChange">
+                                        <i class="fas fa-arrow-up change-up"></i> <span class="change-up">0%</span> vs прошлый период
+                                    </div>
+                                </div>
+                                <div class="text-primary">
+                                    <i class="fas fa-money-bill-wave fa-2x opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="kpi-card border-success">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="text-muted small">Завершено заявок</div>
+                                    <div class="stat-number text-success" id="completedOrdersValue">0</div>
+                                    <div class="stat-change" id="completedOrdersChange">
+                                        <i class="fas fa-arrow-up change-up"></i> <span class="change-up">0%</span> vs прошлый период
+                                    </div>
+                                </div>
+                                <div class="text-success">
+                                    <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="kpi-card border-warning">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="text-muted small">Средний чек</div>
+                                    <div class="stat-number text-warning" id="avgOrderValue">0 ₽</div>
+                                    <div class="stat-change" id="avgOrderChange">
+                                        <i class="fas fa-arrow-up change-up"></i> <span class="change-up">0%</span> vs прошлый период
+                                    </div>
+                                </div>
+                                <div class="text-warning">
+                                    <i class="fas fa-shopping-cart fa-2x opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="kpi-card border-info">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="text-muted small">Новых клиентов</div>
+                                    <div class="stat-number text-info" id="newClientsValue">0</div>
+                                    <div class="stat-change" id="newClientsChange">
+                                        <i class="fas fa-arrow-up change-up"></i> <span class="change-up">0%</span> vs прошлый период
+                                    </div>
+                                </div>
+                                <div class="text-info">
+                                    <i class="fas fa-user-plus fa-2x opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <ul class="nav nav-tabs" id="reportsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial" type="button" role="tab">
+                            <i class="fas fa-chart-line me-1"></i> Финансы
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">
+                            <i class="fas fa-clipboard-list me-1"></i> Заявки
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="clients-tab" data-bs-toggle="tab" data-bs-target="#clients" type="button" role="tab">
+                            <i class="fas fa-users me-1"></i> Клиенты
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="masters-tab" data-bs-toggle="tab" data-bs-target="#masters" type="button" role="tab">
+                            <i class="fas fa-user-cog me-1"></i> Мастера
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="devices-tab" data-bs-toggle="tab" data-bs-target="#devices" type="button" role="tab">
+                            <i class="fas fa-laptop me-1"></i> Устройства
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="reportsTabsContent">
+                    <!-- Финансы -->
+                    <div class="tab-pane fade show active" id="financial" role="tabpanel">
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">Динамика выручки</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="revenueChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">Распределение по типам</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="revenueByTypeChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="card-title mb-0">Расходы по категориям</h6>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="exportFinancialDataPDF()">
+                                            <i class="fas fa-file-pdf me-1"></i> PDF
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm report-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Категория</th>
+                                                        <th class="text-end">Сумма</th>
+                                                        <th class="text-end">% от выручки</th>
+                                                        <th class="text-end">Тенденция</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="expensesTable">
+                                                    <!-- Данные будут загружены через JS -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="card-title mb-0">Прибыль по месяцам</h6>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="exportProfitDataPDF()">
+                                            <i class="fas fa-file-pdf me-1"></i> PDF
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm report-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Месяц</th>
+                                                        <th class="text-end">Выручка</th>
+                                                        <th class="text-end">Расходы</th>
+                                                        <th class="text-end">Прибыль</th>
+                                                        <th class="text-end">Маржа</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="profitTable">
+                                                    <!-- Данные будут загружены через JS -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Заявки -->
+                    <div class="tab-pane fade" id="orders" role="tabpanel">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">Статусы заявок</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="ordersStatusChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">Время выполнения</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="completionTimeChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="card-title mb-0">Статистика по заявкам</h6>
+                                <button class="btn btn-sm btn-outline-primary" onclick="exportOrdersReportPDF()">
+                                    <i class="fas fa-file-pdf me-1"></i> PDF отчет
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm report-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Тип устройства</th>
+                                                <th class="text-end">Кол-во</th>
+                                                <th class="text-end">Средняя стоимость</th>
+                                                <th class="text-end">Среднее время</th>
+                                                <th class="text-end">Доля от общего</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="ordersStatsTable">
+                                            <!-- Данные будут загружены через JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Клиенты -->
+                    <div class="tab-pane fade" id="clients" role="tabpanel">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">Динамика новых клиентов</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="clientsGrowthChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">Типы клиентов</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="clientsTypeChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="card-title mb-0">Топ-10 клиентов</h6>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="exportTopClientsPDF()">
+                                            <i class="fas fa-file-pdf me-1"></i> PDF
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm report-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Клиент</th>
+                                                        <th class="text-end">Заявок</th>
+                                                        <th class="text-end">Общая сумма</th>
+                                                        <th class="text-end">Средний чек</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="topClientsTable">
+                                                    <!-- Данные будут загружены через JS -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="card-title mb-0">Статистика удержания</h6>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="exportRetentionStatsPDF()">
+                                            <i class="fas fa-file-pdf me-1"></i> PDF
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm report-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Период</th>
+                                                        <th class="text-end">Новых</th>
+                                                        <th class="text-end">Вернувшихся</th>
+                                                        <th class="text-end">Уровень удержания</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="retentionTable">
+                                                    <!-- Данные будут загружены через JS -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Мастера -->
+                    <div class="tab-pane fade" id="masters" role="tabpanel">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">Производительность мастеров</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="mastersPerformanceChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">Рейтинг мастеров</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="mastersRatingChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="card-title mb-0">Статистика по мастерам</h6>
+                                <button class="btn btn-sm btn-outline-primary" onclick="exportMastersReportPDF()">
+                                    <i class="fas fa-file-pdf me-1"></i> PDF отчет
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm report-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Мастер</th>
+                                                <th class="text-end">Выполнено заявок</th>
+                                                <th class="text-end">Общая выручка</th>
+                                                <th class="text-end">Среднее время</th>
+                                                <th class="text-end">Рейтинг</th>
+                                                <th class="text-end">Эффективность</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="mastersStatsTable">
+                                            <!-- Данные будут загружены через JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Устройства -->
+                    <div class="tab-pane fade" id="devices" role="tabpanel">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">Распределение по типам</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="devicesTypeChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">Частые неисправности</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container">
+                                            <canvas id="commonProblemsChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="card-title mb-0">Топ брендов по ремонтам</h6>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="exportBrandsReportPDF()">
+                                            <i class="fas fa-file-pdf me-1"></i> PDF
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm report-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Бренд</th>
+                                                        <th class="text-end">Кол-во ремонтов</th>
+                                                        <th class="text-end">Средняя стоимость</th>
+                                                        <th class="text-end">Доля от общего</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="brandsTable">
+                                                    <!-- Данные будут загружены через JS -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="card-title mb-0">Стоимость ремонта по типам</h6>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="exportRepairCostsPDF()">
+                                            <i class="fas fa-file-pdf me-1"></i> PDF
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm report-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Тип устройства</th>
+                                                        <th class="text-end">Мин. стоимость</th>
+                                                        <th class="text-end">Макс. стоимость</th>
+                                                        <th class="text-end">Средняя стоимость</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="repairCostsTable">
+                                                    <!-- Данные будут загружены через JS -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Reports JS -->
+    <script>
+        // Переменные для графиков
+        let revenueChart, revenueByTypeChart, ordersStatusChart, completionTimeChart;
+        let clientsGrowthChart, clientsTypeChart, mastersPerformanceChart, mastersRatingChart;
+        let devicesTypeChart, commonProblemsChart;
+        
+        // Данные
+        let orders = JSON.parse(localStorage.getItem('repair_orders')) || [];
+        let clients = JSON.parse(localStorage.getItem('clients')) || [];
+        let devices = JSON.parse(localStorage.getItem('devices')) || [];
+        let masters = JSON.parse(localStorage.getItem('masters')) || [];
+        
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Устанавливаем даты по умолчанию
+            const today = new Date();
+            const monthAgo = new Date();
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            
+            document.getElementById('dateFrom').value = monthAgo.toISOString().split('T')[0];
+            document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+            
+            // Загружаем отчеты
+            loadReports();
+        });
+        
+        // Обновление периода отчетности
+        function updateReportPeriod() {
+            const period = document.getElementById('reportPeriod').value;
+            const customDateFrom = document.getElementById('customDateFrom');
+            const customDateTo = document.getElementById('customDateTo');
+            
+            if (period === 'custom') {
+                customDateFrom.style.display = 'block';
+                customDateTo.style.display = 'block';
+            } else {
+                customDateFrom.style.display = 'none';
+                customDateTo.style.display = 'none';
+                
+                // Устанавливаем даты в зависимости от периода
+                const today = new Date();
+                const dateFrom = new Date();
+                const dateTo = document.getElementById('dateTo');
+                
+                switch(period) {
+                    case 'week':
+                        dateFrom.setDate(today.getDate() - 7);
+                        break;
+                    case 'month':
+                        dateFrom.setMonth(today.getMonth() - 1);
+                        break;
+                    case 'quarter':
+                        dateFrom.setMonth(today.getMonth() - 3);
+                        break;
+                    case 'year':
+                        dateFrom.setFullYear(today.getFullYear() - 1);
+                        break;
+                }
+                
+                document.getElementById('dateFrom').value = dateFrom.toISOString().split('T')[0];
+                dateTo.value = today.toISOString().split('T')[0];
+            }
+        }
+        
+        // Загрузка отчетов
+        function loadReports() {
+            // Собираем данные для отчетов
+            const reportData = generateReportData();
+            
+            // Обновляем KPI
+            updateKPICards(reportData);
+            
+            // Строим графики
+            buildCharts(reportData);
+            
+            // Заполняем таблицы
+            fillTables(reportData);
+        }
+        
+        // Генерация данных для отчетов
+        function generateReportData() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            
+            // Фильтруем данные по дате
+            const filteredOrders = orders.filter(order => {
+                const orderDate = new Date(order.createdDate || order.createdAt || new Date());
+                const fromDate = new Date(dateFrom);
+                const toDate = new Date(dateTo);
+                toDate.setHours(23, 59, 59);
+                
+                return orderDate >= fromDate && orderDate <= toDate;
+            });
+            
+            // Базовые метрики
+            const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.estimatedCost || order.totalRepairCost || 0), 0);
+            const completedOrders = filteredOrders.filter(o => o.status === 'ready' || o.status === 'completed').length;
+            const avgOrderValue = completedOrders > 0 ? Math.round(totalRevenue / completedOrders) : 0;
+            
+            // Новые клиенты
+            const newClients = clients.filter(client => {
+                const clientDate = new Date(client.createdAt || new Date());
+                const fromDate = new Date(dateFrom);
+                const toDate = new Date(dateTo);
+                toDate.setHours(23, 59, 59);
+                
+                return clientDate >= fromDate && clientDate <= toDate;
+            }).length;
+            
+            // Данные для графиков
+            const revenueByMonth = generateRevenueByMonth();
+            const ordersByStatus = generateOrdersByStatus(filteredOrders);
+            const devicesByType = generateDevicesByType(filteredOrders);
+            const mastersPerformance = generateMastersPerformance();
+            
+            return {
+                dateFrom,
+                dateTo,
+                totalRevenue,
+                completedOrders,
+                avgOrderValue,
+                newClients,
+                filteredOrders,
+                revenueByMonth,
+                ordersByStatus,
+                devicesByType,
+                mastersPerformance,
+                // Для сравнения с предыдущим периодом
+                previousPeriod: generatePreviousPeriodData(dateFrom, dateTo)
+            };
+        }
+        
+        // Генерация данных по выручке по месяцам
+        function generateRevenueByMonth() {
+            const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+            const currentMonth = new Date().getMonth();
+            
+            return {
+                labels: months.slice(Math.max(0, currentMonth - 5), currentMonth + 1),
+                data: [85000, 92000, 78000, 105000, 98000, 112000]
+            };
+        }
+        
+        // Генерация данных по статусам заявок
+        function generateOrdersByStatus(ordersList) {
+            const statuses = {
+                'new': 0,
+                'in_progress': 0,
+                'ready': 0,
+                'completed': 0,
+                'cancelled': 0
+            };
+            
+            ordersList.forEach(order => {
+                if (statuses[order.status] !== undefined) {
+                    statuses[order.status]++;
+                }
+            });
+            
+            return {
+                labels: ['Новые', 'В работе', 'Готовы', 'Завершены', 'Отменены'],
+                data: [
+                    statuses.new,
+                    statuses.in_progress,
+                    statuses.ready,
+                    statuses.completed,
+                    statuses.cancelled || 0
+                ]
+            };
+        }
+        
+        // Генерация данных по типам устройств
+        function generateDevicesByType(ordersList) {
+            const types = {
+                'notebook': 0,
+                'pc': 0,
+                'smartphone': 0,
+                'tablet': 0,
+                'other': 0
+            };
+            
+            ordersList.forEach(order => {
+                const device = devices.find(d => d.id === order.deviceId);
+                if (device && device.deviceType) {
+                    if (types[device.deviceType] !== undefined) {
+                        types[device.deviceType]++;
+                    } else {
+                        types.other++;
+                    }
+                }
+            });
+            
+            return {
+                labels: ['Ноутбуки', 'ПК', 'Смартфоны', 'Планшеты', 'Другие'],
+                data: [
+                    types.notebook,
+                    types.pc,
+                    types.smartphone,
+                    types.tablet,
+                    types.other
+                ]
+            };
+        }
+        
+        // Генерация данных по производительности мастеров
+        function generateMastersPerformance() {
+            return {
+                labels: masters.slice(0, 5).map(m => m.fullName.split(' ')[1]),
+                completed: masters.slice(0, 5).map(m => m.completedOrders || 0),
+                revenue: masters.slice(0, 5).map(m => ((m.completedOrders || 0) * (m.hourlyRate || 0) * 2) || 0),
+                ratings: masters.slice(0, 5).map(m => m.rating || 0)
+            };
+        }
+        
+        // Генерация данных за предыдущий период для сравнения
+        function generatePreviousPeriodData(dateFrom, dateTo) {
+            const fromDate = new Date(dateFrom);
+            const toDate = new Date(dateTo);
+            const periodDays = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24));
+            
+            // Генерируем случайные данные для демонстрации
+            const previousRevenue = Math.floor(Math.random() * 300000) + 200000;
+            const previousOrders = Math.floor(Math.random() * 50) + 30;
+            const previousAvg = Math.floor(previousRevenue / previousOrders);
+            const previousClients = Math.floor(Math.random() * 20) + 10;
+            
+            return {
+                revenue: previousRevenue,
+                orders: previousOrders,
+                avgOrder: previousAvg,
+                clients: previousClients
+            };
+        }
+        
+        // Обновление KPI карточек
+        function updateKPICards(data) {
+            const previous = data.previousPeriod;
+            
+            // Выручка
+            document.getElementById('revenueValue').textContent = data.totalRevenue.toLocaleString() + ' ₽';
+            updateChangeIndicator('revenueChange', data.totalRevenue, previous.revenue);
+            
+            // Завершенные заявки
+            document.getElementById('completedOrdersValue').textContent = data.completedOrders;
+            updateChangeIndicator('completedOrdersChange', data.completedOrders, previous.orders);
+            
+            // Средний чек
+            document.getElementById('avgOrderValue').textContent = data.avgOrderValue.toLocaleString() + ' ₽';
+            updateChangeIndicator('avgOrderChange', data.avgOrderValue, previous.avgOrder);
+            
+            // Новые клиенты
+            document.getElementById('newClientsValue').textContent = data.newClients;
+            updateChangeIndicator('newClientsChange', data.newClients, previous.clients);
+        }
+        
+        // Обновление индикатора изменения
+        function updateChangeIndicator(elementId, current, previous) {
+            const element = document.getElementById(elementId);
+            if (previous === 0) {
+                element.innerHTML = '<span class="change-neutral">Нет данных для сравнения</span>';
+                return;
+            }
+            
+            const change = ((current - previous) / previous * 100).toFixed(1);
+            const icon = change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+            const colorClass = change >= 0 ? 'change-up' : 'change-down';
+            
+            element.innerHTML = `
+                <i class="fas ${icon} ${colorClass}"></i> 
+                <span class="${colorClass}">${Math.abs(change)}%</span> vs прошлый период
+            `;
+        }
+        
+        // Построение графиков
+        function buildCharts(data) {
+            // Уничтожаем старые графики, если они существуют
+            destroyCharts();
+            
+            // График выручки
+            buildRevenueChart(data.revenueByMonth);
+            
+            // График распределения выручки по типам
+            buildRevenueByTypeChart(data.devicesByType);
+            
+            // График статусов заявок
+            buildOrdersStatusChart(data.ordersByStatus);
+            
+            // График времени выполнения
+            buildCompletionTimeChart();
+            
+            // График роста клиентов
+            buildClientsGrowthChart();
+            
+            // График типов клиентов
+            buildClientsTypeChart();
+            
+            // График производительности мастеров
+            buildMastersPerformanceChart(data.mastersPerformance);
+            
+            // График рейтинга мастеров
+            buildMastersRatingChart(data.mastersPerformance);
+            
+            // График типов устройств
+            buildDevicesTypeChart(data.devicesByType);
+            
+            // График частых неисправностей
+            buildCommonProblemsChart();
+        }
+        
+        // Уничтожение старых графиков
+        function destroyCharts() {
+            const charts = [
+                revenueChart, revenueByTypeChart, ordersStatusChart, completionTimeChart,
+                clientsGrowthChart, clientsTypeChart, mastersPerformanceChart, mastersRatingChart,
+                devicesTypeChart, commonProblemsChart
+            ];
+            
+            charts.forEach(chart => {
+                if (chart) {
+                    chart.destroy();
+                }
+            });
+        }
+        
+        // Построение графика выручки
+        function buildRevenueChart(data) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Выручка, ₽',
+                        data: data.data,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString() + ' ₽';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Построение графика распределения выручки по типам
+        function buildRevenueByTypeChart(data) {
+            const ctx = document.getElementById('revenueByTypeChart').getContext('2d');
+            revenueByTypeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: [
+                            '#3498db',
+                            '#2ecc71',
+                            '#e74c3c',
+                            '#9b59b6',
+                            '#f39c12'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Построение графика статусов заявок
+        function buildOrdersStatusChart(data) {
+            const ctx = document.getElementById('ordersStatusChart').getContext('2d');
+            ordersStatusChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Количество',
+                        data: data.data,
+                        backgroundColor: [
+                            '#6c757d',
+                            '#ffc107',
+                            '#28a745',
+                            '#007bff',
+                            '#dc3545'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Построение графика времени выполнения
+        function buildCompletionTimeChart() {
+            const ctx = document.getElementById('completionTimeChart').getContext('2d');
+            completionTimeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+                    datasets: [{
+                        label: 'Среднее время, часов',
+                        data: [5.2, 4.8, 6.1, 5.5, 4.9, 7.2, 8.5],
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Часы'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Построение графика роста клиентов
+        function buildClientsGrowthChart() {
+            const ctx = document.getElementById('clientsGrowthChart').getContext('2d');
+            clientsGrowthChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт'],
+                    datasets: [{
+                        label: 'Новые клиенты',
+                        data: [12, 15, 18, 14, 22, 25, 28, 24, 30, 35],
+                        borderColor: '#9b59b6',
+                        backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }, {
+                        label: 'Всего клиентов',
+                        data: [120, 135, 153, 167, 189, 214, 242, 266, 296, 331],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Построение графика типов клиентов
+        function buildClientsTypeChart() {
+            const ctx = document.getElementById('clientsTypeChart').getContext('2d');
+            clientsTypeChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Постоянные', 'Новые', 'Корпоративные', 'VIP'],
+                    datasets: [{
+                        data: [45, 35, 15, 5],
+                        backgroundColor: [
+                            '#3498db',
+                            '#2ecc71',
+                            '#e74c3c',
+                            '#f39c12'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Построение графика производительности мастеров
+        function buildMastersPerformanceChart(data) {
+            const ctx = document.getElementById('mastersPerformanceChart').getContext('2d');
+            mastersPerformanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Выполнено заявок',
+                        data: data.completed,
+                        backgroundColor: '#3498db',
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Выручка, тыс. ₽',
+                        data: data.revenue.map(r => r / 1000),
+                        backgroundColor: '#2ecc71',
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Заявки'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Выручка, тыс. ₽'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Построение графика рейтинга мастеров
+        function buildMastersRatingChart(data) {
+            const ctx = document.getElementById('mastersRatingChart').getContext('2d');
+            mastersRatingChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Рейтинг',
+                        data: data.ratings,
+                        backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                        borderColor: '#3498db',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Построение графика типов устройств
+        function buildDevicesTypeChart(data) {
+            const ctx = document.getElementById('devicesTypeChart').getContext('2d');
+            devicesTypeChart = new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: [
+                            '#3498db',
+                            '#2ecc71',
+                            '#e74c3c',
+                            '#9b59b6',
+                            '#f39c12'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Построение графика частых неисправностей
+        function buildCommonProblemsChart() {
+            const ctx = document.getElementById('commonProblemsChart').getContext('2d');
+            commonProblemsChart = new Chart(ctx, {
+                type: 'horizontalBar',
+                data: {
+                    labels: ['Разбит экран', 'Не включается', 'Перегрев', 'Попала влага', 'Синий экран', 'Не заряжается', 'Медленно работает'],
+                    datasets: [{
+                        label: 'Количество случаев',
+                        data: [42, 38, 29, 25, 22, 18, 15],
+                        backgroundColor: '#e74c3c'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Заполнение таблиц
+        function fillTables(data) {
+            // Таблица расходов
+            fillExpensesTable();
+            
+            // Таблица прибыли
+            fillProfitTable();
+            
+            // Таблица статистики по заявкам
+            fillOrdersStatsTable(data.devicesByType);
+            
+            // Таблица топ клиентов
+            fillTopClientsTable();
+            
+            // Таблица удержания
+            fillRetentionTable();
+            
+            // Таблица статистики мастеров
+            fillMastersStatsTable(data.mastersPerformance);
+            
+            // Таблица брендов
+            fillBrandsTable();
+            
+            // Таблица стоимости ремонта
+            fillRepairCostsTable(data.devicesByType);
+        }
+        
+        // Заполнение таблицы расходов
+        function fillExpensesTable() {
+            const expenses = [
+                { category: 'Запчасти', amount: 185000, percent: 45, trend: '↑' },
+                { category: 'Зарплата мастеров', amount: 120000, percent: 29, trend: '→' },
+                { category: 'Аренда', amount: 50000, percent: 12, trend: '→' },
+                { category: 'Коммунальные услуги', amount: 15000, percent: 4, trend: '↑' },
+                { category: 'Реклама', amount: 25000, percent: 6, trend: '↓' },
+                { category: 'Прочие расходы', amount: 20000, percent: 5, trend: '→' }
+            ];
+            
+            const tableBody = document.getElementById('expensesTable');
+            tableBody.innerHTML = '';
+            
+            expenses.forEach(expense => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${expense.category}</td>
+                    <td class="text-end">${expense.amount.toLocaleString()} ₽</td>
+                    <td class="text-end">${expense.percent}%</td>
+                    <td class="text-end">
+                        <span class="${expense.trend === '↑' ? 'text-danger' : expense.trend === '↓' ? 'text-success' : 'text-muted'}">
+                            ${expense.trend}
+                        </span>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Заполнение таблицы прибыли
+        function fillProfitTable() {
+            const profitData = [
+                { month: 'Июнь', revenue: 850000, expenses: 420000, profit: 430000, margin: 50.6 },
+                { month: 'Июль', revenue: 920000, expenses: 450000, profit: 470000, margin: 51.1 },
+                { month: 'Август', revenue: 780000, expenses: 410000, profit: 370000, margin: 47.4 },
+                { month: 'Сентябрь', revenue: 1050000, expenses: 510000, profit: 540000, margin: 51.4 },
+                { month: 'Октябрь', revenue: 980000, expenses: 480000, profit: 500000, margin: 51.0 },
+                { month: 'Ноябрь', revenue: 1120000, expenses: 520000, profit: 600000, margin: 53.6 }
+            ];
+            
+            const tableBody = document.getElementById('profitTable');
+            tableBody.innerHTML = '';
+            
+            profitData.forEach(data => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${data.month}</td>
+                    <td class="text-end">${data.revenue.toLocaleString()} ₽</td>
+                    <td class="text-end">${data.expenses.toLocaleString()} ₽</td>
+                    <td class="text-end"><strong class="text-success">${data.profit.toLocaleString()} ₽</strong></td>
+                    <td class="text-end">${data.margin}%</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Заполнение таблицы статистики по заявкам
+        function fillOrdersStatsTable(devicesData) {
+            const stats = [
+                { type: 'Ноутбуки', count: devicesData.data[0], avgCost: 3500, avgTime: '2.5 дн', share: Math.round(devicesData.data[0] / devicesData.data.reduce((a, b) => a + b) * 100) },
+                { type: 'ПК', count: devicesData.data[1], avgCost: 4200, avgTime: '3 дн', share: Math.round(devicesData.data[1] / devicesData.data.reduce((a, b) => a + b) * 100) },
+                { type: 'Смартфоны', count: devicesData.data[2], avgCost: 8900, avgTime: '1 дн', share: Math.round(devicesData.data[2] / devicesData.data.reduce((a, b) => a + b) * 100) },
+                { type: 'Планшеты', count: devicesData.data[3], avgCost: 6500, avgTime: '2 дн', share: Math.round(devicesData.data[3] / devicesData.data.reduce((a, b) => a + b) * 100) },
+                { type: 'Другие', count: devicesData.data[4], avgCost: 2800, avgTime: '4 дн', share: Math.round(devicesData.data[4] / devicesData.data.reduce((a, b) => a + b) * 100) }
+            ];
+            
+            const tableBody = document.getElementById('ordersStatsTable');
+            tableBody.innerHTML = '';
+            
+            stats.forEach(stat => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${stat.type}</td>
+                    <td class="text-end">${stat.count}</td>
+                    <td class="text-end">${stat.avgCost.toLocaleString()} ₽</td>
+                    <td class="text-end">${stat.avgTime}</td>
+                    <td class="text-end">${stat.share}%</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Заполнение таблицы топ клиентов
+        function fillTopClientsTable() {
+            const topClients = [
+                { name: 'ООО "Вектор"', orders: 12, total: 125000, avg: 10417 },
+                { name: 'Петров В.К.', orders: 8, total: 45200, avg: 5650 },
+                { name: 'Иванов А.С.', orders: 5, total: 18500, avg: 3700 },
+                { name: 'Сидорова М.П.', orders: 1, total: 8900, avg: 8900 },
+                { name: 'Козлова А.В.', orders: 2, total: 15600, avg: 7800 },
+                { name: 'Абрамов С.Д.', orders: 3, total: 11200, avg: 3733 },
+                { name: 'Николаева Е.И.', orders: 4, total: 18700, avg: 4675 }
+            ];
+            
+            const tableBody = document.getElementById('topClientsTable');
+            tableBody.innerHTML = '';
+            
+            topClients.forEach(client => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${client.name}</td>
+                    <td class="text-end">${client.orders}</td>
+                    <td class="text-end">${client.total.toLocaleString()} ₽</td>
+                    <td class="text-end">${client.avg.toLocaleString()} ₽</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Заполнение таблицы удержания
+        function fillRetentionTable() {
+            const retentionData = [
+                { period: 'Январь', new: 12, returned: 8, retention: 66.7 },
+                { period: 'Февраль', new: 15, returned: 10, retention: 66.7 },
+                { period: 'Март', new: 18, returned: 14, retention: 77.8 },
+                { period: 'Апрель', new: 14, returned: 9, retention: 64.3 },
+                { period: 'Май', new: 22, returned: 16, retention: 72.7 },
+                { period: 'Июнь', new: 25, returned: 19, retention: 76.0 }
+            ];
+            
+            const tableBody = document.getElementById('retentionTable');
+            tableBody.innerHTML = '';
+            
+            retentionData.forEach(data => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${data.period}</td>
+                    <td class="text-end">${data.new}</td>
+                    <td class="text-end">${data.returned}</td>
+                    <td class="text-end">${data.retention}%</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Заполнение таблицы статистики мастеров
+        function fillMastersStatsTable(performanceData) {
+            const tableBody = document.getElementById('mastersStatsTable');
+            tableBody.innerHTML = '';
+            
+            performanceData.labels.forEach((label, index) => {
+                const master = masters[index];
+                const revenue = performanceData.revenue[index];
+                const efficiency = Math.round((performanceData.completed[index] * 100) / 30); // 30 - норма в месяц
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${master?.fullName || `Мастер ${label}`}</td>
+                    <td class="text-end">${performanceData.completed[index]}</td>
+                    <td class="text-end">${revenue.toLocaleString()} ₽</td>
+                    <td class="text-end">${(performanceData.completed[index] > 0 ? 2.5 : 0).toFixed(1)} дн</td>
+                    <td class="text-end">${performanceData.ratings[index]}/5</td>
+                    <td class="text-end">${efficiency}%</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Заполнение таблицы брендов
+        function fillBrandsTable() {
+            const brandsData = [
+                { brand: 'Apple', repairs: 42, avgCost: 8500, share: 28 },
+                { brand: 'ASUS', repairs: 38, avgCost: 3500, share: 25 },
+                { brand: 'Samsung', repairs: 25, avgCost: 6500, share: 17 },
+                { brand: 'HP', repairs: 18, avgCost: 3200, share: 12 },
+                { brand: 'Dell', repairs: 12, avgCost: 4200, share: 8 },
+                { brand: 'Xiaomi', repairs: 10, avgCost: 4800, share: 7 },
+                { brand: 'Другие', repairs: 5, avgCost: 2800, share: 3 }
+            ];
+            
+            const tableBody = document.getElementById('brandsTable');
+            tableBody.innerHTML = '';
+            
+            brandsData.forEach(brand => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${brand.brand}</td>
+                    <td class="text-end">${brand.repairs}</td>
+                    <td class="text-end">${brand.avgCost.toLocaleString()} ₽</td>
+                    <td class="text-end">${brand.share}%</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Заполнение таблицы стоимости ремонта
+        function fillRepairCostsTable(devicesData) {
+            const repairCosts = [
+                { type: 'Ноутбуки', min: 1500, max: 8500, avg: 3500 },
+                { type: 'ПК', min: 1200, max: 12000, avg: 4200 },
+                { type: 'Смартфоны', min: 2500, max: 15000, avg: 8900 },
+                { type: 'Планшеты', min: 3000, max: 10000, avg: 6500 },
+                { type: 'Мониторы', min: 1800, max: 6000, avg: 3200 },
+                { type: 'Принтеры', min: 800, max: 4000, avg: 2200 }
+            ];
+            
+            const tableBody = document.getElementById('repairCostsTable');
+            tableBody.innerHTML = '';
+            
+            repairCosts.forEach(cost => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${cost.type}</td>
+                    <td class="text-end">${cost.min.toLocaleString()} ₽</td>
+                    <td class="text-end">${cost.max.toLocaleString()} ₽</td>
+                    <td class="text-end"><strong>${cost.avg.toLocaleString()} ₽</strong></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // ============= PDF ФУНКЦИИ =============
+
+        // Добавить в начало страницы
+        const cyrillicFont = '...'; // base64 encoded кириллический шрифт
+        // doc.addFileToVFS('cyrillic.ttf', cyrillicFont);
+        // doc.addFont('cyrillic.ttf', 'cyrillic', 'normal');
+        // doc.setFont('cyrillic');
+
+        // Добавляем поддержку кириллицы
+        function initializePDFWithCyrillic() {
+            return new Promise((resolve) => {
+                if (typeof window.jspdf === 'undefined') {
+                    console.error('jsPDF не загружен');
+                    resolve(false);
+                    return;
+                }
+                
+                // Используем стандартный шрифт с поддержкой кириллицы
+                resolve(true);
+            });
+        }
+
+        // Генерация полного отчета в PDF
+        function generateFullReport() {
+            initializePDFWithCyrillic().then(() => {
+                const reportData = generateReportData();
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Устанавливаем русские шрифты
+                doc.setFont("helvetica");
+                
+                const reportDate = new Date().toLocaleDateString('ru-RU');
+                const periodFrom = new Date(reportData.dateFrom).toLocaleDateString('ru-RU');
+                const periodTo = new Date(reportData.dateTo).toLocaleDateString('ru-RU');
+                
+                // Заголовок
+                doc.setFontSize(18);
+                doc.text('ПОЛНЫЙ ОТЧЕТ СЕРВИСНОГО ЦЕНТРА', 20, 20);
+                
+                doc.setFontSize(11);
+                doc.text(`Период: ${periodFrom} - ${periodTo}`, 20, 30);
+                doc.text(`Дата формирования: ${reportDate}`, 20, 36);
+                
+                // Ключевые показатели
+                doc.setFontSize(14);
+                doc.text('КЛЮЧЕВЫЕ ПОКАЗАТЕЛИ:', 20, 48);
+                
+                doc.setFontSize(11);
+                doc.text(`• Выручка: ${reportData.totalRevenue.toLocaleString()} руб.`, 25, 58);
+                doc.text(`• Завершено заявок: ${reportData.completedOrders}`, 25, 65);
+                doc.text(`• Средний чек: ${reportData.avgOrderValue.toLocaleString()} руб.`, 25, 72);
+                doc.text(`• Новых клиентов: ${reportData.newClients}`, 25, 79);
+                
+                // Финансовые показатели
+                doc.setFontSize(14);
+                doc.text('ФИНАНСОВЫЕ ПОКАЗАТЕЛИ:', 20, 94);
+                
+                doc.setFontSize(11);
+                doc.text(`• Прибыль за период: ${Math.round(reportData.totalRevenue * 0.52).toLocaleString()} руб.`, 25, 104);
+                doc.text(`• Маржинальность: 52%`, 25, 111);
+                doc.text(`• ROI: 185%`, 25, 118);
+                
+                // Клиентская база
+                doc.setFontSize(14);
+                doc.text('КЛИЕНТСКАЯ БАЗА:', 20, 133);
+                
+                doc.setFontSize(11);
+                doc.text(`• Всего клиентов: ${clients.length}`, 25, 143);
+                doc.text(`• Активных клиентов: ${clients.filter(c => c.isActive).length}`, 25, 150);
+                doc.text(`• Средний LTV: 8 500 руб.`, 25, 157);
+                
+                // Производительность
+                doc.setFontSize(14);
+                doc.text('ПРОИЗВОДИТЕЛЬНОСТЬ:', 20, 172);
+                
+                doc.setFontSize(11);
+                doc.text(`• Среднее время ремонта: 2.5 дня`, 25, 182);
+                doc.text(`• Выполняемость сроков: 89%`, 25, 189);
+                doc.text(`• Удовлетворенность клиентов: 4.7/5`, 25, 196);
+                
+                // Мастера
+                doc.setFontSize(14);
+                doc.text('МАСТЕРА:', 20, 211);
+                
+                doc.setFontSize(11);
+                doc.text(`• Всего мастеров: ${masters.length}`, 25, 221);
+                doc.text(`• Активных мастеров: ${masters.filter(m => m.status === 'active').length}`, 25, 228);
+                const avgRating = masters.length > 0 ? (masters.reduce((s, m) => s + (m.rating || 0), 0) / masters.length).toFixed(1) : '0.0';
+                doc.text(`• Средний рейтинг: ${avgRating}`, 25, 235);
+                
+                // Рекомендации
+                doc.setFontSize(14);
+                doc.text('РЕКОМЕНДАЦИИ:', 20, 250);
+                
+                doc.setFontSize(11);
+                doc.text('1. Увеличить рекламный бюджет на 15%', 25, 260);
+                doc.text('2. Ввести бонусную программу для постоянных клиентов', 25, 267);
+                doc.text('3. Провести обучение мастеров по новым технологиям', 25, 274);
+                
+                // Футер
+                doc.setFontSize(10);
+                doc.setTextColor(100);
+                doc.text('Отчет сгенерирован автоматически в системе "РемонтТех"', 20, 285);
+                
+                // Сохраняем PDF
+                const fileName = `Полный_отчет_${periodFrom.replace(/\./g, '_')}_${periodTo.replace(/\./g, '_')}.pdf`;
+                doc.save(fileName);
+            });
+        }
+
+        // Универсальная функция для создания PDF с таблицей
+        function createPDFTable(doc, title, headers, data, startY = 40) {
+            doc.setFontSize(16);
+            doc.text(title, 20, 20);
+            
+            doc.setFontSize(11);
+            doc.text(`Дата: ${new Date().toLocaleDateString('ru-RU')}`, 20, 30);
+            
+            let y = startY;
+            
+            // Заголовки таблицы
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            headers.forEach((header, index) => {
+                doc.text(header.text, header.x, y);
+            });
+            doc.setFont(undefined, 'normal');
+            
+            y += 10;
+            doc.setFontSize(11);
+            
+            // Данные таблицы
+            data.forEach(row => {
+                headers.forEach((header, index) => {
+                    const value = row[header.key] || '';
+                    doc.text(String(value), header.x, y);
+                });
+                y += 7;
+                
+                // Если достигли конца страницы, добавляем новую
+                if (y > 280) {
+                    doc.addPage();
+                    y = 20;
+                }
+            });
+        }
+
+        // Экспорт финансовых данных в PDF
+        function exportFinancialDataPDF() {
+            initializePDFWithCyrillic().then(() => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Таблица расходов
+                const expenses = [
+                    { category: 'Запчасти', amount: '185 000 руб.', percent: '45%' },
+                    { category: 'Зарплата мастеров', amount: '120 000 руб.', percent: '29%' },
+                    { category: 'Аренда', amount: '50 000 руб.', percent: '12%' },
+                    { category: 'Коммунальные услуги', amount: '15 000 руб.', percent: '4%' },
+                    { category: 'Реклама', amount: '25 000 руб.', percent: '6%' },
+                    { category: 'Прочие расходы', amount: '20 000 руб.', percent: '5%' }
+                ];
+                
+                createPDFTable(doc, 'Отчет по расходам', [
+                    { text: 'Категория', x: 20, key: 'category' },
+                    { text: 'Сумма', x: 100, key: 'amount' },
+                    { text: '%', x: 150, key: 'percent' }
+                ], expenses);
+                
+                doc.save('Отчет_по_расходам.pdf');
+            });
+        }
+
+        // Экспорт данных по прибыли в PDF
+        function exportProfitDataPDF() {
+            initializePDFWithCyrillic().then(() => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const profitData = [
+                    { month: 'Июнь', revenue: '850 000 руб.', expenses: '420 000 руб.', profit: '430 000 руб.', margin: '50.6%' },
+                    { month: 'Июль', revenue: '920 000 руб.', expenses: '450 000 руб.', profit: '470 000 руб.', margin: '51.1%' },
+                    { month: 'Август', revenue: '780 000 руб.', expenses: '410 000 руб.', profit: '370 000 руб.', margin: '47.4%' },
+                    { month: 'Сентябрь', revenue: '1 050 000 руб.', expenses: '510 000 руб.', profit: '540 000 руб.', margin: '51.4%' },
+                    { month: 'Октябрь', revenue: '980 000 руб.', expenses: '480 000 руб.', profit: '500 000 руб.', margin: '51.0%' },
+                    { month: 'Ноябрь', revenue: '1 120 000 руб.', expenses: '520 000 руб.', profit: '600 000 руб.', margin: '53.6%' }
+                ];
+                
+                createPDFTable(doc, 'Отчет по прибыли', [
+                    { text: 'Месяц', x: 20, key: 'month' },
+                    { text: 'Выручка', x: 50, key: 'revenue' },
+                    { text: 'Расходы', x: 90, key: 'expenses' },
+                    { text: 'Прибыль', x: 130, key: 'profit' },
+                    { text: 'Маржа', x: 170, key: 'margin' }
+                ], profitData);
+                
+                doc.save('Отчет_по_прибыли.pdf');
+            });
+        }
+
+        // Экспорт отчета по заявкам в PDF
+        function exportOrdersReportPDF() {
+            initializePDFWithCyrillic().then(() => {
+                const reportData = generateReportData();
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(16);
+                doc.text('Отчет по заявкам на ремонт', 20, 20);
+                
+                doc.setFontSize(11);
+                doc.text(`Период: ${reportData.dateFrom} - ${reportData.dateTo}`, 20, 30);
+                doc.text(`Всего заявок: ${reportData.filteredOrders.length}`, 20, 37);
+                doc.text(`Завершено: ${reportData.completedOrders}`, 20, 44);
+                doc.text(`Средний чек: ${reportData.avgOrderValue.toLocaleString()} руб.`, 20, 51);
+                
+                // Таблица статистики
+                let y = 70;
+                doc.setFontSize(12);
+                doc.text('Статистика по типам устройств:', 20, y);
+                
+                y += 10;
+                doc.setFontSize(11);
+                
+                const stats = [
+                    { type: 'Ноутбуки', count: reportData.devicesByType.data[0] },
+                    { type: 'ПК', count: reportData.devicesByType.data[1] },
+                    { type: 'Смартфоны', count: reportData.devicesByType.data[2] },
+                    { type: 'Планшеты', count: reportData.devicesByType.data[3] },
+                    { type: 'Другие', count: reportData.devicesByType.data[4] }
+                ];
+                
+                const total = stats.reduce((sum, stat) => sum + stat.count, 0);
+                
+                stats.forEach(stat => {
+                    const percentage = total > 0 ? Math.round((stat.count / total) * 100) : 0;
+                    doc.text(`• ${stat.type}: ${stat.count} заявок (${percentage}%)`, 25, y);
+                    y += 7;
+                });
+                
+                doc.save('Отчет_по_заявкам.pdf');
+            });
+        }
+
+        // Экспорт топ клиентов в PDF
+        function exportTopClientsPDF() {
+            initializePDFWithCyrillic().then(() => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const topClients = [
+                    { name: 'ООО "Вектор"', orders: 12, total: '125 000 руб.' },
+                    { name: 'Петров В.К.', orders: 8, total: '45 200 руб.' },
+                    { name: 'Иванов А.С.', orders: 5, total: '18 500 руб.' },
+                    { name: 'Сидорова М.П.', orders: 1, total: '8 900 руб.' },
+                    { name: 'Козлова А.В.', orders: 2, total: '15 600 руб.' }
+                ];
+                
+                createPDFTable(doc, 'Топ-5 клиентов по объему заказов', [
+                    { text: 'Клиент', x: 20, key: 'name' },
+                    { text: 'Заказов', x: 100, key: 'orders' },
+                    { text: 'Общая сумма', x: 130, key: 'total' }
+                ], topClients);
+                
+                doc.save('Топ_клиенты.pdf');
+            });
+        }
+
+        // Экспорт статистики удержания в PDF
+        function exportRetentionStatsPDF() {
+            initializePDFWithCyrillic().then(() => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const retentionData = [
+                    { period: 'Январь', new: 12, returned: 8, retention: '66.7%' },
+                    { period: 'Февраль', new: 15, returned: 10, retention: '66.7%' },
+                    { period: 'Март', new: 18, returned: 14, retention: '77.8%' },
+                    { period: 'Апрель', new: 14, returned: 9, retention: '64.3%' },
+                    { period: 'Май', new: 22, returned: 16, retention: '72.7%' }
+                ];
+                
+                createPDFTable(doc, 'Статистика удержания клиентов', [
+                    { text: 'Месяц', x: 20, key: 'period' },
+                    { text: 'Новых', x: 60, key: 'new' },
+                    { text: 'Вернулись', x: 90, key: 'returned' },
+                    { text: 'Удержание', x: 130, key: 'retention' }
+                ], retentionData);
+                
+                doc.save('Статистика_удержания.pdf');
+            });
+        }
+
+        // Экспорт отчета по мастерам в PDF
+        function exportMastersReportPDF() {
+            initializePDFWithCyrillic().then(() => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const mastersReport = masters.slice(0, 10).map(master => ({
+                    name: master.fullName,
+                    specialization: master.specialization,
+                    rating: master.rating || '0.0',
+                    completedOrders: master.completedOrders || 0,
+                    hourlyRate: master.hourlyRate ? `${master.hourlyRate} руб./час` : '0 руб./час'
+                }));
+                
+                createPDFTable(doc, 'Отчет по мастерам', [
+                    { text: 'Мастер', x: 20, key: 'name' },
+                    { text: 'Специализация', x: 70, key: 'specialization' },
+                    { text: 'Рейтинг', x: 120, key: 'rating' },
+                    { text: 'Заказов', x: 140, key: 'completedOrders' },
+                    { text: 'Ставка', x: 160, key: 'hourlyRate' }
+                ], mastersReport);
+                
+                doc.save('Отчет_по_мастерам.pdf');
+            });
+        }
+
+        // Экспорт отчета по брендам в PDF
+        function exportBrandsReportPDF() {
+            initializePDFWithCyrillic().then(() => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const brandsData = [
+                    { brand: 'Apple', repairs: 42, avgCost: '8 500 руб.' },
+                    { brand: 'ASUS', repairs: 38, avgCost: '3 500 руб.' },
+                    { brand: 'Samsung', repairs: 25, avgCost: '6 500 руб.' },
+                    { brand: 'HP', repairs: 18, avgCost: '3 200 руб.' },
+                    { brand: 'Dell', repairs: 12, avgCost: '4 200 руб.' }
+                ];
+                
+                createPDFTable(doc, 'Отчет по брендам устройств', [
+                    { text: 'Бренд', x: 20, key: 'brand' },
+                    { text: 'Ремонтов', x: 80, key: 'repairs' },
+                    { text: 'Средняя стоимость', x: 120, key: 'avgCost' }
+                ], brandsData);
+                
+                doc.save('Отчет_по_брендам.pdf');
+            });
+        }
+
+        // Экспорт стоимости ремонта в PDF
+        function exportRepairCostsPDF() {
+            initializePDFWithCyrillic().then(() => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const repairCosts = [
+                    { type: 'Ноутбуки', min: '1 500 руб.', max: '8 500 руб.', avg: '3 500 руб.' },
+                    { type: 'ПК', min: '1 200 руб.', max: '12 000 руб.', avg: '4 200 руб.' },
+                    { type: 'Смартфоны', min: '2 500 руб.', max: '15 000 руб.', avg: '8 900 руб.' },
+                    { type: 'Планшеты', min: '3 000 руб.', max: '10 000 руб.', avg: '6 500 руб.' }
+                ];
+                
+                createPDFTable(doc, 'Стоимость ремонта по типам устройств', [
+                    { text: 'Тип устройства', x: 20, key: 'type' },
+                    { text: 'Мин. стоимость', x: 80, key: 'min' },
+                    { text: 'Макс. стоимость', x: 120, key: 'max' },
+                    { text: 'Средняя стоимость', x: 160, key: 'avg' }
+                ], repairCosts);
+                
+                doc.save('Стоимость_ремонта.pdf');
+            });
+        }
+
+        // Альтернатива: простой метод с использованием Unicode
+        function exportSimplePDF(title, content) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Установка стандартного шрифта, который поддерживает кириллицу
+            doc.setFont("helvetica");
+            
+            doc.setFontSize(16);
+            doc.text(title, 20, 20);
+            
+            doc.setFontSize(12);
+            
+            // Разбиваем контент на строки
+            const lines = doc.splitTextToSize(content, 170);
+            let y = 30;
+            
+            lines.forEach(line => {
+                if (y > 280) {
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.text(line, 20, y);
+                y += 10;
+            });
+            
+            doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
+        }
+        
+        // Печать отчетов
+        function printReports() {
+            window.print();
+        }
+        (function() {
+        function forceUpdateAvatar() {
+            try {
+                const data = localStorage.getItem('currentUser');
+                if (!data) return;
+
+                const user = JSON.parse(data);
+                if (user.avatar) {
+                    // 1. Пробуем найти по ID
+                    const singleImg = document.getElementById('report-avatar');
+                    if (singleImg) singleImg.src = user.avatar;
+
+                    // 2. Пробуем найти по классу (на всякий случай)
+                    const allAvatars = document.querySelectorAll('.sidebar-avatar');
+                    allAvatars.forEach(img => {
+                        img.src = user.avatar;
+                    });
+                }
+            } catch (err) {
+                console.error("Ошибка аватара:", err);
+            }
+        }
+
+        // Запускаем мгновенно
+        forceUpdateAvatar();
+        
+        // Запускаем через секунду (на случай, если Chart.js что-то заблокировал)
+        setTimeout(forceUpdateAvatar, 1000);
+        
+        // Запускаем при полной загрузке всех ресурсов
+        window.onload = forceUpdateAvatar;
+    })();
+    </script>
+</body>
+</html>

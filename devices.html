@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Устройства - Система управления ремонтами</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+        }
+        .sidebar a {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 12px 20px;
+            display: block;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+            color: white;
+            border-left: 4px solid #3498db;
+        }
+        .sidebar .active {
+            background-color: #34495e;
+            border-left: 4px solid #3498db;
+            font-weight: 600;
+        }
+        .device-card {
+            transition: transform 0.2s;
+            border-left: 4px solid;
+        }
+        .device-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .device-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+        .type-badge {
+            font-size: 0.75em;
+            padding: 3px 8px;
+        }
+        .spec-item {
+            font-size: 0.85em;
+            margin-bottom: 3px;
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-in-repair { background-color: #ffc107; }
+        .status-ready { background-color: #28a745; }
+        .status-new { background-color: #007bff; }
+        .filter-tags {
+            margin-top: 10px;
+        }
+        .filter-tag {
+            cursor: pointer;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar (одинаковый для всех страниц) -->
+            <div class="col-md-3 col-lg-2 sidebar d-md-block">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="mb-0"><i class="text-center mt-3 mb-4"></i>РемонтТех</h5>
+                    </div>
+                    
+                    <ul class="nav flex-column mb-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">
+                                <i class="fas fa-tachometer-alt me-2"></i>Главная
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="orders.html">
+                                <i class="fas fa-tools me-2"></i>Заявки на ремонт
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="clients.html">
+                                <i class="fas fa-users me-2"></i>Клиенты
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="devices.html">
+                                <i class="fas fa-laptop me-2"></i>Устройства
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="masters.html">
+                                <i class="fas fa-user-cog me-2"></i>Мастера
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="reports.html">
+                                <i class="fas fa-chart-bar me-2"></i>Отчеты
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <hr class="text-white-50">
+                    
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                            <strong>Администратор</strong>
+                            <span class="badge bg-success ms-2">Online</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                            <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>Профиль</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">
+                        <i class="fas fa-laptop text-primary me-2"></i>
+                        Устройства
+                    </h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#newDeviceModal">
+                            <i class="fas fa-plus-circle me-1"></i> Новое устройство
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="exportDevices()">
+                            <i class="fas fa-download me-1"></i> Экспорт
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-3 col-6">
+                        <div class="card border-primary">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">Всего устройств</h6>
+                                <h4 class="card-title text-primary" id="totalDevices">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="card border-warning">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">В ремонте</h6>
+                                <h4 class="card-title text-warning" id="devicesInRepair">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="card border-success">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">Готовы</h6>
+                                <h4 class="card-title text-success" id="devicesReady">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="card border-info">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">Ноутбуки</h6>
+                                <h4 class="card-title text-info" id="notebooksCount">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Поиск по модели, серийнику или клиенту..." id="searchInput">
+                                    <button class="btn btn-primary" type="button" onclick="searchDevices()">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="deviceTypeFilter" onchange="filterDevices()">
+                                    <option value="">Все типы</option>
+                                    <option value="notebook">Ноутбук</option>
+                                    <option value="pc">Стационарный ПК</option>
+                                    <option value="smartphone">Смартфон</option>
+                                    <option value="tablet">Планшет</option>
+                                    <option value="monitor">Монитор</option>
+                                    <option value="printer">Принтер/МФУ</option>
+                                    <option value="other">Другое</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="statusFilter" onchange="filterDevices()">
+                                    <option value="">Все статусы</option>
+                                    <option value="new">Новое</option>
+                                    <option value="in_repair">В ремонте</option>
+                                    <option value="ready">Готово</option>
+                                    <option value="returned">Возвращено</option>
+                                    <option value="scrap">Списано</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Быстрые фильтры -->
+                        <div class="filter-tags" id="quickFilters">
+                            <small class="text-muted me-2">Быстрые фильтры:</small>
+                            <span class="badge bg-primary filter-tag" onclick="setQuickFilter('brand', 'ASUS')">ASUS</span>
+                            <span class="badge bg-primary filter-tag" onclick="setQuickFilter('brand', 'HP')">HP</span>
+                            <span class="badge bg-primary filter-tag" onclick="setQuickFilter('brand', 'Apple')">Apple</span>
+                            <span class="badge bg-primary filter-tag" onclick="setQuickFilter('brand', 'Dell')">Dell</span>
+                            <span class="badge bg-warning filter-tag" onclick="setQuickFilter('status', 'in_repair')">В ремонте</span>
+                            <span class="badge bg-success filter-tag" onclick="setQuickFilter('status', 'ready')">Готово</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Toggle -->
+                <div class="btn-group mb-4" role="group" aria-label="View toggle">
+                    <input type="radio" class="btn-check" name="viewMode" id="viewTable" autocomplete="off" checked onclick="setViewMode('table')">
+                    <label class="btn btn-outline-primary" for="viewTable">
+                        <i class="fas fa-table me-1"></i> Таблица
+                    </label>
+                    <input type="radio" class="btn-check" name="viewMode" id="viewCards" autocomplete="off" onclick="setViewMode('cards')">
+                    <label class="btn btn-outline-primary" for="viewCards">
+                        <i class="fas fa-th-large me-1"></i> Карточки
+                    </label>
+                </div>
+
+                <!-- Table View -->
+                <div id="tableView" class="view-section">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th width="50">ID</th>
+                                            <th width="300">Устройство</th>
+                                            <th width="150">Клиент</th>
+                                            <th width="120">Серийный номер</th>
+                                            <th width="100">Статус</th>
+                                            <th width="120">Дата поступления</th>
+                                            <th width="120">Ремонтов</th>
+                                            <th width="150">Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="devicesTableBody">
+                                        <!-- Данные будут загружены через JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cards View -->
+                <div id="cardsView" class="view-section" style="display: none;">
+                    <div class="row" id="devicesCardsContainer">
+                        <!-- Карточки будут загружены через JS -->
+                    </div>
+                </div>
+
+                <!-- No Devices Message -->
+                <div class="text-center py-5" id="noDevicesMessage" style="display: none;">
+                    <i class="fas fa-laptop fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Нет устройств</h4>
+                    <p class="text-muted">Добавьте первое устройство, нажав кнопку "Новое устройство"</p>
+                    <button class="btn btn-success mt-2" data-bs-toggle="modal" data-bs-target="#newDeviceModal">
+                        <i class="fas fa-plus-circle me-1"></i> Добавить устройство
+                    </button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal: New Device -->
+    <div class="modal fade" id="newDeviceModal" tabindex="-1" aria-labelledby="newDeviceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newDeviceModalLabel">
+                        <i class="fas fa-plus-circle me-2"></i>Новое устройство
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newDeviceForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="deviceType" class="form-label">Тип устройства *</label>
+                                <select class="form-select" id="deviceType" required onchange="updateDeviceIcon()">
+                                    <option value="">Выберите тип...</option>
+                                    <option value="notebook">Ноутбук</option>
+                                    <option value="pc">Стационарный ПК</option>
+                                    <option value="smartphone">Смартфон</option>
+                                    <option value="tablet">Планшет</option>
+                                    <option value="monitor">Монитор</option>
+                                    <option value="printer">Принтер/МФУ</option>
+                                    <option value="other">Другое</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="deviceBrand" class="form-label">Бренд *</label>
+                                <input type="text" class="form-control" id="deviceBrand" required placeholder="ASUS, Apple, Dell и т.д.">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="deviceModel" class="form-label">Модель *</label>
+                                <input type="text" class="form-control" id="deviceModel" required placeholder="X543MA, iPhone 12, OptiPlex 3070">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="serialNumber" class="form-label">Серийный номер</label>
+                                <input type="text" class="form-control" id="serialNumber" placeholder="SN123456789">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="clientSelect" class="form-label">Клиент *</label>
+                                <select class="form-select" id="clientSelect" required>
+                                    <option value="">Выберите клиента...</option>
+                                    <!-- Клиенты будут загружены динамически -->
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="purchaseYear" class="form-label">Год выпуска/покупки</label>
+                                <input type="number" class="form-control" id="purchaseYear" min="2000" max="2023" value="2023">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="specifications" class="form-label">Характеристики</label>
+                            <textarea class="form-control" id="specifications" rows="3" placeholder="Процессор, память, видеокарта и т.д."></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="warrantyUntil" class="form-label">Гарантия до</label>
+                                <input type="date" class="form-control" id="warrantyUntil">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="initialStatus" class="form-label">Начальный статус</label>
+                                <select class="form-select" id="initialStatus">
+                                    <option value="new">Новое</option>
+                                    <option value="in_repair">В ремонте</option>
+                                    <option value="ready">Готово</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="deviceNotes" class="form-label">Примечания</label>
+                            <textarea class="form-control" id="deviceNotes" rows="2" placeholder="Особенности, дефекты, история..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveNewDevice()">
+                        <i class="fas fa-save me-1"></i> Сохранить устройство
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Device Details -->
+    <div class="modal fade" id="deviceDetailsModal" tabindex="-1" aria-labelledby="deviceDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deviceDetailsModalLabel">
+                        <i class="fas fa-info-circle me-2"></i>Детали устройства
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="deviceDetailsBody">
+                    <!-- Детали будут загружены динамически -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Devices JS -->
+    <script>
+        // Данные устройств
+        let devices = JSON.parse(localStorage.getItem('devices')) || [];
+        let clients = JSON.parse(localStorage.getItem('clients')) || [];
+        let currentViewMode = 'table';
+        let currentFilters = {};
+        
+        // Иконки для типов устройств
+        const deviceIcons = {
+            'notebook': 'fa-laptop',
+            'pc': 'fa-desktop',
+            'smartphone': 'fa-mobile-alt',
+            'tablet': 'fa-tablet-alt',
+            'monitor': 'fa-tv',
+            'printer': 'fa-print',
+            'other': 'fa-microchip'
+        };
+        
+        // Цвета для типов устройств
+        const deviceColors = {
+            'notebook': '#3498db',
+            'pc': '#2ecc71',
+            'smartphone': '#e74c3c',
+            'tablet': '#9b59b6',
+            'monitor': '#f39c12',
+            'printer': '#1abc9c',
+            'other': '#95a5a6'
+        };
+        
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDevices();
+            loadClientsForSelect();
+            updateStatistics();
+        });
+        
+        // Загрузка устройств
+        function loadDevices() {
+            // Если нет данных в localStorage, создаем демо-устройства
+            if (devices.length === 0) {
+                createDemoDevices();
+            }
+            
+            displayDevices();
+            updateNoDevicesMessage();
+        }
+        
+        // Создание демо-устройств
+        function createDemoDevices() {
+            const demoDevices = [
+                {
+                    id: 1,
+                    clientId: 1,
+                    deviceType: 'notebook',
+                    brand: 'ASUS',
+                    model: 'X543MA',
+                    serialNumber: 'ASUS123456',
+                    purchaseYear: 2020,
+                    specifications: 'Intel Core i5-8250U, 8GB RAM, 256GB SSD, 15.6" FHD',
+                    warrantyUntil: '2023-12-31',
+                    status: 'in_repair',
+                    repairCount: 2,
+                    totalRepairCost: 8500,
+                    notes: 'Постоянно перегревается, требуется чистка',
+                    createdAt: '2023-10-15',
+                    lastRepairDate: '2023-11-10'
+                },
+                {
+                    id: 2,
+                    clientId: 2,
+                    deviceType: 'smartphone',
+                    brand: 'Apple',
+                    model: 'iPhone 12',
+                    serialNumber: 'IP12A24031234',
+                    purchaseYear: 2021,
+                    specifications: '128GB, синий, A14 Bionic',
+                    warrantyUntil: '2024-01-15',
+                    status: 'ready',
+                    repairCount: 1,
+                    totalRepairCost: 8900,
+                    notes: 'Замена дисплея, оригинальная деталь',
+                    createdAt: '2023-11-09',
+                    lastRepairDate: '2023-11-12'
+                },
+                {
+                    id: 3,
+                    clientId: 3,
+                    deviceType: 'pc',
+                    brand: 'Custom',
+                    model: 'Игровой ПК',
+                    serialNumber: 'CUSTOM001',
+                    purchaseYear: 2022,
+                    specifications: 'RTX 3080, Intel i7-12700K, 32GB DDR4, 1TB NVMe SSD',
+                    warrantyUntil: '2024-06-30',
+                    status: 'new',
+                    repairCount: 0,
+                    totalRepairCost: 0,
+                    notes: 'Синий экран при запуске игр, возможен перегрев',
+                    createdAt: '2023-11-11',
+                    lastRepairDate: null
+                },
+                {
+                    id: 4,
+                    clientId: 4,
+                    deviceType: 'pc',
+                    brand: 'Dell',
+                    model: 'OptiPlex 3070',
+                    serialNumber: 'DELL789012',
+                    purchaseYear: 2020,
+                    specifications: 'Intel Core i7-9700, 16GB RAM, 512GB SSD',
+                    warrantyUntil: '2023-11-30',
+                    status: 'in_repair',
+                    repairCount: 1,
+                    totalRepairCost: 2200,
+                    notes: 'Корпоративное устройство, замена HDD на SSD',
+                    createdAt: '2023-11-08',
+                    lastRepairDate: '2023-11-09'
+                },
+                {
+                    id: 5,
+                    clientId: 5,
+                    deviceType: 'notebook',
+                    brand: 'HP',
+                    model: 'Pavilion 15',
+                    serialNumber: 'HP543210',
+                    purchaseYear: 2021,
+                    specifications: 'AMD Ryzen 5, 12GB RAM, 512GB SSD',
+                    warrantyUntil: '2024-03-15',
+                    status: 'ready',
+                    repairCount: 1,
+                    totalRepairCost: 3500,
+                    notes: 'Чистка от пыли, замена термопасты',
+                    createdAt: '2023-10-25',
+                    lastRepairDate: '2023-10-28'
+                },
+                {
+                    id: 6,
+                    clientId: 1,
+                    deviceType: 'smartphone',
+                    brand: 'Samsung',
+                    model: 'Galaxy S21',
+                    serialNumber: 'SM-G991B123',
+                    purchaseYear: 2021,
+                    specifications: '128GB, черный, Exynos 2100',
+                    warrantyUntil: '2023-12-01',
+                    status: 'returned',
+                    repairCount: 3,
+                    totalRepairCost: 12500,
+                    notes: 'Многоразовый ремонт, клиент забрал',
+                    createdAt: '2023-09-10',
+                    lastRepairDate: '2023-10-20'
+                }
+            ];
+            
+            devices = demoDevices;
+            localStorage.setItem('devices', JSON.stringify(devices));
+        }
+        
+        // Загрузка клиентов для выпадающего списка
+        function loadClientsForSelect() {
+            const clientSelect = document.getElementById('clientSelect');
+            clientSelect.innerHTML = '<option value="">Выберите клиента...</option>';
+            
+            clients.forEach(client => {
+                const option = document.createElement('option');
+                option.value = client.id;
+                option.textContent = `${client.fullName} (${client.phone})`;
+                clientSelect.appendChild(option);
+            });
+        }
+        
+        // Отображение устройств
+        function displayDevices(filteredDevices = devices) {
+            if (currentViewMode === 'table') {
+                displayDevicesTable(filteredDevices);
+            } else {
+                displayDevicesCards(filteredDevices);
+            }
+        }
+        
+        // Табличное отображение
+        function displayDevicesTable(devicesList) {
+            const tableBody = document.getElementById('devicesTableBody');
+            tableBody.innerHTML = '';
+            
+            devicesList.forEach(device => {
+                const client = clients.find(c => c.id === device.clientId);
+                const clientName = client ? client.fullName : 'Неизвестный клиент';
+                const iconClass = deviceIcons[device.deviceType] || 'fa-microchip';
+                
+                // Определяем статус
+                let statusBadge = '';
+                let statusIndicator = '';
+                switch(device.status) {
+                    case 'new':
+                        statusBadge = '<span class="badge bg-primary">Новое</span>';
+                        statusIndicator = '<span class="status-indicator status-new"></span>';
+                        break;
+                    case 'in_repair':
+                        statusBadge = '<span class="badge bg-warning">В ремонте</span>';
+                        statusIndicator = '<span class="status-indicator status-in-repair"></span>';
+                        break;
+                    case 'ready':
+                        statusBadge = '<span class="badge bg-success">Готово</span>';
+                        statusIndicator = '<span class="status-indicator status-ready"></span>';
+                        break;
+                    case 'returned':
+                        statusBadge = '<span class="badge bg-secondary">Возвращено</span>';
+                        break;
+                    case 'scrap':
+                        statusBadge = '<span class="badge bg-danger">Списано</span>';
+                        break;
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${device.id}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas ${iconClass} me-3" style="color: ${deviceColors[device.deviceType] || '#3498db'}"></i>
+                            <div>
+                                <strong>${device.brand} ${device.model}</strong><br>
+                                <small class="text-muted">${getDeviceTypeName(device.deviceType)}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${clientName}</td>
+                    <td><code>${device.serialNumber || 'Не указан'}</code></td>
+                    <td>${statusIndicator} ${statusBadge}</td>
+                    <td>${device.createdAt}</td>
+                    <td>
+                        <span class="badge ${device.repairCount > 0 ? 'bg-info' : 'bg-secondary'}">
+                            ${device.repairCount || 0}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary action-btn" onclick="viewDeviceDetails(${device.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning action-btn" onclick="editDevice(${device.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-success action-btn" onclick="addRepairToDevice(${device.id})">
+                            <i class="fas fa-tools"></i>
+                        </button>
+                        <button class="btn btn-sm btn-info action-btn" onclick="showRepairHistory(${device.id})">
+                            <i class="fas fa-history"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Отображение карточками
+        function displayDevicesCards(devicesList) {
+            const container = document.getElementById('devicesCardsContainer');
+            container.innerHTML = '';
+            
+            devicesList.forEach(device => {
+                const client = clients.find(c => c.id === device.clientId);
+                const clientName = client ? client.fullName : 'Неизвестный клиент';
+                const iconClass = deviceIcons[device.deviceType] || 'fa-microchip';
+                const deviceColor = deviceColors[device.deviceType] || '#3498db';
+                
+                // Определяем статус
+                let statusClass = '';
+                let statusText = '';
+                switch(device.status) {
+                    case 'new':
+                        statusClass = 'border-primary';
+                        statusText = 'Новое';
+                        break;
+                    case 'in_repair':
+                        statusClass = 'border-warning';
+                        statusText = 'В ремонте';
+                        break;
+                    case 'ready':
+                        statusClass = 'border-success';
+                        statusText = 'Готово';
+                        break;
+                    case 'returned':
+                        statusClass = 'border-secondary';
+                        statusText = 'Возвращено';
+                        break;
+                    case 'scrap':
+                        statusClass = 'border-danger';
+                        statusText = 'Списано';
+                        break;
+                }
+                
+                const card = document.createElement('div');
+                card.className = 'col-md-6 col-lg-4 mb-4';
+                card.innerHTML = `
+                    <div class="card device-card h-100 ${statusClass}" style="border-left-color: ${deviceColor}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="device-icon" style="color: ${deviceColor}">
+                                    <i class="fas ${iconClass}"></i>
+                                </div>
+                                <div>
+                                    <span class="badge ${device.status === 'in_repair' ? 'bg-warning' : 'bg-secondary'} type-badge">
+                                        ${statusText}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <h5 class="card-title">${device.brand} ${device.model}</h5>
+                            <h6 class="card-subtitle mb-3 text-muted">${getDeviceTypeName(device.deviceType)}</h6>
+                            
+                            <div class="mb-3">
+                                <div class="spec-item">
+                                    <i class="fas fa-user me-1 text-muted"></i>
+                                    <strong>Клиент:</strong> ${clientName}
+                                </div>
+                                <div class="spec-item">
+                                    <i class="fas fa-barcode me-1 text-muted"></i>
+                                    <strong>Серийник:</strong> ${device.serialNumber || 'Не указан'}
+                                </div>
+                                <div class="spec-item">
+                                    <i class="fas fa-calendar me-1 text-muted"></i>
+                                    <strong>Год:</strong> ${device.purchaseYear || 'Не указан'}
+                                </div>
+                                ${device.specifications ? `
+                                    <div class="spec-item">
+                                        <i class="fas fa-microchip me-1 text-muted"></i>
+                                        <strong>Хар-ки:</strong> ${device.specifications.substring(0, 50)}${device.specifications.length > 50 ? '...' : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-6 text-center">
+                                    <div class="text-muted small">Ремонтов</div>
+                                    <div class="h5 mb-0">${device.repairCount || 0}</div>
+                                </div>
+                                <div class="col-6 text-center">
+                                    <div class="text-muted small">Стоимость рем.</div>
+                                    <div class="h5 mb-0 text-primary">${(device.totalRepairCost || 0).toLocaleString()} ₽</div>
+                                </div>
+                            </div>
+                            
+                            <div class="small text-muted mb-3">
+                                <i class="fas fa-calendar me-1"></i> Добавлено: ${device.createdAt}
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-sm btn-primary" onclick="viewDeviceDetails(${device.id})">
+                                    <i class="fas fa-eye me-1"></i> Подробнее
+                                </button>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-outline-warning" onclick="editDevice(${device.id})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="addRepairToDevice(${device.id})">
+                                        <i class="fas fa-tools"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info" onclick="showRepairHistory(${device.id})">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteDevice(${device.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        
+        // Обновление статистики
+        function updateStatistics() {
+            const totalDevices = devices.length;
+            const devicesInRepair = devices.filter(d => d.status === 'in_repair').length;
+            const devicesReady = devices.filter(d => d.status === 'ready').length;
+            const notebooksCount = devices.filter(d => d.deviceType === 'notebook').length;
+            
+            document.getElementById('totalDevices').textContent = totalDevices;
+            document.getElementById('devicesInRepair').textContent = devicesInRepair;
+            document.getElementById('devicesReady').textContent = devicesReady;
+            document.getElementById('notebooksCount').textContent = notebooksCount;
+        }
+        
+        // Обновление иконки устройства при выборе типа
+        function updateDeviceIcon() {
+            const deviceType = document.getElementById('deviceType').value;
+            // Можно добавить динамическую смену иконки в будущем
+        }
+        
+        // Поиск устройств
+        function searchDevices() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const deviceType = document.getElementById('deviceTypeFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            
+            let filteredDevices = devices;
+            
+            if (searchText) {
+                filteredDevices = filteredDevices.filter(device =>
+                    device.brand.toLowerCase().includes(searchText) ||
+                    device.model.toLowerCase().includes(searchText) ||
+                    (device.serialNumber && device.serialNumber.toLowerCase().includes(searchText)) ||
+                    (device.specifications && device.specifications.toLowerCase().includes(searchText))
+                );
+                
+                // Также ищем по имени клиента
+                filteredDevices = filteredDevices.filter(device => {
+                    const client = clients.find(c => c.id === device.clientId);
+                    return client && client.fullName.toLowerCase().includes(searchText);
+                });
+            }
+            
+            if (deviceType) {
+                filteredDevices = filteredDevices.filter(device => device.deviceType === deviceType);
+            }
+            
+            if (status) {
+                filteredDevices = filteredDevices.filter(device => device.status === status);
+            }
+            
+            // Применяем дополнительные фильтры
+            if (currentFilters.brand) {
+                filteredDevices = filteredDevices.filter(device => device.brand === currentFilters.brand);
+            }
+            if (currentFilters.status) {
+                filteredDevices = filteredDevices.filter(device => device.status === currentFilters.status);
+            }
+            
+            displayDevices(filteredDevices);
+            updateNoDevicesMessage(filteredDevices.length === 0);
+        }
+        
+        // Фильтрация устройств
+        function filterDevices() {
+            searchDevices();
+        }
+        
+        // Быстрые фильтры
+        function setQuickFilter(type, value) {
+            currentFilters[type] = value;
+            
+            // Устанавливаем значения в выпадающие списки
+            if (type === 'brand') {
+                document.getElementById('deviceTypeFilter').value = '';
+                document.getElementById('statusFilter').value = '';
+                document.getElementById('searchInput').value = value;
+            } else if (type === 'status') {
+                document.getElementById('statusFilter').value = value;
+                document.getElementById('deviceTypeFilter').value = '';
+                document.getElementById('searchInput').value = '';
+            }
+            
+            searchDevices();
+        }
+        
+        // Сброс поиска
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('deviceTypeFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            currentFilters = {};
+            displayDevices();
+            updateNoDevicesMessage(devices.length === 0);
+        }
+        
+        // Установка режима просмотра
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            const tableView = document.getElementById('tableView');
+            const cardsView = document.getElementById('cardsView');
+            
+            if (mode === 'table') {
+                tableView.style.display = 'block';
+                cardsView.style.display = 'none';
+            } else {
+                tableView.style.display = 'none';
+                cardsView.style.display = 'block';
+            }
+            
+            displayDevices();
+        }
+        
+        // Сохранение нового устройства
+        function saveNewDevice() {
+            const deviceType = document.getElementById('deviceType').value;
+            const brand = document.getElementById('deviceBrand').value;
+            const model = document.getElementById('deviceModel').value;
+            const serialNumber = document.getElementById('serialNumber').value;
+            const clientId = parseInt(document.getElementById('clientSelect').value);
+            const purchaseYear = document.getElementById('purchaseYear').value;
+            const specifications = document.getElementById('specifications').value;
+            const warrantyUntil = document.getElementById('warrantyUntil').value;
+            const initialStatus = document.getElementById('initialStatus').value;
+            const notes = document.getElementById('deviceNotes').value;
+            
+            // Валидация
+            if (!deviceType || !brand || !model || !clientId) {
+                alert('Пожалуйста, заполните обязательные поля (Тип, Бренд, Модель, Клиент)');
+                return;
+            }
+            
+            // Создание нового устройства
+            const newDevice = {
+                id: devices.length > 0 ? Math.max(...devices.map(d => d.id)) + 1 : 1,
+                clientId: clientId,
+                deviceType: deviceType,
+                brand: brand,
+                model: model,
+                serialNumber: serialNumber || null,
+                purchaseYear: purchaseYear || null,
+                specifications: specifications || null,
+                warrantyUntil: warrantyUntil || null,
+                status: initialStatus,
+                repairCount: 0,
+                totalRepairCost: 0,
+                notes: notes || null,
+                createdAt: new Date().toLocaleDateString('ru-RU'),
+                lastRepairDate: null
+            };
+            
+            // Добавление в массив
+            devices.push(newDevice);
+            localStorage.setItem('devices', JSON.stringify(devices));
+            
+            // Закрытие модального окна
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newDeviceModal'));
+            modal.hide();
+            
+            // Обновление интерфейса
+            displayDevices();
+            updateStatistics();
+            updateNoDevicesMessage();
+            
+            // Очистка формы
+            document.getElementById('newDeviceForm').reset();
+            
+            alert(`Устройство "${brand} ${model}" успешно добавлено!`);
+        }
+        
+        // Просмотр деталей устройства
+        function viewDeviceDetails(deviceId) {
+            const device = devices.find(d => d.id === deviceId);
+            const client = clients.find(c => c.id === device.clientId);
+            
+            if (!device) return;
+            
+            const clientName = client ? `${client.fullName} (${client.phone})` : 'Неизвестный клиент';
+            const clientEmail = client ? client.email : 'Не указан';
+            
+            const details = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-info-circle text-primary me-2"></i>Основная информация</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td width="40%"><strong>Тип:</strong></td>
+                                <td>${getDeviceTypeName(device.deviceType)}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Бренд/Модель:</strong></td>
+                                <td>${device.brand} ${device.model}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Серийный номер:</strong></td>
+                                <td><code>${device.serialNumber || 'Не указан'}</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Год выпуска:</strong></td>
+                                <td>${device.purchaseYear || 'Не указан'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Статус:</strong></td>
+                                <td>${getStatusName(device.status)}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Дата добавления:</strong></td>
+                                <td>${device.createdAt}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user text-primary me-2"></i>Клиент</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td width="40%"><strong>Клиент:</strong></td>
+                                <td>${clientName}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>${clientEmail}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Гарантия до:</strong></td>
+                                <td>${device.warrantyUntil || 'Не указана'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Кол-во ремонтов:</strong></td>
+                                <td><span class="badge bg-info">${device.repairCount || 0}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Общая стоимость:</strong></td>
+                                <td><strong class="text-primary">${(device.totalRepairCost || 0).toLocaleString()} ₽</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Последний ремонт:</strong></td>
+                                <td>${device.lastRepairDate || 'Не было'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                ${device.specifications ? `
+                    <div class="mt-3">
+                        <h6><i class="fas fa-microchip text-primary me-2"></i>Характеристики</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <pre class="mb-0" style="white-space: pre-wrap;">${device.specifications}</pre>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${device.notes ? `
+                    <div class="mt-3">
+                        <h6><i class="fas fa-sticky-note text-primary me-2"></i>Примечания</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                ${device.notes}
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="modal-footer mt-4">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-warning" onclick="editDevice(${device.id})" data-bs-dismiss="modal">
+                        <i class="fas fa-edit me-1"></i> Редактировать
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="addRepairToDevice(${device.id})" data-bs-dismiss="modal">
+                        <i class="fas fa-tools me-1"></i> Добавить ремонт
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('deviceDetailsBody').innerHTML = details;
+            const modal = new bootstrap.Modal(document.getElementById('deviceDetailsModal'));
+            modal.show();
+        }
+        
+        // Редактирование устройства
+        function editDevice(deviceId) {
+            alert(`Редактирование устройства #${deviceId} - будет реализовано в следующей версии`);
+            // Здесь можно открыть модальное окно редактирования
+        }
+        
+        // Добавление ремонта к устройству
+        function addRepairToDevice(deviceId) {
+            const repairCost = prompt('Введите стоимость ремонта:');
+            if (repairCost && !isNaN(repairCost)) {
+                const device = devices.find(d => d.id === deviceId);
+                if (device) {
+                    device.repairCount = (device.repairCount || 0) + 1;
+                    device.totalRepairCost = (device.totalRepairCost || 0) + parseFloat(repairCost);
+                    device.status = 'in_repair';
+                    device.lastRepairDate = new Date().toLocaleDateString('ru-RU');
+                    
+                    localStorage.setItem('devices', JSON.stringify(devices));
+                    
+                    displayDevices();
+                    updateStatistics();
+                    
+                    alert(`Ремонт на сумму ${repairCost} ₽ добавлен к устройству ${device.brand} ${device.model}`);
+                }
+            }
+        }
+        
+        // Показать историю ремонтов
+        function showRepairHistory(deviceId) {
+            const device = devices.find(d => d.id === deviceId);
+            if (device) {
+                const history = device.repairCount > 0 
+                    ? `Устройство ремонтировалось ${device.repairCount} раз на общую сумму ${device.totalRepairCost.toLocaleString()} ₽`
+                    : 'Устройство еще не ремонтировалось';
+                alert(`История ремонтов для ${device.brand} ${device.model}:\n\n${history}`);
+            }
+        }
+        
+        // Удаление устройства
+        function deleteDevice(deviceId) {
+            if (!confirm('Вы уверены, что хотите удалить это устройство?')) {
+                return;
+            }
+            
+            const device = devices.find(d => d.id === deviceId);
+            if (device && device.repairCount > 0) {
+                if (!confirm(`У устройства есть история из ${device.repairCount} ремонтов. Удалить вместе с историей?`)) {
+                    return;
+                }
+            }
+            
+            devices = devices.filter(d => d.id !== deviceId);
+            localStorage.setItem('devices', JSON.stringify(devices));
+            
+            displayDevices();
+            updateStatistics();
+            updateNoDevicesMessage();
+            
+            alert('Устройство удалено');
+        }
+        
+        // Экспорт устройств
+        function exportDevices() {
+            const dataStr = JSON.stringify(devices, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `devices_export_${new Date().toISOString().split('T')[0]}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            alert(`Экспортировано ${devices.length} устройств`);
+        }
+        
+        // Обновление сообщения "нет устройств"
+        function updateNoDevicesMessage(show = devices.length === 0) {
+            const noDevicesMessage = document.getElementById('noDevicesMessage');
+            const tableView = document.getElementById('tableView');
+            const cardsView = document.getElementById('cardsView');
+            
+            if (show) {
+                noDevicesMessage.style.display = 'block';
+                tableView.style.display = 'none';
+                cardsView.style.display = 'none';
+            } else {
+                noDevicesMessage.style.display = 'none';
+            }
+        }
+        
+        // Вспомогательные функции
+        function getDeviceTypeName(type) {
+            switch(type) {
+                case 'notebook': return 'Ноутбук';
+                case 'pc': return 'Стационарный ПК';
+                case 'smartphone': return 'Смартфон';
+                case 'tablet': return 'Планшет';
+                case 'monitor': return 'Монитор';
+                case 'printer': return 'Принтер/МФУ';
+                case 'other': return 'Другое устройство';
+                default: return type;
+            }
+        }
+        
+        function getStatusName(status) {
+            switch(status) {
+                case 'new': return 'Новое';
+                case 'in_repair': return 'В ремонте';
+                case 'ready': return 'Готово';
+                case 'returned': return 'Возвращено';
+                case 'scrap': return 'Списано';
+                default: return status;
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+    const savedData = localStorage.getItem('currentUser');
+    if (savedData) {
+        const user = JSON.parse(savedData);
+        if (user.avatar) {
+            // Ищем все картинки с классом sidebar-avatar и ставим им сохраненное фото
+            const avatars = document.querySelectorAll('.sidebar-avatar');
+            avatars.forEach(img => {
+                img.src = user.avatar;
+            });
+        }
+    }
+});
+    </script>
+</body>
+</html>

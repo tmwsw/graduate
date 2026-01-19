@@ -1,0 +1,2139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль - Система управления ремонтами</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Подключаем библиотеки для PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+        }
+        .sidebar a {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 12px 20px;
+            display: block;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+            color: white;
+            border-left: 4px solid #3498db;
+        }
+        .sidebar .active {
+            background-color: #34495e;
+            border-left: 4px solid #3498db;
+            font-weight: 600;
+        }
+        .profile-header {
+            background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .profile-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 5px solid white;
+            object-fit: cover;
+        }
+        .profile-stats {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .stat-item {
+            padding: 15px;
+        }
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: block;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .form-control:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        .btn-primary {
+            background-color: #3498db;
+            border-color: #3498db;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        .badge-notification {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
+        .notification-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        .notification-item.unread {
+            background-color: #e8f4fc;
+            border-left: 4px solid #3498db;
+        }
+        .notification-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .activity-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .activity-timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e9ecef;
+        }
+        .activity-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            left: -25px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #3498db;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #e9ecef;
+        }
+        .activity-item.recent::before {
+            background-color: #2ecc71;
+        }
+        .activity-item.old::before {
+            background-color: #95a5a6;
+        }
+        .activity-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .tab-content {
+            background: white;
+            border-radius: 0 0 10px 10px;
+            padding: 20px;
+        }
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6c757d;
+            padding: 10px 20px;
+        }
+        .nav-tabs .nav-link.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+            font-weight: 600;
+        }
+        .settings-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar d-md-block">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="mb-0"><i class="text-center mt-3 mb-4"></i>РемонтТех</h5>
+                    </div>
+                    
+                    <ul class="nav flex-column mb-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">
+                                <i class="fas fa-tachometer-alt me-2"></i>Главная
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="orders.html">
+                                <i class="fas fa-tools me-2"></i>Заявки на ремонт
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="clients.html">
+                                <i class="fas fa-users me-2"></i>Клиенты
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="devices.html">
+                                <i class="fas fa-laptop me-2"></i>Устройства
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="masters.html">
+                                <i class="fas fa-user-cog me-2"></i>Мастера
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="reports.html">
+                                <i class="fas fa-chart-bar me-2"></i>Отчеты
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="profile.html">
+                                <i class="fas fa-user me-2"></i>Профиль
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <hr class="text-white-50">
+                    
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                            <strong>Администратор</strong>
+                            <span class="badge bg-success ms-2">Online</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                            <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>Профиль</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <!-- Profile Header -->
+                <div class="profile-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-3 text-center">
+                            <img src="https://via.placeholder.com/150" alt="Аватар" class="profile-avatar mb-3">
+                            <button class="btn btn-outline-light btn-sm" onclick="changeAvatar()">
+                                <i class="fas fa-camera me-1"></i> Сменить фото
+                            </button>
+                            <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="uploadAvatar(event)">
+                        </div>
+                        <div class="col-md-6">
+                            <h2 class="mb-2" id="userFullName">Иванов Иван Иванович</h2>
+                            <p class="mb-1"><i class="fas fa-briefcase me-2"></i> <span id="userPosition">Администратор системы</span></p>
+                            <p class="mb-1"><i class="fas fa-envelope me-2"></i> <span id="userEmail">admin@remonttech.ru</span></p>
+                            <p class="mb-0"><i class="fas fa-phone me-2"></i> <span id="userPhone">+7 (999) 123-45-67</span></p>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <span class="badge bg-success mb-2">Активный</span>
+                            <p class="mb-0">В системе с: <strong id="joinDate">15.03.2023</strong></p>
+                            <p>Последний вход: <strong id="lastLogin">Сегодня, 10:30</strong></p>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <span class="stat-number" id="statOrders">24</span>
+                            <span class="stat-label">Заявок сегодня</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="statCompleted">18</span>
+                            <span class="stat-label">Выполнено</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="statRating">4.8</span>
+                            <span class="stat-label">Рейтинг</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="statDays">284</span>
+                            <span class="stat-label">Дней работы</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
+                            <i class="fas fa-user-edit me-1"></i> Основная информация
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab">
+                            <i class="fas fa-shield-alt me-1"></i> Безопасность
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="notifications-tab" data-bs-toggle="tab" data-bs-target="#notifications" type="button" role="tab">
+                            <i class="fas fa-bell me-1"></i> Уведомления
+                            <span class="badge bg-danger ms-1" id="notificationBadge">3</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab">
+                            <i class="fas fa-history me-1"></i> Активность
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">
+                            <i class="fas fa-cog me-1"></i> Настройки
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="profileTabsContent">
+                    <!-- Основная информация -->
+                    <div class="tab-pane fade show active" id="info" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Личные данные</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="personalInfoForm">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label for="firstName" class="form-label">Имя</label>
+                                                    <input type="text" class="form-control" id="firstName" value="Иван" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="lastName" class="form-label">Фамилия</label>
+                                                    <input type="text" class="form-control" id="lastName" value="Иванов" required>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label for="middleName" class="form-label">Отчество</label>
+                                                    <input type="text" class="form-control" id="middleName" value="Иванович">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="birthDate" class="form-label">Дата рождения</label>
+                                                    <input type="date" class="form-control" id="birthDate" value="1990-05-15">
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                        <label for="position" class="form-label">Должность</label>
+                                        <select class="form-select" id="position">
+                                            <option value="admin_sys" selected>Администратор системы</option>
+                                            <option value="admin">Администратор</option>
+                                            <option value="manager">Менеджер</option>
+                                            <option value="master">Мастер</option>
+                                            <option value="observer">Наблюдатель</option>
+                                        </select>
+                                    </div>
+                                            <div class="mb-3">
+                                                <label for="department" class="form-label">Отдел</label>
+                                                <select class="form-select" id="department">
+                                                    <option value="admin">Администрация</option>
+                                                    <option value="service" selected>Сервисный центр</option>
+                                                    <option value="sales">Отдел продаж</option>
+                                                    <option value="tech">Технический отдел</option>
+                                                    <option value="support">Поддержка</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="bio" class="form-label">О себе</label>
+                                                <textarea class="form-control" id="bio" rows="3">Администратор системы управления ремонтами. Работаю в компании с 2023 года.</textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-save me-1"></i> Сохранить изменения
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Контактная информация</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="contactInfoForm">
+                                            <div class="mb-3">
+                                                <label for="email" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="email" value="admin@remonttech.ru" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="phone" class="form-label">Телефон</label>
+                                                <input type="tel" class="form-control" id="phone" value="+79991234567" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="telegram" class="form-label">Telegram</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">@</span>
+                                                    <input type="text" class="form-control" id="telegram" value="ivan_admin">
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="address" class="form-label">Адрес</label>
+                                                <input type="text" class="form-control" id="address" value="г. Москва, ул. Примерная, д. 10">
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-save me-1"></i> Сохранить контакты
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mt-3">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Статистика работы</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Заявок обработано:</span>
+                                            <strong>1,248</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Среднее время:</span>
+                                            <strong>2.4 ч</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Эффективность:</span>
+                                            <strong>94%</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Клиентов обслужено:</span>
+                                            <strong>856</strong>
+                                        </div>
+                                        <hr>
+                                        <div class="text-center">
+                                            <small class="text-muted">Обновлено: сегодня, 09:00</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Безопасность -->
+                    <div class="tab-pane fade" id="security" role="tabpanel">
+                        <div class="row">
+                            <div class="col-lg-7 col-md-12 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Смена пароля</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="changePasswordForm">
+                                            <div class="mb-3">
+                                                <label class="form-label">Текущий пароль</label>
+                                                <div class="input-group">
+                                                    <input type="password" class="form-control" id="currentPassword" required>
+                                                    <button class="btn btn-outline-secondary toggle-password" type="button">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="form-text">Введите свой текущий пароль для подтверждения</div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Новый пароль</label>
+                                                <div class="input-group">
+                                                    <input type="password" class="form-control" id="newPassword" required>
+                                                    <button class="btn btn-outline-secondary toggle-password" type="button">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="form-text">Пароль должен содержать не менее 8 символов</div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Подтверждение пароля</label>
+                                                <div class="input-group">
+                                                    <input type="password" class="form-control" id="confirmPassword" required>
+                                                    <button class="btn btn-outline-secondary toggle-password" type="button">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="logoutAll">
+                                                    <label class="form-check-label" for="logoutAll">Выйти со всех устройств</label>
+                                                </div>
+                                            </div>
+                                            
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-key me-1"></i> Сменить пароль
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-5 col-md-12 mb-4">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-header bg-transparent">
+                                        <h5 class="card-title mb-0">Активные сессии</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-4">
+                                            <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
+                                                <div class="d-flex">
+                                                    <div class="me-3 text-primary"><i class="fas fa-desktop fa-lg"></i></div>
+                                                    <div>
+                                                        <strong class="d-block">Chrome, Windows</strong>
+                                                        <span class="text-muted small">Москва, Россия • Текущая сессия</span>
+                                                    </div>
+                                                </div>
+                                                <span class="badge bg-success">Активна</span>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
+                                                <div class="d-flex">
+                                                    <div class="me-3 text-secondary"><i class="fas fa-mobile-alt fa-lg"></i></div>
+                                                    <div>
+                                                        <strong class="d-block">Safari, iPhone</strong>
+                                                        <span class="text-muted small">Москва, Россия • 2 часа назад</span>
+                                                    </div>
+                                                </div>
+                                                <span class="badge bg-secondary opacity-75">Неактивна</span>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div class="d-flex">
+                                                    <div class="me-3 text-secondary"><i class="fas fa-laptop fa-lg"></i></div>
+                                                    <div>
+                                                        <strong class="d-block">Firefox, macOS</strong>
+                                                        <span class="text-muted small">Санкт-Петербург, Россия • 5 дней назад</span>
+                                                    </div>
+                                                </div>
+                                                <span class="badge bg-secondary opacity-75">Неактивна</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-grid">
+                                            <button class="btn btn-outline-danger" onclick="logoutAllSessions()">
+                                                <i class="fas fa-sign-out-alt me-1"></i> Завершить все сессии
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Уведомления -->
+                    <div class="tab-pane fade" id="notifications" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">Уведомления</h5>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-primary me-2" onclick="markAllAsRead()">
+                                                <i class="fas fa-check-double me-1"></i> Отметить все как прочитанные
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="clearAllNotifications()">
+                                                <i class="fas fa-trash me-1"></i> Очистить все
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div id="notificationsList">
+                                            <!-- Уведомления будут загружены через JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Настройки уведомлений</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="notificationSettingsForm">
+                                            <div class="settings-item">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                                                    <label class="form-check-label" for="emailNotifications">
+                                                        Email уведомления
+                                                    </label>
+                                                </div>
+                                                <small class="text-muted">Получать уведомления на email</small>
+                                            </div>
+                                            <div class="settings-item">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="pushNotifications" checked>
+                                                    <label class="form-check-label" for="pushNotifications">
+                                                        Push-уведомления
+                                                    </label>
+                                                </div>
+                                                <small class="text-muted">Показывать уведомления в браузере</small>
+                                            </div>
+                                            <div class="settings-item">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="newOrdersNotify" checked>
+                                                    <label class="form-check-label" for="newOrdersNotify">
+                                                        Новые заявки
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="settings-item">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="completedOrdersNotify" checked>
+                                                    <label class="form-check-label" for="completedOrdersNotify">
+                                                        Завершенные заявки
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="settings-item">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="systemAlertsNotify" checked>
+                                                    <label class="form-check-label" for="systemAlertsNotify">
+                                                        Системные оповещения
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="settings-item">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="reportReadyNotify">
+                                                    <label class="form-check-label" for="reportReadyNotify">
+                                                        Готовность отчетов
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="d-grid mt-3">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-save me-1"></i> Сохранить настройки
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Активность -->
+                    <div class="tab-pane fade" id="activity" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">История активности</h5>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-secondary active" onclick="filterActivity('all')">Все</button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="filterActivity('orders')">Заявки</button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="filterActivity('system')">Система</button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="filterActivity('security')">Безопасность</button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="activity-timeline" id="activityTimeline">
+                                            <!-- Активность будет загружена через JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Статистика активности</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="text-center mb-4">
+                                            <canvas id="activityChart" width="200" height="200"></canvas>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Заявок обработано:</span>
+                                                <strong>24</strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Клиентов добавлено:</span>
+                                                <strong>8</strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Отчетов сгенерировано:</span>
+                                                <strong>3</strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Входов в систему:</span>
+                                                <strong>12</strong>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="text-center">
+                                            <small class="text-muted">Период: последние 7 дней</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mt-3">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Экспорт истории</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-3">Вы можете экспортировать историю вашей активности для анализа или архивации.</p>
+                                        <div class="mb-3">
+                                            <label class="form-label">Период</label>
+                                            <select class="form-select" id="exportPeriod">
+                                                <option value="week">Последняя неделя</option>
+                                                <option value="month" selected>Последний месяц</option>
+                                                <option value="quarter">Последний квартал</option>
+                                                <option value="year">Последний год</option>
+                                                <option value="all">Вся история</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Формат</label>
+                                            <select class="form-select" id="exportFormat">
+                                                <option value="csv">CSV (Excel)</option>
+                                                <option value="pdf" selected>PDF (документ)</option>
+                                                <option value="json">JSON (данные)</option>
+                                                <option value="txt">TXT (текстовый)</option>
+                                            </select>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button class="btn btn-primary" onclick="exportActivity()">
+                                                <i class="fas fa-download me-1"></i> Экспортировать
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Настройки -->
+                    <div class="tab-pane fade" id="settings" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Настройки интерфейса</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="interfaceSettingsForm">
+                                            <div class="mb-3">
+                                                <label for="timezone" class="form-label">Часовой пояс</label>
+                                                <select class="form-select" id="timezone">
+                                                    <option value="Europe/Moscow" selected>Москва (UTC+3)</option>
+                                                    <option value="Europe/Kaliningrad">Калининград (UTC+2)</option>
+                                                    <option value="Asia/Yekaterinburg">Екатеринбург (UTC+5)</option>
+                                                    <option value="Asia/Novosibirsk">Новосибирск (UTC+7)</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="dateFormat" class="form-label">Формат даты</label>
+                                                <select class="form-select" id="dateFormat">
+                                                    <option value="dd.mm.yyyy" selected>ДД.ММ.ГГГГ</option>
+                                                    <option value="mm/dd/yyyy">ММ/ДД/ГГГГ</option>
+                                                    <option value="yyyy-mm-dd">ГГГГ-ММ-ДД</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-save me-1"></i> Сохранить настройки
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mt-3">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Резервное копирование</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-3">Создайте резервную копию ваших данных и настроек.</p>
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-outline-primary" onclick="createBackup()">
+                                                <i class="fas fa-download me-1"></i> Создать резервную копию
+                                            </button>
+                                            <button class="btn btn-outline-secondary" onclick="restoreBackup()">
+                                                <i class="fas fa-upload me-1"></i> Восстановить из резервной копии
+                                            </button>
+                                        </div>
+                                        <div class="mt-3">
+                                            <small class="text-muted">Последняя резервная копия: <strong>05.01.2026, 08:30</strong></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Интеграции</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="settings-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">Telegram Bot</h6>
+                                                    <p class="text-muted small mb-0">Получайте уведомления о новых заявках в Telegram</p>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="telegramIntegration">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mt-3">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Опасная зона</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="alert alert-danger">
+                                            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i> Внимание!</h6>
+                                            <p class="mb-2">Эти действия нельзя отменить. Пожалуйста, будьте осторожны.</p>
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                                                <i class="fas fa-user-slash me-1"></i> Удалить аккаунт
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <!-- Модальное окно очистки данных -->
+    <div class="modal fade" id="clearDataModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Очистка всех данных</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Это действие удалит все ваши данные:
+                    </div>
+                    <ul>
+                        <li>История активности</li>
+                        <li>Сохраненные настройки</li>
+                        <li>Персональные данные</li>
+                        <li>Настроенные интеграции</li>
+                    </ul>
+                    <p>Это действие нельзя отменить.</p>
+                    <div class="mb-3">
+                        <label for="confirmClear" class="form-label">Введите "ОЧИСТИТЬ" для подтверждения:</label>
+                        <input type="text" class="form-control" id="confirmClear" placeholder="ОЧИСТИТЬ">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-danger" onclick="clearAllData()" id="clearDataBtn" disabled>Очистить все данные</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно удаления аккаунта -->
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Удаление аккаунта</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Это действие удалит ваш аккаунт и все связанные с ним данные.
+                    </div>
+                    <p>После удаления аккаунта:</p>
+                    <ul>
+                        <li>Вы потеряете доступ к системе</li>
+                        <li>Все ваши данные будут удалены</li>
+                        <li>Это действие нельзя отменить</li>
+                    </ul>
+                    <div class="mb-3">
+                        <label for="confirmDelete" class="form-label">Введите "УДАЛИТЬ" для подтверждения:</label>
+                        <input type="text" class="form-control" id="confirmDelete" placeholder="УДАЛИТЬ">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteAccount()" id="deleteAccountBtn" disabled>Удалить аккаунт</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // Данные пользователя
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || {
+            id: 1,
+            fullName: 'Иванов Иван Иванович',
+            firstName: 'Иван',
+            lastName: 'Иванов',
+            middleName: 'Иванович',
+            email: 'admin@remonttech.ru',
+            phone: '+7 (999) 123-45-67',
+            position: 'Администратор системы',
+            department: 'service',
+            joinDate: '15.03.2023',
+            lastLogin: 'Сегодня, 10:30',
+            avatar: 'https://via.placeholder.com/150',
+            bio: 'Администратор системы управления ремонтами. Работаю в компании с 2023 года.',
+            birthDate: '1990-05-15',
+            telegram: '@ivan_admin',
+            address: 'г. Москва, ул. Примерная, д. 10',
+            theme: 'light',
+            language: 'ru',
+            timezone: 'Europe/Moscow',
+            dateFormat: 'dd.mm.yyyy',
+            emailNotifications: true,
+            pushNotifications: true,
+            smsNotifications: false,
+            newOrdersNotify: true,
+            completedOrdersNotify: true,
+            systemAlertsNotify: true,
+            reportReadyNotify: false,
+            animations: true,
+            compactMode: false,
+            sidebarCollapsed: false,
+            telegramIntegration: false,
+            googleCalendarIntegration: false,
+            accountingIntegration: false,
+            smsIntegration: false,
+            twoFactorEnabled: true,
+            authMethod: 'sms'
+        };
+        
+        // Уведомления
+        let notifications = JSON.parse(localStorage.getItem('notifications')) || [
+            {
+                id: 1,
+                title: 'Новая заявка на ремонт',
+                message: 'Поступила новая заявка на ремонт ноутбука от клиента Петров В.К.',
+                time: '10:15',
+                date: '05.01.2026',
+                type: 'new_order',
+                read: false
+            },
+            {
+                id: 2,
+                title: 'Заявка завершена',
+                message: 'Заявка №2456 успешно завершена. Устройство готово к выдаче.',
+                time: '09:45',
+                date: '05.01.2026',
+                type: 'completed',
+                read: false
+            },
+            {
+                id: 3,
+                title: 'Системное обновление',
+                message: 'Запланировано обновление системы на 06.01.2026 в 03:00',
+                time: '08:30',
+                date: '05.01.2026',
+                type: 'system',
+                read: false
+            },
+            {
+                id: 4,
+                title: 'Напоминание',
+                message: 'Не забудьте сформировать отчет за месяц',
+                time: 'Вчера, 18:00',
+                date: '04.01.2026',
+                type: 'reminder',
+                read: true
+            },
+            {
+                id: 5,
+                title: 'Новый клиент',
+                message: 'В систему добавлен новый клиент: Сидорова М.П.',
+                time: 'Вчера, 16:30',
+                date: '04.01.2026',
+                type: 'new_client',
+                read: true
+            }
+        ];
+        
+        // История активности
+        let activityHistory = JSON.parse(localStorage.getItem('activityHistory')) || [
+            {
+                id: 1,
+                action: 'Вход в систему',
+                details: 'Успешный вход с IP: 192.168.1.1',
+                time: 'Сегодня, 10:30',
+                type: 'security',
+                icon: 'fa-sign-in-alt'
+            },
+            {
+                id: 2,
+                action: 'Создание отчета',
+                details: 'Сгенерирован отчет по заявкам за январь 2026',
+                time: 'Сегодня, 10:15',
+                type: 'system',
+                icon: 'fa-file-alt'
+            },
+            {
+                id: 3,
+                action: 'Обновление заявки',
+                details: 'Заявка №2456 переведена в статус "Готово"',
+                time: 'Сегодня, 09:45',
+                type: 'orders',
+                icon: 'fa-check-circle'
+            },
+            {
+                id: 4,
+                action: 'Добавление клиента',
+                details: 'Добавлен новый клиент: Петров В.К.',
+                time: 'Вчера, 16:45',
+                type: 'system',
+                icon: 'fa-user-plus'
+            },
+            {
+                id: 5,
+                action: 'Изменение пароля',
+                details: 'Пароль учетной записи успешно изменен',
+                time: '03.01.2026, 14:20',
+                type: 'security',
+                icon: 'fa-key'
+            },
+            {
+                id: 6,
+                action: 'Экспорт данных',
+                details: 'Экспортирован список клиентов в формате CSV',
+                time: '02.01.2026, 11:30',
+                type: 'system',
+                icon: 'fa-download'
+            }
+        ];
+        
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+            loadNotifications();
+            loadActivityHistory();
+            setupEventListeners();
+            initActivityChart();
+        });
+        
+        // Загрузка данных пользователя
+        function loadUserData() {
+            // Основная информация
+            document.getElementById('userFullName').textContent = currentUser.fullName;
+            document.getElementById('userPosition').textContent = currentUser.position;
+            document.getElementById('userEmail').textContent = currentUser.email;
+            document.getElementById('userPhone').textContent = currentUser.phone;
+            document.getElementById('joinDate').textContent = currentUser.joinDate;
+            document.getElementById('lastLogin').textContent = currentUser.lastLogin;
+            
+            // Формы редактирования
+            document.getElementById('firstName').value = currentUser.firstName;
+            document.getElementById('lastName').value = currentUser.lastName;
+            document.getElementById('middleName').value = currentUser.middleName;
+            document.getElementById('position').value = currentUser.position;
+            document.getElementById('department').value = currentUser.department;
+            document.getElementById('bio').value = currentUser.bio;
+            document.getElementById('birthDate').value = currentUser.birthDate;
+            
+            document.getElementById('email').value = currentUser.email;
+            document.getElementById('phone').value = currentUser.phone.replace(/[^+\d]/g, '');
+            document.getElementById('telegram').value = currentUser.telegram.replace('@', '');
+            document.getElementById('address').value = currentUser.address;
+            
+            // Статистика
+            updateStatistics();
+            
+            // Настройки уведомлений
+            document.getElementById('emailNotifications').checked = currentUser.emailNotifications;
+            document.getElementById('pushNotifications').checked = currentUser.pushNotifications;
+            document.getElementById('smsNotifications').checked = currentUser.smsNotifications;
+            document.getElementById('newOrdersNotify').checked = currentUser.newOrdersNotify;
+            document.getElementById('completedOrdersNotify').checked = currentUser.completedOrdersNotify;
+            document.getElementById('systemAlertsNotify').checked = currentUser.systemAlertsNotify;
+            document.getElementById('reportReadyNotify').checked = currentUser.reportReadyNotify;
+            
+            // Настройки интерфейса
+            document.getElementById('theme').value = currentUser.theme;
+            document.getElementById('language').value = currentUser.language;
+            document.getElementById('timezone').value = currentUser.timezone;
+            document.getElementById('dateFormat').value = currentUser.dateFormat;
+            document.getElementById('animations').checked = currentUser.animations;
+            document.getElementById('compactMode').checked = currentUser.compactMode;
+            document.getElementById('sidebarCollapsed').checked = currentUser.sidebarCollapsed;
+            
+            // Интеграции
+            document.getElementById('telegramIntegration').checked = currentUser.telegramIntegration;
+            document.getElementById('googleCalendarIntegration').checked = currentUser.googleCalendarIntegration;
+            document.getElementById('accountingIntegration').checked = currentUser.accountingIntegration;
+            document.getElementById('smsIntegration').checked = currentUser.smsIntegration;
+            
+            // Безопасность
+            document.getElementById('authMethod').value = currentUser.authMethod;
+        }
+        
+        // Обновление статистики
+        function updateStatistics() {
+            const orders = JSON.parse(localStorage.getItem('repair_orders')) || [];
+            const today = new Date().toLocaleDateString('ru-RU');
+            
+            // Заявки сегодня
+            const todayOrders = orders.filter(order => {
+                const orderDate = new Date(order.createdDate || order.createdAt || new Date()).toLocaleDateString('ru-RU');
+                return orderDate === today;
+            }).length;
+            
+            // Выполненные заявки сегодня
+            const completedToday = orders.filter(order => {
+                const orderDate = new Date(order.createdDate || order.createdAt || new Date()).toLocaleDateString('ru-RU');
+                return orderDate === today && (order.status === 'completed' || order.status === 'ready');
+            }).length;
+            
+            document.getElementById('statOrders').textContent = todayOrders;
+            document.getElementById('statCompleted').textContent = completedToday;
+            
+            // Дни работы
+            const joinDate = new Date(currentUser.joinDate.split('.').reverse().join('-'));
+            const todayDate = new Date();
+            const daysDiff = Math.floor((todayDate - joinDate) / (1000 * 60 * 60 * 24));
+            document.getElementById('statDays').textContent = daysDiff > 0 ? daysDiff : 1;
+        }
+        
+        // Загрузка уведомлений
+        function loadNotifications() {
+            const notificationsList = document.getElementById('notificationsList');
+            const unreadCount = notifications.filter(n => !n.read).length;
+            
+            // Обновляем бейдж
+            document.getElementById('notificationBadge').textContent = unreadCount;
+            if (unreadCount === 0) {
+                document.getElementById('notificationBadge').style.display = 'none';
+            }
+            
+            // Очищаем список
+            notificationsList.innerHTML = '';
+            
+            // Добавляем уведомления
+            notifications.forEach(notification => {
+                const notificationElement = document.createElement('div');
+                notificationElement.className = `notification-item ${notification.read ? '' : 'unread'}`;
+                notificationElement.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">${notification.title}</h6>
+                            <p class="mb-1">${notification.message}</p>
+                            <small class="notification-time">${notification.date}, ${notification.time}</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm ${notification.read ? 'btn-outline-secondary' : 'btn-outline-primary'}" onclick="toggleNotificationRead(${notification.id})">
+                                <i class="fas fa-${notification.read ? 'envelope' : 'envelope-open'}"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteNotification(${notification.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                notificationsList.appendChild(notificationElement);
+            });
+            
+            // Сохраняем в localStorage
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+        }
+        
+        // Загрузка истории активности
+        function loadActivityHistory() {
+            const activityTimeline = document.getElementById('activityTimeline');
+            activityTimeline.innerHTML = '';
+            
+            activityHistory.forEach((activity, index) => {
+                const activityElement = document.createElement('div');
+                activityElement.className = `activity-item ${index < 3 ? 'recent' : 'old'}`;
+                activityElement.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">${activity.action}</h6>
+                            <p class="mb-1 text-muted">${activity.details}</p>
+                            <small class="activity-time">${activity.time}</small>
+                        </div>
+                        <div>
+                            <i class="fas ${activity.icon} text-muted"></i>
+                        </div>
+                    </div>
+                `;
+                activityTimeline.appendChild(activityElement);
+            });
+            
+            // Сохраняем в localStorage
+            localStorage.setItem('activityHistory', JSON.stringify(activityHistory));
+        }
+        
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            // Форма личных данных
+            document.getElementById('personalInfoForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                savePersonalInfo();
+            });
+            
+            // Форма контактной информации
+            document.getElementById('contactInfoForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveContactInfo();
+            });
+            
+            // Форма смены пароля
+            document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                changePassword();
+            });
+            
+            // Форма настроек уведомлений
+            document.getElementById('notificationSettingsForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveNotificationSettings();
+            });
+            
+            // Форма настроек интерфейса
+            document.getElementById('interfaceSettingsForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveInterfaceSettings();
+            });
+            
+            // Подтверждение очистки данных
+            document.getElementById('confirmClear').addEventListener('input', function() {
+                document.getElementById('clearDataBtn').disabled = this.value !== 'ОЧИСТИТЬ';
+            });
+            
+            // Подтверждение удаления аккаунта
+            document.getElementById('confirmDelete').addEventListener('input', function() {
+                document.getElementById('deleteAccountBtn').disabled = this.value !== 'УДАЛИТЬ';
+            });
+        }
+        
+        // Инициализация графика активности
+        function initActivityChart() {
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Заявки', 'Клиенты', 'Отчеты', 'Система'],
+                    datasets: [{
+                        data: [45, 25, 15, 15],
+                        backgroundColor: [
+                            '#3498db',
+                            '#2ecc71',
+                            '#9b59b6',
+                            '#f39c12'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 15
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // ============= ФУНКЦИИ ПРОФИЛЯ =============
+        
+        // Смена аватара
+        function changeAvatar() {
+            document.getElementById('avatarInput').click();
+        }
+        
+        function uploadAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageData = e.target.result;
+                    
+                    // Обновляем фото в профиле
+                    document.querySelector('.profile-avatar').src = imageData;
+                    
+                    // Обновляем фото в выпадающем меню (если мы на странице профиля)
+                    const navAvatar = document.querySelector('.sidebar-avatar');
+                    if (navAvatar) navAvatar.src = imageData;
+
+                    // СОХРАНЕНИЕ: записываем в localStorage
+                    // Если у тебя объект currentUser, делаем так:
+                    let currentUser = JSON.parse(localStorage.getItem('currentUser')) || {};
+                    currentUser.avatar = imageData;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    alert('Аватар обновлен!');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Сохранение личных данных
+        function savePersonalInfo() {
+            currentUser.firstName = document.getElementById('firstName').value;
+            currentUser.lastName = document.getElementById('lastName').value;
+            currentUser.middleName = document.getElementById('middleName').value;
+            currentUser.fullName = `${currentUser.lastName} ${currentUser.firstName} ${currentUser.middleName}`;
+            currentUser.position = document.getElementById('position').value;
+            currentUser.department = document.getElementById('department').value;
+            currentUser.bio = document.getElementById('bio').value;
+            currentUser.birthDate = document.getElementById('birthDate').value;
+            
+            // Обновляем отображение
+            document.getElementById('userFullName').textContent = currentUser.fullName;
+            document.getElementById('userPosition').textContent = currentUser.position;
+            
+            // Сохраняем
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // Добавляем в историю активности
+            addActivity('Обновление профиля', 'Изменены личные данные', 'system', 'fa-user-edit');
+            
+            showAlert('success', 'Личные данные успешно сохранены!');
+        }
+        
+        // Сохранение контактной информации
+        function saveContactInfo() {
+            currentUser.email = document.getElementById('email').value;
+            currentUser.phone = formatPhone(document.getElementById('phone').value);
+            currentUser.telegram = '@' + document.getElementById('telegram').value.replace('@', '');
+            currentUser.address = document.getElementById('address').value;
+            
+            // Обновляем отображение
+            document.getElementById('userEmail').textContent = currentUser.email;
+            document.getElementById('userPhone').textContent = currentUser.phone;
+            
+            // Сохраняем
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // Добавляем в историю активности
+            addActivity('Обновление контактов', 'Изменена контактная информация', 'system', 'fa-address-book');
+            
+            showAlert('success', 'Контактная информация успешно сохранена!');
+        }
+        
+        // Форматирование телефона
+        function formatPhone(phone) {
+            const cleaned = phone.replace(/\D/g, '');
+            const match = cleaned.match(/^(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})$/);
+            if (match) {
+                return `+${match[1]} (${match[2]}) ${match[3]}-${match[4]}-${match[5]}`;
+            }
+            return phone;
+        }
+        
+        // Смена пароля
+        function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const logoutAll = document.getElementById('logoutAll').checked;
+            
+            // Валидация
+            if (newPassword.length < 8) {
+                showAlert('danger', 'Пароль должен содержать не менее 8 символов!');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showAlert('danger', 'Новый пароль и подтверждение не совпадают!');
+                return;
+            }
+            
+            // Здесь должна быть проверка текущего пароля с сервером
+            // Для демо просто проверяем, что поле не пустое
+            if (!currentPassword) {
+                showAlert('danger', 'Введите текущий пароль!');
+                return;
+            }
+            
+            // Сохраняем новый пароль (в реальном приложении нужно хэшировать)
+            currentUser.password = newPassword; // Внимание: в реальном приложении НЕ храните пароли в localStorage!
+            
+            // Очищаем форму
+            document.getElementById('changePasswordForm').reset();
+            
+            // Добавляем в историю активности
+            addActivity('Смена пароля', 'Пароль учетной записи успешно изменен', 'security', 'fa-key');
+            
+            // Если выбрано "Выйти со всех устройств"
+            if (logoutAll) {
+                logoutAllSessions();
+            }
+            
+            showAlert('success', 'Пароль успешно изменен!');
+        }
+        
+        // Отключение двухфакторной аутентификации
+        function disable2FA() {
+            if (confirm('Вы уверены, что хотите отключить двухфакторную аутентификацию?\nЭто снизит безопасность вашего аккаунта.')) {
+                currentUser.twoFactorEnabled = false;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                // Добавляем в историю активности
+                addActivity('Отключение 2FA', 'Отключена двухфакторная аутентификация', 'security', 'fa-shield-alt');
+                
+                showAlert('warning', 'Двухфакторная аутентификация отключена. Рекомендуем включить ее для безопасности.');
+            }
+        }
+        
+        // Генерация резервных кодов
+        function generateBackupCodes() {
+            const codes = [];
+            for (let i = 0; i < 10; i++) {
+                codes.push(Math.random().toString(36).substring(2, 8).toUpperCase());
+            }
+            
+            alert(`Резервные коды сгенерированы:\n\n${codes.join('\n')}\n\nСохраните эти коды в безопасном месте!`);
+            
+            // Добавляем в историю активности
+            addActivity('Генерация кодов', 'Сгенерированы новые резервные коды 2FA', 'security', 'fa-redo');
+        }
+        
+        // Выход со всех устройств
+        function logoutAllSessions() {
+            if (confirm('Завершить все активные сессии?\nВы будете выведены из системы на всех устройствах.')) {
+                // В реальном приложении здесь должен быть запрос к серверу
+                // Для демо просто показываем сообщение
+                
+                // Добавляем в историю активности
+                addActivity('Завершение сессий', 'Все активные сессии завершены', 'security', 'fa-sign-out-alt');
+                
+                showAlert('info', 'Все сессии завершены. Требуется повторный вход.');
+                
+                // Через 2 секунды переходим на страницу входа
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            }
+        }
+        
+        // Переключение статуса прочтения уведомления
+        function toggleNotificationRead(id) {
+            const notification = notifications.find(n => n.id === id);
+            if (notification) {
+                notification.read = !notification.read;
+                loadNotifications();
+                
+                // Сохраняем
+                localStorage.setItem('notifications', JSON.stringify(notifications));
+            }
+        }
+        
+        // Удаление уведомления
+        function deleteNotification(id) {
+            notifications = notifications.filter(n => n.id !== id);
+            loadNotifications();
+        }
+        
+        // Отметить все уведомления как прочитанные
+        function markAllAsRead() {
+            notifications.forEach(n => n.read = true);
+            loadNotifications();
+            
+            // Добавляем в историю активности
+            addActivity('Чтение уведомлений', 'Все уведомления отмечены как прочитанные', 'system', 'fa-check-double');
+            
+            showAlert('info', 'Все уведомления отмечены как прочитанные.');
+        }
+        
+        // Очистить все уведомления
+        function clearAllNotifications() {
+            if (notifications.length === 0) {
+                showAlert('info', 'Нет уведомлений для очистки.');
+                return;
+            }
+            
+            if (confirm(`Удалить все уведомления (${notifications.length})?`)) {
+                notifications = [];
+                loadNotifications();
+                
+                // Добавляем в историю активности
+                addActivity('Очистка уведомлений', 'Все уведомления удалены', 'system', 'fa-trash');
+                
+                showAlert('info', 'Все уведомления удалены.');
+            }
+        }
+        
+        // Сохранение настроек уведомлений
+        function saveNotificationSettings() {
+            currentUser.emailNotifications = document.getElementById('emailNotifications').checked;
+            currentUser.pushNotifications = document.getElementById('pushNotifications').checked;
+            currentUser.smsNotifications = document.getElementById('smsNotifications').checked;
+            currentUser.newOrdersNotify = document.getElementById('newOrdersNotify').checked;
+            currentUser.completedOrdersNotify = document.getElementById('completedOrdersNotify').checked;
+            currentUser.systemAlertsNotify = document.getElementById('systemAlertsNotify').checked;
+            currentUser.reportReadyNotify = document.getElementById('reportReadyNotify').checked;
+            
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // Добавляем в историю активности
+            addActivity('Настройки уведомлений', 'Изменены настройки уведомлений', 'system', 'fa-bell');
+            
+            showAlert('success', 'Настройки уведомлений сохранены!');
+        }
+        
+        // Фильтрация активности
+        function filterActivity(type) {
+            const buttons = document.querySelectorAll('#activity .btn-group .btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const activityTimeline = document.getElementById('activityTimeline');
+            activityTimeline.innerHTML = '';
+            
+            const filteredActivities = type === 'all' 
+                ? activityHistory 
+                : activityHistory.filter(a => a.type === type);
+            
+            filteredActivities.forEach((activity, index) => {
+                const activityElement = document.createElement('div');
+                activityElement.className = `activity-item ${index < 3 ? 'recent' : 'old'}`;
+                activityElement.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">${activity.action}</h6>
+                            <p class="mb-1 text-muted">${activity.details}</p>
+                            <small class="activity-time">${activity.time}</small>
+                        </div>
+                        <div>
+                            <i class="fas ${activity.icon} text-muted"></i>
+                        </div>
+                    </div>
+                `;
+                activityTimeline.appendChild(activityElement);
+            });
+        }
+        
+                // Экспорт активности
+        function exportActivity() {
+            const period = document.getElementById('exportPeriod').value;
+            const format = document.getElementById('exportFormat').value;
+            
+            let data;
+            let blob;
+            let filename = `активность_${new Date().toLocaleDateString('ru-RU')}`;
+            
+            if (format === 'csv') {
+                // CSV с BOM для кириллицы
+                const csvContent = '\uFEFF'; // UTF-8 BOM
+                data = csvContent + 'Действие,Детали,Время,Тип\n';
+                
+                activityHistory.forEach(a => {
+                    const action = a.action.replace(/"/g, '""');
+                    const details = a.details.replace(/"/g, '""');
+                    const time = a.time.replace(/"/g, '""');
+                    const type = a.type === 'security' ? 'Безопасность' : 
+                                a.type === 'orders' ? 'Заявки' : 
+                                a.type === 'system' ? 'Система' : a.type;
+                    
+                    data += `"${action}","${details}","${time}","${type}"\n`;
+                });
+                
+                blob = new Blob([data], { 
+                    type: 'text/csv;charset=utf-8;' 
+                });
+                filename += '.csv';
+                
+            } else if (format === 'json') {
+                data = JSON.stringify(activityHistory, null, 2);
+                blob = new Blob([data], { 
+                    type: 'application/json;charset=utf-8;' 
+                });
+                filename += '.json';
+                
+            } else if (format === 'pdf') {
+                // PDF экспорт - используем простую версию
+                exportActivityToPDFSimple();
+                return;
+                
+            } else if (format === 'txt') {
+                // TXT формат
+                data = '=== ИСТОРИЯ АКТИВНОСТИ ===\n\n';
+                data += `Пользователь: ${currentUser.fullName}\n`;
+                data += `Должность: ${currentUser.position}\n`;
+                data += `Дата формирования: ${new Date().toLocaleDateString('ru-RU')}\n`;
+                data += `Всего записей: ${activityHistory.length}\n`;
+                data += '='.repeat(50) + '\n\n';
+                
+                activityHistory.forEach((a, index) => {
+                    const type = a.type === 'security' ? 'Безопасность' : 
+                                a.type === 'orders' ? 'Заявки' : 
+                                a.type === 'system' ? 'Система' : a.type;
+                    
+                    data += `${index + 1}. ${a.action}\n`;
+                    data += `   Детали: ${a.details}\n`;
+                    data += `   Время: ${a.time}\n`;
+                    data += `   Тип: ${type}\n`;
+                    data += '-'.repeat(50) + '\n\n';
+                });
+                
+                blob = new Blob([data], { 
+                    type: 'text/plain;charset=utf-8;' 
+                });
+                filename += '.txt';
+            }
+            
+            // Скачивание файла
+            downloadFile(blob, filename);
+            
+            // Добавляем в историю активности
+            addActivity('Экспорт активности', `Экспортирована история активности в формате ${format.toUpperCase()}`, 'system', 'fa-download');
+            
+            showAlert('success', `История активности экспортирована в формате ${format.toUpperCase()}!`);
+        }
+
+        // Универсальная функция скачивания файла
+        function downloadFile(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            
+            // Очистка
+            setTimeout(() => {
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+
+        // PDF экспорт активности с использованием автотаблиц
+    function exportActivityToPDF() {
+        // Проверяем, загружена ли библиотека jsPDF
+        if (typeof window.jspdf === 'undefined') {
+            showAlert('warning', 'Библиотека PDF не загружена. Используйте другой формат.');
+            return;
+        }
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        const reportDate = new Date().toLocaleDateString('ru-RU');
+        const title = 'История активности пользователя';
+        
+        // Заголовок
+        doc.setFontSize(18);
+        doc.text(title, 20, 20);
+        
+        doc.setFontSize(11);
+        doc.text(`Пользователь: ${currentUser.fullName}`, 20, 30);
+        doc.text(`Должность: ${currentUser.position}`, 20, 37);
+        doc.text(`Дата формирования: ${reportDate}`, 20, 44);
+        doc.text(`Всего записей: ${activityHistory.length}`, 20, 51);
+        
+        // Подготовка данных для таблицы
+        const tableData = activityHistory.map((activity, index) => {
+            let typeText;
+            switch(activity.type) {
+                case 'security':
+                    typeText = 'Безопасность';
+                    break;
+                case 'orders':
+                    typeText = 'Заявки';
+                    break;
+                case 'system':
+                    typeText = 'Система';
+                    break;
+                default:
+                    typeText = activity.type;
+            }
+            
+            return [
+                index + 1,
+                activity.action,
+                activity.details,
+                activity.time,
+                typeText
+            ];
+        });
+        
+        // Настройки таблицы
+        const tableConfig = {
+            head: [['№', 'Действие', 'Детали', 'Время', 'Тип']],
+            body: tableData,
+            startY: 60,
+            theme: 'grid',
+            headStyles: {
+                fillColor: [52, 152, 219], // Синий цвет заголовка
+                textColor: [255, 255, 255],
+                fontSize: 10,
+                fontStyle: 'bold'
+            },
+            bodyStyles: {
+                fontSize: 9,
+                textColor: [0, 0, 0]
+            },
+            alternateRowStyles: {
+                fillColor: [245, 245, 245]
+            },
+            columnStyles: {
+                0: { cellWidth: 10 }, // №
+                1: { cellWidth: 40 }, // Действие
+                2: { cellWidth: 80 }, // Детали
+                3: { cellWidth: 30 }, // Время
+                4: { cellWidth: 30 }  // Тип
+            },
+            margin: { top: 60 },
+            didDrawPage: function(data) {
+                // Номер страницы
+                const pageCount = doc.internal.getNumberOfPages();
+                doc.setFontSize(10);
+                doc.setTextColor(150, 150, 150);
+                doc.text(
+                    `Страница ${data.pageNumber} из ${pageCount}`,
+                    doc.internal.pageSize.width / 2,
+                    doc.internal.pageSize.height - 10,
+                    { align: 'center' }
+                );
+            }
+        };
+        
+        // Создаем таблицу
+        doc.autoTable(tableConfig);
+        
+        // Футер
+        const finalY = doc.lastAutoTable.finalY || 60;
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Документ сгенерирован автоматически в системе "РемонтТех"', 20, finalY + 20);
+        
+        // Сохраняем PDF
+        const filename = `активность_${currentUser.lastName}_${reportDate.replace(/\./g, '_')}.pdf`;
+        doc.save(filename);
+        
+        // Добавляем в историю активности
+        addActivity('Экспорт активности', 'Экспортирована история активности в формате PDF', 'system', 'fa-file-pdf');
+        
+        showAlert('success', 'История активности экспортирована в формате PDF!');
+    }
+
+// Альтернативный простой PDF экспорт без автотаблиц
+    function exportActivityToPDFSimple() {
+        if (typeof window.jspdf === 'undefined') {
+            showAlert('warning', 'Библиотека PDF не загружена. Используйте другой формат.');
+            return;
+        }
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        const reportDate = new Date().toLocaleDateString('ru-RU');
+        const title = 'История активности пользователя';
+        
+        // Используем стандартные шрифты, которые поддерживают кириллицу
+        doc.setFont("helvetica");
+        
+        // Заголовок
+        doc.setFontSize(18);
+        doc.text(title, 20, 20);
+        
+        doc.setFontSize(11);
+        doc.text(`Пользователь: ${currentUser.fullName}`, 20, 30);
+        doc.text(`Дата формирования: ${reportDate}`, 20, 37);
+        doc.text(`Всего записей: ${activityHistory.length}`, 20, 44);
+        
+        // Создаем простую таблицу
+        let y = 60;
+        let page = 1;
+        
+        // Заголовки таблицы
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text('№', 20, y);
+        doc.text('Действие', 30, y);
+        doc.text('Время', 120, y);
+        doc.text('Тип', 160, y);
+        doc.setFont(undefined, 'normal');
+        
+        y += 10;
+        
+        // Данные таблицы
+        doc.setFontSize(10);
+        
+        activityHistory.forEach((activity, index) => {
+            // Проверяем, нужна ли новая страница
+            if (y > 270) {
+                doc.addPage();
+                page++;
+                y = 20;
+                
+                // Добавляем заголовок на новой странице
+                doc.setFontSize(10);
+                doc.text(`Продолжение истории активности - Страница ${page}`, 20, y);
+                y += 15;
+            }
+            
+            // Номер
+            doc.text(`${index + 1}.`, 20, y);
+            
+            // Действие
+            const actionLines = doc.splitTextToSize(activity.action, 70);
+            if (actionLines.length > 1) {
+                doc.text(actionLines[0], 30, y);
+                // Если действие многострочное, смещаем следующие строки
+                for (let i = 1; i < actionLines.length; i++) {
+                    y += 5;
+                    doc.text(actionLines[i], 30, y);
+                }
+            } else {
+                doc.text(activity.action, 30, y);
+            }
+            
+            // Время
+            doc.text(activity.time, 120, y);
+            
+            // Тип
+            let typeText;
+            switch(activity.type) {
+                case 'security': typeText = 'Безопасность'; break;
+                case 'orders': typeText = 'Заявки'; break;
+                case 'system': typeText = 'Система'; break;
+                default: typeText = activity.type;
+            }
+            doc.text(typeText, 160, y);
+            
+            // Детали на следующей строке
+            y += 7;
+            const detailsLines = doc.splitTextToSize(activity.details, 150);
+            doc.text(`Детали: ${detailsLines[0]}`, 30, y);
+            
+            if (detailsLines.length > 1) {
+                for (let i = 1; i < detailsLines.length; i++) {
+                    y += 5;
+                    doc.text(detailsLines[i], 30, y);
+                }
+            }
+            
+            y += 10;
+            
+            // Разделительная линия
+            doc.setDrawColor(240, 240, 240);
+            doc.line(20, y, 190, y);
+            y += 5;
+        });
+        
+        // Номер страницы
+        doc.setFontSize(10);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+            `Страница ${page}`,
+            doc.internal.pageSize.width / 2,
+            doc.internal.pageSize.height - 10,
+            { align: 'center' }
+        );
+        
+        // Футер
+        doc.setTextColor(100, 100, 100);
+        doc.text('Документ сгенерирован автоматически в системе "РемонтТех"', 20, doc.internal.pageSize.height - 20);
+        
+        // Сохраняем PDF
+        const filename = `активность_${reportDate.replace(/\./g, '_')}.pdf`;
+        doc.save(filename);
+        
+        // Добавляем в историю активности
+        addActivity('Экспорт активности', 'Экспортирована история активности в формате PDF', 'system', 'fa-file-pdf');
+        
+        showAlert('success', 'История активности экспортирована в формате PDF!');
+    }
+
+    // Обновляем HTML для добавления формата TXT
+    function updateExportFormats() {
+        // В HTML нужно обновить select с форматами:
+        // <select class="form-select" id="exportFormat">
+        //     <option value="csv">CSV</option>
+        //     <option value="pdf" selected>PDF</option>
+        //     <option value="json">JSON</option>
+        //     <option value="txt">TXT (текстовый)</option>
+        // </select>
+    }
+
+    // Альтернативный метод для CSV с использованием Data URI (работает в большинстве браузеров)
+    function downloadCSVWithCyrillic(data, filename) {
+        // Создаем BOM для UTF-8
+        const BOM = '\uFEFF';
+        const csv = BOM + data;
+        
+        // Используем Data URI с указанием кодировки
+        const uri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        const link = document.createElement('a');
+        link.href = uri;
+        link.download = filename;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Пример использования для CSV:
+    function exportCSVAlternative() {
+        let csv = 'Действие,Детали,Время,Тип\n';
+        
+        activityHistory.forEach(a => {
+            csv += `"${a.action}","${a.details}","${a.time}","${a.type}"\n`;
+        });
+        
+        downloadCSVWithCyrillic(csv, `активность_${new Date().toLocaleDateString('ru-RU')}.csv`);
+    }
+        
+        // Сохранение настроек интерфейса
+        function saveInterfaceSettings() {
+            currentUser.theme = document.getElementById('theme').value;
+            currentUser.language = document.getElementById('language').value;
+            currentUser.timezone = document.getElementById('timezone').value;
+            currentUser.dateFormat = document.getElementById('dateFormat').value;
+            currentUser.animations = document.getElementById('animations').checked;
+            currentUser.compactMode = document.getElementById('compactMode').checked;
+            currentUser.sidebarCollapsed = document.getElementById('sidebarCollapsed').checked;
+            
+            // Интеграции
+            currentUser.telegramIntegration = document.getElementById('telegramIntegration').checked;
+            currentUser.googleCalendarIntegration = document.getElementById('googleCalendarIntegration').checked;
+            currentUser.accountingIntegration = document.getElementById('accountingIntegration').checked;
+            currentUser.smsIntegration = document.getElementById('smsIntegration').checked;
+            
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // Добавляем в историю активности
+            addActivity('Настройки интерфейса', 'Изменены настройки интерфейса и интеграций', 'system', 'fa-cog');
+            
+            showAlert('success', 'Настройки сохранены! Для применения некоторых изменений может потребоваться перезагрузка страницы.');
+        }
+        
+        // Создание резервной копии
+        function createBackup() {
+            const backupData = {
+                user: currentUser,
+                settings: {
+                    theme: currentUser.theme,
+                    language: currentUser.language,
+                    // ... другие настройки
+                },
+                timestamp: new Date().toISOString()
+            };
+            
+            const data = JSON.stringify(backupData, null, 2);
+            const blob = new Blob([data], { type: 'application/json;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `резервная_копия_${new Date().toLocaleDateString('ru-RU')}.json`;
+            link.click();
+            
+            // Добавляем в историю активности
+            addActivity('Резервное копирование', 'Создана резервная копия настроек', 'system', 'fa-download');
+            
+            showAlert('success', 'Резервная копия создана и загружена!');
+        }
+        
+        // Восстановление из резервной копии
+        function restoreBackup() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const backupData = JSON.parse(e.target.result);
+                        
+                        if (confirm('Восстановить данные из резервной копии?\nТекущие настройки будут перезаписаны.')) {
+                            // Восстанавливаем данные
+                            Object.assign(currentUser, backupData.user || {});
+                            
+                            // Сохраняем
+                            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                            
+                            // Перезагружаем страницу
+                            location.reload();
+                            
+                            // Добавляем в историю активности
+                            addActivity('Восстановление', 'Данные восстановлены из резервной копии', 'system', 'fa-upload');
+                        }
+                    } catch (error) {
+                        showAlert('danger', 'Ошибка при чтении файла резервной копии!');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+        
+        // Очистка всех данных
+        function clearAllData() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('clearDataModal'));
+            modal.hide();
+            
+            // Очищаем данные
+            notifications = [];
+            activityHistory = [];
+            
+            // Сохраняем
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+            localStorage.setItem('activityHistory', JSON.stringify(activityHistory));
+            
+            // Обновляем отображение
+            loadNotifications();
+            loadActivityHistory();
+            
+            // Добавляем в историю активности (перед очисткой)
+            addActivity('Очистка данных', 'Все пользовательские данные очищены', 'system', 'fa-trash');
+            
+            showAlert('warning', 'Все данные очищены!');
+        }
+        
+        // Удаление аккаунта
+        function deleteAccount() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteAccountModal'));
+            modal.hide();
+            
+            // В реальном приложении здесь должен быть запрос к серверу
+            // Для демо просто показываем сообщение и переходим на страницу входа
+            
+            showAlert('danger', 'Аккаунт удален. Вы будете перенаправлены на страницу входа.');
+            
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 3000);
+        }
+        
+        // Добавление записи в историю активности
+        function addActivity(action, details, type, icon) {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            const dateString = now.toLocaleDateString('ru-RU');
+            
+            const newActivity = {
+                id: activityHistory.length + 1,
+                action: action,
+                details: details,
+                time: `Сегодня, ${timeString}`,
+                type: type,
+                icon: icon
+            };
+            
+            activityHistory.unshift(newActivity);
+            if (activityHistory.length > 50) {
+                activityHistory.pop(); // Ограничиваем историю 50 записями
+            }
+            
+            localStorage.setItem('activityHistory', JSON.stringify(activityHistory));
+            
+            // Обновляем отображение, если открыта вкладка активности
+            if (document.getElementById('activity-tab').classList.contains('active')) {
+                loadActivityHistory();
+            }
+        }
+        
+        // Показать уведомление
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 350px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Автоматически скрыть через 5 секунд
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+        document.querySelectorAll('.toggle-password').forEach(button => {
+            button.addEventListener('click', function() {
+                // Находим input, который находится в той же группе, что и кнопка
+                const input = this.parentElement.querySelector('input');
+                const icon = this.querySelector('i');
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedData = localStorage.getItem('currentUser');
+            if (savedData) {
+                const user = JSON.parse(savedData);
+                if (user.avatar) {
+                    // Ищем все картинки с классом sidebar-avatar и ставим им сохраненное фото
+                    const avatars = document.querySelectorAll('.sidebar-avatar');
+                    avatars.forEach(img => {
+                        img.src = user.avatar;
+                    });
+                }
+            }
+        });
+    </script>
+    
+</body>
+</html>

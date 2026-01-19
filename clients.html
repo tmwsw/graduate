@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Клиенты - Система управления ремонтами</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+        }
+        .sidebar a {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 12px 20px;
+            display: block;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+            color: white;
+            border-left: 4px solid #3498db;
+        }
+        .sidebar .active {
+            background-color: #34495e;
+            border-left: 4px solid #3498db;
+            font-weight: 600;
+        }
+        .table th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+        .client-card {
+            transition: transform 0.2s;
+            border-left: 4px solid #3498db;
+        }
+        .client-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .stats-badge {
+            font-size: 0.75em;
+            padding: 3px 8px;
+        }
+        .action-btn {
+            margin: 2px;
+            min-width: 80px;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar (одинаковый для всех страниц) -->
+            <div class="col-md-3 col-lg-2 sidebar d-md-block">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="mb-0"><i class="text-center mt-3 mb-4"></i>РемонтТех</h5>
+                    </div>
+                    
+                    <ul class="nav flex-column mb-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">
+                                <i class="fas fa-tachometer-alt me-2"></i>Главная
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="orders.html">
+                                <i class="fas fa-tools me-2"></i>Заявки на ремонт
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="clients.html">
+                                <i class="fas fa-users me-2"></i>Клиенты
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="devices.html">
+                                <i class="fas fa-laptop me-2"></i>Устройства
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="masters.html">
+                                <i class="fas fa-user-cog me-2"></i>Мастера
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="reports.html">
+                                <i class="fas fa-chart-bar me-2"></i>Отчеты
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <hr class="text-white-50">
+                    
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                            <strong>Администратор</strong>
+                            <span class="badge bg-success ms-2">Online</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                            <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>Профиль</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">
+                        <i class="fas fa-users text-primary me-2"></i>
+                        Клиенты
+                    </h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#newClientModal">
+                            <i class="fas fa-user-plus me-1"></i> Новый клиент
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="exportClients()">
+                            <i class="fas fa-download me-1"></i> Экспорт
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-3 col-6">
+                        <div class="card border-primary">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">Всего клиентов</h6>
+                                <h4 class="card-title text-primary" id="totalClients">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="card border-success">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">Активные</h6>
+                                <h4 class="card-title text-success" id="activeClients">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="card border-warning">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">Устройств</h6>
+                                <h4 class="card-title text-warning" id="totalDevices">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="card border-info">
+                            <div class="card-body text-center py-2">
+                                <h6 class="card-subtitle mb-1 text-muted">Среднее в чеке</h6>
+                                <h4 class="card-title text-info" id="avgOrderValue">0 ₽</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search and Filters -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Поиск по имени, телефону или email..." id="searchInput">
+                                    <button class="btn btn-primary" type="button" onclick="searchClients()">
+                                        <i class="fas fa-search"></i> Найти
+                                    </button>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                                        <i class="fas fa-times"></i> Сбросить
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-select" id="clientTypeFilter" onchange="filterClients()">
+                                    <option value="">Все типы клиентов</option>
+                                    <option value="regular">Постоянные</option>
+                                    <option value="new">Новые</option>
+                                    <option value="corporate">Корпоративные</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Toggle -->
+                <div class="btn-group mb-4" role="group" aria-label="View toggle">
+                    <input type="radio" class="btn-check" name="viewMode" id="viewTable" autocomplete="off" checked onclick="setViewMode('table')">
+                    <label class="btn btn-outline-primary" for="viewTable">
+                        <i class="fas fa-table me-1"></i> Таблица
+                    </label>
+                    <input type="radio" class="btn-check" name="viewMode" id="viewCards" autocomplete="off" onclick="setViewMode('cards')">
+                    <label class="btn btn-outline-primary" for="viewCards">
+                        <i class="fas fa-th-large me-1"></i> Карточки
+                    </label>
+                </div>
+
+                <!-- Table View -->
+                <div id="tableView" class="view-section">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th width="50">#</th>
+                                            <th>Клиент</th>
+                                            <th width="150">Контакты</th>
+                                            <th width="100">Устройства</th>
+                                            <th width="100">Заявок</th>
+                                            <th width="120">Всего потрачено</th>
+                                            <th width="100">Статус</th>
+                                            <th width="200">Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="clientsTableBody">
+                                        <!-- Данные будут загружены через JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cards View -->
+                <div id="cardsView" class="view-section" style="display: none;">
+                    <div class="row" id="clientsCardsContainer">
+                        <!-- Карточки будут загружены через JS -->
+                    </div>
+                </div>
+
+                <!-- No Clients Message -->
+                <div class="text-center py-5" id="noClientsMessage" style="display: none;">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Нет клиентов</h4>
+                    <p class="text-muted">Добавьте первого клиента, нажав кнопку "Новый клиент"</p>
+                    <button class="btn btn-success mt-2" data-bs-toggle="modal" data-bs-target="#newClientModal">
+                        <i class="fas fa-user-plus me-1"></i> Добавить клиента
+                    </button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal: New Client -->
+    <div class="modal fade" id="newClientModal" tabindex="-1" aria-labelledby="newClientModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newClientModalLabel">
+                        <i class="fas fa-user-plus me-2"></i>Новый клиент
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newClientForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="clientFullName" class="form-label">ФИО *</label>
+                                <input type="text" class="form-control" id="clientFullName" required placeholder="Иванов Иван Иванович">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="clientPhone" class="form-label">Телефон *</label>
+                                <input type="tel" class="form-control" id="clientPhone" required placeholder="+7 (XXX) XXX-XX-XX">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="clientEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="clientEmail" placeholder="client@example.com">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="clientType" class="form-label">Тип клиента</label>
+                                <select class="form-select" id="clientType">
+                                    <option value="regular">Постоянный</option>
+                                    <option value="new">Новый</option>
+                                    <option value="corporate">Корпоративный</option>
+                                    <option value="vip">VIP</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="clientAddressSearch" class="form-label">Адрес обслуживания</label>
+                            <div class="input-group">
+                                <select class="form-select flex-grow-0" style="width: 35%;">
+                                    <option selected>Везде</option>
+                                    <optgroup label="Районы города">
+                                        <option value="center">Центральный</option>
+                                        <option value="north">Северный</option>
+                                        <option value="south">Южный</option>
+                                    </optgroup>
+                                    <optgroup label="Филиалы">
+                                        <option value="office-1">Офис на Ленина</option>
+                                        <option value="office-2">Офис на Мира</option>
+                                    </optgroup>
+                                </select>
+
+                                <input class="form-control" list="addressVariants" id="clientAddressSearch" placeholder="Улица, дом, кв...">
+                                
+                                <datalist id="addressVariants">
+                                    <option value="ул. Ленина, д. 1, офис 101 (Центр)">
+                                    <option value="ул. Ленина, д. 25, кв. 12 (Центр)">
+                                    <option value="пр. Мира, д. 45, склад 3 (Север)">
+                                    <option value="пр. Мира, д. 10, кв. 5 (Север)">
+                                    <option value="ул. Садовая, д. 115 (Юг)">
+                                </datalist>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="clientNotes" class="form-label">Примечания</label>
+                            <textarea class="form-control" id="clientNotes" rows="3" placeholder="Дополнительная информация о клиенте..."></textarea>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="sendWelcome" checked>
+                            <label class="form-check-label" for="sendWelcome">
+                                Отправить приветственное сообщение
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveNewClient()">
+                        <i class="fas fa-save me-1"></i> Добавить клиента
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Client -->
+    <div class="modal fade" id="editClientModal" tabindex="-1" aria-labelledby="editClientModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editClientModalLabel">
+                        <i class="fas fa-edit me-2"></i>Редактировать клиента
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="editClientModalBody">
+                    <!-- Форма редактирования будет загружена динамически -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Clients JS -->
+    <script>
+        // Данные клиентов
+        let clients = JSON.parse(localStorage.getItem('clients')) || [];
+        let currentViewMode = 'table';
+        
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            loadClients();
+            updateStatistics();
+        });
+        
+        // Загрузка клиентов
+        function loadClients() {
+            // Если нет данных в localStorage, создаем тестовых клиентов
+            if (clients.length === 0) {
+                createDemoClients();
+            }
+            
+            displayClients();
+            updateNoClientsMessage();
+        }
+        
+        // Создание демо-клиентов
+        function createDemoClients() {
+            const demoClients = [
+                {
+                    id: 1,
+                    fullName: 'Иванов Алексей Сергеевич',
+                    phone: '+7 (912) 345-67-89',
+                    email: 'ivanov@example.com',
+                    address: 'ул. Ленина, 10, кв. 5',
+                    clientType: 'regular',
+                    notes: 'Постоянный клиент с 2020 года',
+                    createdAt: '2023-01-15',
+                    devicesCount: 2,
+                    ordersCount: 5,
+                    totalSpent: 18500,
+                    isActive: true
+                },
+                {
+                    id: 2,
+                    fullName: 'Сидорова Мария Петровна',
+                    phone: '+7 (923) 456-78-90',
+                    email: 'sidorova@example.com',
+                    address: 'пр. Мира, 25, кв. 12',
+                    clientType: 'new',
+                    notes: 'Предпочитает уведомления по SMS',
+                    createdAt: '2023-10-20',
+                    devicesCount: 1,
+                    ordersCount: 1,
+                    totalSpent: 8900,
+                    isActive: true
+                },
+                {
+                    id: 3,
+                    fullName: 'Петров Владимир Константинович',
+                    phone: '+7 (934) 567-89-01',
+                    email: 'petrov@example.com',
+                    address: 'ул. Советская, 45',
+                    clientType: 'corporate',
+                    notes: 'Бизнес-клиент, договор №123',
+                    createdAt: '2023-09-10',
+                    devicesCount: 3,
+                    ordersCount: 8,
+                    totalSpent: 45200,
+                    isActive: true
+                },
+                {
+                    id: 4,
+                    fullName: 'ООО "Вектор"',
+                    phone: '+7 (800) 123-45-67',
+                    email: 'office@vector.ru',
+                    address: 'ул. Промышленная, 15',
+                    clientType: 'corporate',
+                    notes: 'Корпоративный клиент',
+                    createdAt: '2022-05-15',
+                    devicesCount: 5,
+                    ordersCount: 12,
+                    totalSpent: 125000,
+                    isActive: true
+                },
+                {
+                    id: 5,
+                    fullName: 'Козлова Анна Викторовна',
+                    phone: '+7 (945) 678-90-12',
+                    email: 'kozlov@example.com',
+                    address: 'ул. Центральная, 33, кв. 7',
+                    clientType: 'vip',
+                    notes: 'VIP клиент',
+                    createdAt: '2023-11-01',
+                    devicesCount: 1,
+                    ordersCount: 2,
+                    totalSpent: 15600,
+                    isActive: true
+                }
+            ];
+            
+            clients = demoClients;
+            localStorage.setItem('clients', JSON.stringify(clients));
+        }
+        
+        // Отображение клиентов
+        function displayClients(filteredClients = clients) {
+            if (currentViewMode === 'table') {
+                displayClientsTable(filteredClients);
+            } else {
+                displayClientsCards(filteredClients);
+            }
+        }
+        
+        // Табличное отображение
+        function displayClientsTable(clientsList) {
+            const tableBody = document.getElementById('clientsTableBody');
+            tableBody.innerHTML = '';
+            
+            clientsList.forEach(client => {
+                const avatarLetter = client.fullName.charAt(0);
+                const row = document.createElement('tr');
+                
+                // Определяем цвет статуса
+                let statusBadge = '';
+                switch(client.clientType) {
+                    case 'regular':
+                        statusBadge = '<span class="badge bg-primary">Постоянный</span>';
+                        break;
+                    case 'new':
+                        statusBadge = '<span class="badge bg-success">Новый</span>';
+                        break;
+                    case 'corporate':
+                        statusBadge = '<span class="badge bg-warning">Корпоративный</span>';
+                        break;
+                    case 'vip':
+                        statusBadge = '<span class="badge bg-danger">VIP</span>';
+                        break;
+                    default:
+                        statusBadge = '<span class="badge bg-secondary">Обычный</span>';
+                }
+                
+                row.innerHTML = `
+                    <td>${client.id}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar me-3">${avatarLetter}</div>
+                            <div>
+                                <strong>${client.fullName}</strong><br>
+                                <small class="text-muted">Добавлен: ${client.createdAt}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div><small>📱 ${client.phone}</small></div>
+                        <div><small>📧 ${client.email || 'Не указан'}</small></div>
+                    </td>
+                    <td><span class="badge bg-info">${client.devicesCount || 0}</span></td>
+                    <td><span class="badge bg-secondary">${client.ordersCount || 0}</span></td>
+                    <td><strong>${(client.totalSpent || 0).toLocaleString()} ₽</strong></td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary action-btn" onclick="viewClient(${client.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning action-btn" onclick="editClient(${client.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-success action-btn" onclick="addDeviceToClient(${client.id})">
+                            <i class="fas fa-laptop"></i>
+                        </button>
+                        <button class="btn btn-sm btn-info action-btn" onclick="addOrderToClient(${client.id})">
+                            <i class="fas fa-plus-circle"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Отображение карточками
+        function displayClientsCards(clientsList) {
+            const container = document.getElementById('clientsCardsContainer');
+            container.innerHTML = '';
+            
+            clientsList.forEach(client => {
+                const avatarLetter = client.fullName.charAt(0);
+                
+                // Определяем цвет карточки по типу клиента
+                let cardColorClass = '';
+                switch(client.clientType) {
+                    case 'regular':
+                        cardColorClass = 'border-primary';
+                        break;
+                    case 'new':
+                        cardColorClass = 'border-success';
+                        break;
+                    case 'corporate':
+                        cardColorClass = 'border-warning';
+                        break;
+                    case 'vip':
+                        cardColorClass = 'border-danger';
+                        break;
+                    default:
+                        cardColorClass = 'border-secondary';
+                }
+                
+                const card = document.createElement('div');
+                card.className = 'col-md-6 col-lg-4 mb-4';
+                card.innerHTML = `
+                    <div class="card client-card h-100 ${cardColorClass}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="avatar">${avatarLetter}</div>
+                                <div>
+                                    ${client.clientType === 'vip' ? '<span class="badge bg-danger stats-badge">VIP</span>' : ''}
+                                    ${client.clientType === 'corporate' ? '<span class="badge bg-warning stats-badge">Корп.</span>' : ''}
+                                </div>
+                            </div>
+                            
+                            <h5 class="card-title">${client.fullName}</h5>
+                            
+                            <div class="mb-3">
+                                <div class="text-muted small mb-1">
+                                    <i class="fas fa-phone me-1"></i> ${client.phone}
+                                </div>
+                                <div class="text-muted small">
+                                    <i class="fas fa-envelope me-1"></i> ${client.email || 'Email не указан'}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-6 text-center">
+                                    <div class="text-muted small">Устройств</div>
+                                    <div class="h5 mb-0">${client.devicesCount || 0}</div>
+                                </div>
+                                <div class="col-6 text-center">
+                                    <div class="text-muted small">Заявок</div>
+                                    <div class="h5 mb-0">${client.ordersCount || 0}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="text-muted small">Всего потрачено</div>
+                                <div class="h4 text-primary">${(client.totalSpent || 0).toLocaleString()} ₽</div>
+                            </div>
+                            
+                            <div class="small text-muted mb-3">
+                                <i class="fas fa-calendar me-1"></i> Добавлен: ${client.createdAt}
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-sm btn-primary" onclick="viewClient(${client.id})">
+                                    <i class="fas fa-eye me-1"></i> Просмотр
+                                </button>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-outline-warning" onclick="editClient(${client.id})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="addDeviceToClient(${client.id})">
+                                        <i class="fas fa-laptop"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info" onclick="addOrderToClient(${client.id})">
+                                        <i class="fas fa-plus-circle"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteClient(${client.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        
+        // Обновление статистики
+        function updateStatistics() {
+            const totalClients = clients.length;
+            const activeClients = clients.filter(c => c.isActive).length;
+            const totalDevices = clients.reduce((sum, client) => sum + (client.devicesCount || 0), 0);
+            const totalSpent = clients.reduce((sum, client) => sum + (client.totalSpent || 0), 0);
+            const avgOrderValue = totalClients > 0 ? Math.round(totalSpent / totalClients) : 0;
+            
+            document.getElementById('totalClients').textContent = totalClients;
+            document.getElementById('activeClients').textContent = activeClients;
+            document.getElementById('totalDevices').textContent = totalDevices;
+            document.getElementById('avgOrderValue').textContent = avgOrderValue.toLocaleString() + ' ₽';
+        }
+        
+        // Поиск клиентов
+        function searchClients() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const clientType = document.getElementById('clientTypeFilter').value;
+            
+            let filteredClients = clients;
+            
+            if (searchText) {
+                filteredClients = filteredClients.filter(client =>
+                    client.fullName.toLowerCase().includes(searchText) ||
+                    client.phone.toLowerCase().includes(searchText) ||
+                    (client.email && client.email.toLowerCase().includes(searchText)) ||
+                    (client.address && client.address.toLowerCase().includes(searchText))
+                );
+            }
+            
+            if (clientType) {
+                filteredClients = filteredClients.filter(client => client.clientType === clientType);
+            }
+            
+            displayClients(filteredClients);
+            updateNoClientsMessage(filteredClients.length === 0);
+        }
+        
+        // Сброс поиска
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clientTypeFilter').value = '';
+            displayClients();
+            updateNoClientsMessage(clients.length === 0);
+        }
+        
+        // Фильтрация клиентов
+        function filterClients() {
+            searchClients();
+        }
+        
+        // Установка режима просмотра
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            const tableView = document.getElementById('tableView');
+            const cardsView = document.getElementById('cardsView');
+            
+            if (mode === 'table') {
+                tableView.style.display = 'block';
+                cardsView.style.display = 'none';
+            } else {
+                tableView.style.display = 'none';
+                cardsView.style.display = 'block';
+            }
+            
+            displayClients();
+        }
+        
+        // Сохранение нового клиента
+        function saveNewClient() {
+            const fullName = document.getElementById('clientFullName').value;
+            const phone = document.getElementById('clientPhone').value;
+            const email = document.getElementById('clientEmail').value;
+            const address = document.getElementById('clientAddress').value;
+            const clientType = document.getElementById('clientType').value;
+            const notes = document.getElementById('clientNotes').value;
+            
+            // Валидация
+            if (!fullName || !phone) {
+                alert('Пожалуйста, заполните обязательные поля (ФИО и телефон)');
+                return;
+            }
+            
+            // Создание нового клиента
+            const newClient = {
+                id: clients.length > 0 ? Math.max(...clients.map(c => c.id)) + 1 : 1,
+                fullName: fullName,
+                phone: phone,
+                email: email || null,
+                address: address || null,
+                clientType: clientType,
+                notes: notes || null,
+                createdAt: new Date().toLocaleDateString('ru-RU'),
+                devicesCount: 0,
+                ordersCount: 0,
+                totalSpent: 0,
+                isActive: true
+            };
+            
+            // Добавление в массив
+            clients.push(newClient);
+            localStorage.setItem('clients', JSON.stringify(clients));
+            
+            // Закрытие модального окна
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newClientModal'));
+            modal.hide();
+            
+            // Обновление интерфейса
+            displayClients();
+            updateStatistics();
+            updateNoClientsMessage();
+            
+            // Очистка формы
+            document.getElementById('newClientForm').reset();
+            
+            // Отправка приветственного сообщения (если выбрано)
+            if (document.getElementById('sendWelcome').checked && email) {
+                alert(`Приветственное сообщение отправлено на ${email}`);
+            }
+            
+            alert(`Клиент "${fullName}" успешно добавлен!`);
+        }
+        
+        // Просмотр клиента
+        function viewClient(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (client) {
+                alert(`
+                    ==== КЛИЕНТ #${client.id} ====
+                    ФИО: ${client.fullName}
+                    Телефон: ${client.phone}
+                    Email: ${client.email || 'Не указан'}
+                    Адрес: ${client.address || 'Не указан'}
+                    Тип: ${getClientTypeName(client.clientType)}
+                    Устройств: ${client.devicesCount || 0}
+                    Заявок: ${client.ordersCount || 0}
+                    Всего потрачено: ${client.totalSpent?.toLocaleString() || 0} ₽
+                    Дата регистрации: ${client.createdAt}
+                    Примечания: ${client.notes || 'Нет'}
+                `);
+            }
+        }
+        
+        // Редактирование клиента
+        function editClient(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+            
+            const editForm = `
+                <form id="editClientForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editFullName" class="form-label">ФИО *</label>
+                            <input type="text" class="form-control" id="editFullName" value="${client.fullName}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editPhone" class="form-label">Телефон *</label>
+                            <input type="tel" class="form-control" id="editPhone" value="${client.phone}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" value="${client.email || ''}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editClientType" class="form-label">Тип клиента</label>
+                            <select class="form-select" id="editClientType">
+                                <option value="regular" ${client.clientType === 'regular' ? 'selected' : ''}>Постоянный</option>
+                                <option value="new" ${client.clientType === 'new' ? 'selected' : ''}>Новый</option>
+                                <option value="corporate" ${client.clientType === 'corporate' ? 'selected' : ''}>Корпоративный</option>
+                                <option value="vip" ${client.clientType === 'vip' ? 'selected' : ''}>VIP</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editAddress" class="form-label">Адрес</label>
+                        <textarea class="form-control" id="editAddress" rows="2">${client.address || ''}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editNotes" class="form-label">Примечания</label>
+                        <textarea class="form-control" id="editNotes" rows="3">${client.notes || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="editIsActive" ${client.isActive ? 'checked' : ''}>
+                        <label class="form-check-label" for="editIsActive">
+                            Активный клиент
+                        </label>
+                    </div>
+                    
+                    <input type="hidden" id="editClientId" value="${client.id}">
+                </form>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteClient(${client.id})">
+                        <i class="fas fa-trash me-1"></i> Удалить
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveEditedClient()">
+                        <i class="fas fa-save me-1"></i> Сохранить изменения
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('editClientModalBody').innerHTML = editForm;
+            const modal = new bootstrap.Modal(document.getElementById('editClientModal'));
+            modal.show();
+        }
+        
+        // Сохранение отредактированного клиента
+        function saveEditedClient() {
+            const clientId = parseInt(document.getElementById('editClientId').value);
+            const fullName = document.getElementById('editFullName').value;
+            const phone = document.getElementById('editPhone').value;
+            const email = document.getElementById('editEmail').value;
+            const address = document.getElementById('editAddress').value;
+            const clientType = document.getElementById('editClientType').value;
+            const notes = document.getElementById('editNotes').value;
+            const isActive = document.getElementById('editIsActive').checked;
+            
+            // Валидация
+            if (!fullName || !phone) {
+                alert('Пожалуйста, заполните обязательные поля (ФИО и телефон)');
+                return;
+            }
+            
+            // Находим и обновляем клиента
+            const clientIndex = clients.findIndex(c => c.id === clientId);
+            if (clientIndex !== -1) {
+                clients[clientIndex] = {
+                    ...clients[clientIndex],
+                    fullName,
+                    phone,
+                    email: email || null,
+                    address: address || null,
+                    clientType,
+                    notes: notes || null,
+                    isActive
+                };
+                
+                localStorage.setItem('clients', JSON.stringify(clients));
+                
+                // Закрытие модального окна
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
+                modal.hide();
+                
+                // Обновление интерфейса
+                displayClients();
+                updateStatistics();
+                
+                alert('Данные клиента обновлены!');
+            }
+        }
+        
+        // Удаление клиента
+        function deleteClient(clientId) {
+            if (!confirm('Вы уверены, что хотите удалить этого клиента?')) {
+                return;
+            }
+            
+            const client = clients.find(c => c.id === clientId);
+            if (client && (client.ordersCount > 0 || client.devicesCount > 0)) {
+                if (!confirm(`У клиента есть ${client.ordersCount} заявок и ${client.devicesCount} устройств. Удалить вместе с ними?`)) {
+                    return;
+                }
+            }
+            
+            clients = clients.filter(c => c.id !== clientId);
+            localStorage.setItem('clients', JSON.stringify(clients));
+            
+            // Закрытие модального окна редактирования, если оно открыто
+            const editModal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
+            if (editModal) editModal.hide();
+            
+            displayClients();
+            updateStatistics();
+            updateNoClientsMessage();
+            
+            alert('Клиент удален');
+        }
+        
+        // Добавление устройства клиенту
+        function addDeviceToClient(clientId) {
+            const deviceName = prompt('Введите название устройства:');
+            if (deviceName) {
+                const client = clients.find(c => c.id === clientId);
+                if (client) {
+                    client.devicesCount = (client.devicesCount || 0) + 1;
+                    localStorage.setItem('clients', JSON.stringify(clients));
+                    displayClients();
+                    updateStatistics();
+                    alert(`Устройство "${deviceName}" добавлено клиенту ${client.fullName}`);
+                }
+            }
+        }
+        
+        // Добавление заявки клиенту
+        function addOrderToClient(clientId) {
+            const orderAmount = prompt('Введите сумму заявки:');
+            if (orderAmount && !isNaN(orderAmount)) {
+                const client = clients.find(c => c.id === clientId);
+                if (client) {
+                    client.ordersCount = (client.ordersCount || 0) + 1;
+                    client.totalSpent = (client.totalSpent || 0) + parseFloat(orderAmount);
+                    localStorage.setItem('clients', JSON.stringify(clients));
+                    displayClients();
+                    updateStatistics();
+                    alert(`Заявка на сумму ${orderAmount} ₽ добавлена клиенту ${client.fullName}`);
+                }
+            }
+        }
+        
+        // Экспорт клиентов
+        function exportClients() {
+            const dataStr = JSON.stringify(clients, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `clients_export_${new Date().toISOString().split('T')[0]}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            alert(`Экспортировано ${clients.length} клиентов`);
+        }
+        
+        // Обновление сообщения "нет клиентов"
+        function updateNoClientsMessage(show = clients.length === 0) {
+            const noClientsMessage = document.getElementById('noClientsMessage');
+            const tableView = document.getElementById('tableView');
+            const cardsView = document.getElementById('cardsView');
+            
+            if (show) {
+                noClientsMessage.style.display = 'block';
+                tableView.style.display = 'none';
+                cardsView.style.display = 'none';
+            } else {
+                noClientsMessage.style.display = 'none';
+            }
+        }
+        
+        // Вспомогательная функция для получения имени типа клиента
+        function getClientTypeName(type) {
+            switch(type) {
+                case 'regular': return 'Постоянный';
+                case 'new': return 'Новый';
+                case 'corporate': return 'Корпоративный';
+                case 'vip': return 'VIP';
+                default: return 'Обычный';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+    const savedData = localStorage.getItem('currentUser');
+    if (savedData) {
+        const user = JSON.parse(savedData);
+        if (user.avatar) {
+            // Ищем все картинки с классом sidebar-avatar и ставим им сохраненное фото
+            const avatars = document.querySelectorAll('.sidebar-avatar');
+            avatars.forEach(img => {
+                img.src = user.avatar;
+            });
+        }
+    }
+});
+    </script>
+</body>
+</html>
