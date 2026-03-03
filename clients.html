@@ -6,67 +6,8 @@
     <title>Клиенты - Система управления ремонтами</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .sidebar {
-            min-height: 100vh;
-            background-color: #2c3e50;
-            color: white;
-        }
-        .sidebar a {
-            color: #ecf0f1;
-            text-decoration: none;
-            padding: 12px 20px;
-            display: block;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
-        }
-        .sidebar a:hover {
-            background-color: #34495e;
-            color: white;
-            border-left: 4px solid #3498db;
-        }
-        .sidebar .active {
-            background-color: #34495e;
-            border-left: 4px solid #3498db;
-            font-weight: 600;
-        }
-        .table th {
-            background-color: #f1f5f9;
-            font-weight: 600;
-        }
-        .client-card {
-            transition: transform 0.2s;
-            border-left: 4px solid #3498db;
-        }
-        .client-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .stats-badge {
-            font-size: 0.75em;
-            padding: 3px 8px;
-        }
-        .action-btn {
-            margin: 2px;
-            min-width: 80px;
-        }
-        .avatar {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 16px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/clients.css">
+
 </head>
 <body>
     <div class="container-fluid">
@@ -379,107 +320,32 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Clients JS -->
-    <script>
+    <!-- Подключаем модули -->
+    <script type="module">
+        import { 
+            getClients, addClient, updateClient, deleteClient, 
+            addActivity, getCurrentUser 
+        } from './js/data.js';
+        import { showAlert, getClientTypeName, formatPhone } from './js/utils.js';
+
         // Данные клиентов
-        let clients = JSON.parse(localStorage.getItem('clients')) || [];
+        let clients = getClients(); // загружаем сразу
         let currentViewMode = 'table';
-        
+
         // Инициализация страницы
         document.addEventListener('DOMContentLoaded', function() {
             loadClients();
             updateStatistics();
+            updateAvatarFromStorage();
         });
-        
+
         // Загрузка клиентов
         function loadClients() {
-            // Если нет данных в localStorage, создаем тестовых клиентов
-            if (clients.length === 0) {
-                createDemoClients();
-            }
-            
+            clients = getClients(); // обновляем из хранилища
             displayClients();
             updateNoClientsMessage();
         }
-        
-        // Создание демо-клиентов
-        function createDemoClients() {
-            const demoClients = [
-                {
-                    id: 1,
-                    fullName: 'Иванов Алексей Сергеевич',
-                    phone: '+7 (912) 345-67-89',
-                    email: 'ivanov@example.com',
-                    address: 'ул. Ленина, 10, кв. 5',
-                    clientType: 'regular',
-                    notes: 'Постоянный клиент с 2020 года',
-                    createdAt: '2023-01-15',
-                    devicesCount: 2,
-                    ordersCount: 5,
-                    totalSpent: 18500,
-                    isActive: true
-                },
-                {
-                    id: 2,
-                    fullName: 'Сидорова Мария Петровна',
-                    phone: '+7 (923) 456-78-90',
-                    email: 'sidorova@example.com',
-                    address: 'пр. Мира, 25, кв. 12',
-                    clientType: 'new',
-                    notes: 'Предпочитает уведомления по SMS',
-                    createdAt: '2023-10-20',
-                    devicesCount: 1,
-                    ordersCount: 1,
-                    totalSpent: 8900,
-                    isActive: true
-                },
-                {
-                    id: 3,
-                    fullName: 'Петров Владимир Константинович',
-                    phone: '+7 (934) 567-89-01',
-                    email: 'petrov@example.com',
-                    address: 'ул. Советская, 45',
-                    clientType: 'corporate',
-                    notes: 'Бизнес-клиент, договор №123',
-                    createdAt: '2023-09-10',
-                    devicesCount: 3,
-                    ordersCount: 8,
-                    totalSpent: 45200,
-                    isActive: true
-                },
-                {
-                    id: 4,
-                    fullName: 'ООО "Вектор"',
-                    phone: '+7 (800) 123-45-67',
-                    email: 'office@vector.ru',
-                    address: 'ул. Промышленная, 15',
-                    clientType: 'corporate',
-                    notes: 'Корпоративный клиент',
-                    createdAt: '2022-05-15',
-                    devicesCount: 5,
-                    ordersCount: 12,
-                    totalSpent: 125000,
-                    isActive: true
-                },
-                {
-                    id: 5,
-                    fullName: 'Козлова Анна Викторовна',
-                    phone: '+7 (945) 678-90-12',
-                    email: 'kozlov@example.com',
-                    address: 'ул. Центральная, 33, кв. 7',
-                    clientType: 'vip',
-                    notes: 'VIP клиент',
-                    createdAt: '2023-11-01',
-                    devicesCount: 1,
-                    ordersCount: 2,
-                    totalSpent: 15600,
-                    isActive: true
-                }
-            ];
-            
-            clients = demoClients;
-            localStorage.setItem('clients', JSON.stringify(clients));
-        }
-        
+
         // Отображение клиентов
         function displayClients(filteredClients = clients) {
             if (currentViewMode === 'table') {
@@ -488,7 +354,7 @@
                 displayClientsCards(filteredClients);
             }
         }
-        
+
         // Табличное отображение
         function displayClientsTable(clientsList) {
             const tableBody = document.getElementById('clientsTableBody');
@@ -498,7 +364,6 @@
                 const avatarLetter = client.fullName.charAt(0);
                 const row = document.createElement('tr');
                 
-                // Определяем цвет статуса
                 let statusBadge = '';
                 switch(client.clientType) {
                     case 'regular':
@@ -554,7 +419,7 @@
                 tableBody.appendChild(row);
             });
         }
-        
+
         // Отображение карточками
         function displayClientsCards(clientsList) {
             const container = document.getElementById('clientsCardsContainer');
@@ -563,7 +428,6 @@
             clientsList.forEach(client => {
                 const avatarLetter = client.fullName.charAt(0);
                 
-                // Определяем цвет карточки по типу клиента
                 let cardColorClass = '';
                 switch(client.clientType) {
                     case 'regular':
@@ -651,7 +515,7 @@
                 container.appendChild(card);
             });
         }
-        
+
         // Обновление статистики
         function updateStatistics() {
             const totalClients = clients.length;
@@ -665,9 +529,9 @@
             document.getElementById('totalDevices').textContent = totalDevices;
             document.getElementById('avgOrderValue').textContent = avgOrderValue.toLocaleString() + ' ₽';
         }
-        
+
         // Поиск клиентов
-        function searchClients() {
+        window.searchClients = function() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             const clientType = document.getElementById('clientTypeFilter').value;
             
@@ -688,23 +552,20 @@
             
             displayClients(filteredClients);
             updateNoClientsMessage(filteredClients.length === 0);
-        }
-        
-        // Сброс поиска
-        function clearSearch() {
+        };
+
+        window.clearSearch = function() {
             document.getElementById('searchInput').value = '';
             document.getElementById('clientTypeFilter').value = '';
             displayClients();
             updateNoClientsMessage(clients.length === 0);
-        }
-        
-        // Фильтрация клиентов
-        function filterClients() {
+        };
+
+        window.filterClients = function() {
             searchClients();
-        }
-        
-        // Установка режима просмотра
-        function setViewMode(mode) {
+        };
+
+        window.setViewMode = function(mode) {
             currentViewMode = mode;
             const tableView = document.getElementById('tableView');
             const cardsView = document.getElementById('cardsView');
@@ -718,26 +579,23 @@
             }
             
             displayClients();
-        }
-        
+        };
+
         // Сохранение нового клиента
-        function saveNewClient() {
+        window.saveNewClient = function() {
             const fullName = document.getElementById('clientFullName').value;
             const phone = document.getElementById('clientPhone').value;
             const email = document.getElementById('clientEmail').value;
-            const address = document.getElementById('clientAddress').value;
+            const address = document.getElementById('clientAddressSearch').value;
             const clientType = document.getElementById('clientType').value;
             const notes = document.getElementById('clientNotes').value;
             
-            // Валидация
             if (!fullName || !phone) {
-                alert('Пожалуйста, заполните обязательные поля (ФИО и телефон)');
+                showAlert('danger', 'Пожалуйста, заполните обязательные поля (ФИО и телефон)');
                 return;
             }
             
-            // Создание нового клиента
             const newClient = {
-                id: clients.length > 0 ? Math.max(...clients.map(c => c.id)) + 1 : 1,
                 fullName: fullName,
                 phone: phone,
                 email: email || null,
@@ -751,32 +609,27 @@
                 isActive: true
             };
             
-            // Добавление в массив
-            clients.push(newClient);
-            localStorage.setItem('clients', JSON.stringify(clients));
+            addClient(newClient); // сохраняем через модуль
+            clients = getClients(); // обновляем локальный массив
             
-            // Закрытие модального окна
             const modal = bootstrap.Modal.getInstance(document.getElementById('newClientModal'));
             modal.hide();
             
-            // Обновление интерфейса
             displayClients();
             updateStatistics();
             updateNoClientsMessage();
             
-            // Очистка формы
             document.getElementById('newClientForm').reset();
             
-            // Отправка приветственного сообщения (если выбрано)
             if (document.getElementById('sendWelcome').checked && email) {
-                alert(`Приветственное сообщение отправлено на ${email}`);
+                showAlert('info', `Приветственное сообщение отправлено на ${email}`);
             }
             
-            alert(`Клиент "${fullName}" успешно добавлен!`);
-        }
-        
-        // Просмотр клиента
-        function viewClient(clientId) {
+            showAlert('success', `Клиент "${fullName}" успешно добавлен!`);
+            addActivity('Добавление клиента', `Добавлен клиент ${fullName}`, 'system', 'fa-user-plus');
+        };
+
+        window.viewClient = function(clientId) {
             const client = clients.find(c => c.id === clientId);
             if (client) {
                 alert(`
@@ -793,10 +646,9 @@
                     Примечания: ${client.notes || 'Нет'}
                 `);
             }
-        }
-        
-        // Редактирование клиента
-        function editClient(clientId) {
+        };
+
+        window.editClient = function(clientId) {
             const client = clients.find(c => c.id === clientId);
             if (!client) return;
             
@@ -862,10 +714,9 @@
             document.getElementById('editClientModalBody').innerHTML = editForm;
             const modal = new bootstrap.Modal(document.getElementById('editClientModal'));
             modal.show();
-        }
-        
-        // Сохранение отредактированного клиента
-        function saveEditedClient() {
+        };
+
+        window.saveEditedClient = function() {
             const clientId = parseInt(document.getElementById('editClientId').value);
             const fullName = document.getElementById('editFullName').value;
             const phone = document.getElementById('editPhone').value;
@@ -875,42 +726,29 @@
             const notes = document.getElementById('editNotes').value;
             const isActive = document.getElementById('editIsActive').checked;
             
-            // Валидация
             if (!fullName || !phone) {
-                alert('Пожалуйста, заполните обязательные поля (ФИО и телефон)');
+                showAlert('danger', 'Пожалуйста, заполните обязательные поля (ФИО и телефон)');
                 return;
             }
             
-            // Находим и обновляем клиента
-            const clientIndex = clients.findIndex(c => c.id === clientId);
-            if (clientIndex !== -1) {
-                clients[clientIndex] = {
-                    ...clients[clientIndex],
-                    fullName,
-                    phone,
-                    email: email || null,
-                    address: address || null,
-                    clientType,
-                    notes: notes || null,
-                    isActive
-                };
-                
-                localStorage.setItem('clients', JSON.stringify(clients));
-                
-                // Закрытие модального окна
+            const updated = updateClient(clientId, {
+                fullName, phone, email: email || null,
+                address: address || null, clientType,
+                notes: notes || null, isActive
+            });
+            
+            if (updated) {
+                clients = getClients();
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
                 modal.hide();
-                
-                // Обновление интерфейса
                 displayClients();
                 updateStatistics();
-                
-                alert('Данные клиента обновлены!');
+                showAlert('success', 'Данные клиента обновлены!');
+                addActivity('Редактирование клиента', `Изменены данные клиента ${fullName}`, 'system', 'fa-edit');
             }
-        }
-        
-        // Удаление клиента
-        function deleteClient(clientId) {
+        };
+
+        window.deleteClient = function(clientId) {
             if (!confirm('Вы уверены, что хотите удалить этого клиента?')) {
                 return;
             }
@@ -922,10 +760,9 @@
                 }
             }
             
-            clients = clients.filter(c => c.id !== clientId);
-            localStorage.setItem('clients', JSON.stringify(clients));
+            deleteClient(clientId);
+            clients = getClients();
             
-            // Закрытие модального окна редактирования, если оно открыто
             const editModal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
             if (editModal) editModal.hide();
             
@@ -933,42 +770,44 @@
             updateStatistics();
             updateNoClientsMessage();
             
-            alert('Клиент удален');
-        }
-        
-        // Добавление устройства клиенту
-        function addDeviceToClient(clientId) {
+            showAlert('success', 'Клиент удален');
+            addActivity('Удаление клиента', `Удалён клиент ${client?.fullName}`, 'system', 'fa-user-slash');
+        };
+
+        window.addDeviceToClient = function(clientId) {
             const deviceName = prompt('Введите название устройства:');
             if (deviceName) {
                 const client = clients.find(c => c.id === clientId);
                 if (client) {
                     client.devicesCount = (client.devicesCount || 0) + 1;
-                    localStorage.setItem('clients', JSON.stringify(clients));
+                    updateClient(clientId, { devicesCount: client.devicesCount });
+                    clients = getClients();
                     displayClients();
                     updateStatistics();
-                    alert(`Устройство "${deviceName}" добавлено клиенту ${client.fullName}`);
+                    showAlert('success', `Устройство "${deviceName}" добавлено клиенту ${client.fullName}`);
+                    addActivity('Добавление устройства', `Добавлено устройство клиенту ${client.fullName}`, 'devices', 'fa-laptop');
                 }
             }
-        }
-        
-        // Добавление заявки клиенту
-        function addOrderToClient(clientId) {
+        };
+
+        window.addOrderToClient = function(clientId) {
             const orderAmount = prompt('Введите сумму заявки:');
             if (orderAmount && !isNaN(orderAmount)) {
                 const client = clients.find(c => c.id === clientId);
                 if (client) {
                     client.ordersCount = (client.ordersCount || 0) + 1;
                     client.totalSpent = (client.totalSpent || 0) + parseFloat(orderAmount);
-                    localStorage.setItem('clients', JSON.stringify(clients));
+                    updateClient(clientId, { ordersCount: client.ordersCount, totalSpent: client.totalSpent });
+                    clients = getClients();
                     displayClients();
                     updateStatistics();
-                    alert(`Заявка на сумму ${orderAmount} ₽ добавлена клиенту ${client.fullName}`);
+                    showAlert('success', `Заявка на сумму ${orderAmount} ₽ добавлена клиенту ${client.fullName}`);
+                    addActivity('Добавление заявки', `Добавлена заявка клиенту ${client.fullName}`, 'orders', 'fa-plus-circle');
                 }
             }
-        }
-        
-        // Экспорт клиентов
-        function exportClients() {
+        };
+
+        window.exportClients = function() {
             const dataStr = JSON.stringify(clients, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             
@@ -979,10 +818,9 @@
             linkElement.setAttribute('download', exportFileDefaultName);
             linkElement.click();
             
-            alert(`Экспортировано ${clients.length} клиентов`);
-        }
-        
-        // Обновление сообщения "нет клиентов"
+            showAlert('info', `Экспортировано ${clients.length} клиентов`);
+        };
+
         function updateNoClientsMessage(show = clients.length === 0) {
             const noClientsMessage = document.getElementById('noClientsMessage');
             const tableView = document.getElementById('tableView');
@@ -996,31 +834,17 @@
                 noClientsMessage.style.display = 'none';
             }
         }
-        
-        // Вспомогательная функция для получения имени типа клиента
-        function getClientTypeName(type) {
-            switch(type) {
-                case 'regular': return 'Постоянный';
-                case 'new': return 'Новый';
-                case 'corporate': return 'Корпоративный';
-                case 'vip': return 'VIP';
-                default: return 'Обычный';
+
+        // Обновление аватара из localStorage
+        function updateAvatarFromStorage() {
+            const user = getCurrentUser();
+            if (user && user.avatar) {
+                const avatars = document.querySelectorAll('.sidebar-avatar');
+                avatars.forEach(img => {
+                    img.src = user.avatar;
+                });
             }
         }
-
-        document.addEventListener('DOMContentLoaded', function() {
-    const savedData = localStorage.getItem('currentUser');
-    if (savedData) {
-        const user = JSON.parse(savedData);
-        if (user.avatar) {
-            // Ищем все картинки с классом sidebar-avatar и ставим им сохраненное фото
-            const avatars = document.querySelectorAll('.sidebar-avatar');
-            avatars.forEach(img => {
-                img.src = user.avatar;
-            });
-        }
-    }
-});
     </script>
 </body>
 </html>
