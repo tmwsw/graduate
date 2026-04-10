@@ -93,7 +93,7 @@
                                 <div class="d-flex justify-content-between">
                                     <div>
                                         <h5 class="card-title">Новых заявок</h5>
-                                        <h2 class="card-text">12</h2>
+                                        <h2 class="card-text">0</h2>
                                     </div>
                                     <div class="card-icon">
                                         <i class="fas fa-inbox"></i>
@@ -109,7 +109,7 @@
                                 <div class="d-flex justify-content-between">
                                     <div>
                                         <h5 class="card-title">В работе</h5>
-                                        <h2 class="card-text">24</h2>
+                                        <h2 class="card-text">0</h2>
                                     </div>
                                     <div class="card-icon">
                                         <i class="fas fa-tools"></i>
@@ -125,7 +125,7 @@
                                 <div class="d-flex justify-content-between">
                                     <div>
                                         <h5 class="card-title">Готово</h5>
-                                        <h2 class="card-text">8</h2>
+                                        <h2 class="card-text">0</h2>
                                     </div>
                                     <div class="card-icon">
                                         <i class="fas fa-check-circle"></i>
@@ -141,7 +141,7 @@
                                 <div class="d-flex justify-content-between">
                                     <div>
                                         <h5 class="card-title">Среднее время</h5>
-                                        <h2 class="card-text">2.5 дн.</h2>
+                                        <h2 class="card-text">0 д</h2>
                                     </div>
                                     <div class="card-icon">
                                         <i class="fas fa-clock"></i>
@@ -188,6 +188,7 @@
                                 <div class="table-responsive">
                                     <table class="table table-hover">
                                         <thead>
+                                            <tbody id="recentOrdersBody"></tbody>
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Устройство</th>
@@ -198,41 +199,6 @@
                                                 <th>Действия</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>#1001</td>
-                                                <td>Ноутбук ASUS X543MA</td>
-                                                <td>Иванов А.С.</td>
-                                                <td>10.11.2023</td>
-                                                <td><span class="badge bg-warning">В работе</span></td>
-                                                <td>Петров И.В.</td>
-                                                <td>
-                                                    <a href="order-detail.html" class="btn btn-sm btn-outline-primary">Подробнее</a>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>#1002</td>
-                                                <td>Смартфон Xiaomi Redmi Note 10</td>
-                                                <td>Сидорова М.П.</td>
-                                                <td>09.11.2023</td>
-                                                <td><span class="badge bg-success">Готов</span></td>
-                                                <td>Смирнов А.К.</td>
-                                                <td>
-                                                    <a href="order-detail.html" class="btn btn-sm btn-outline-primary">Подробнее</a>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>#1003</td>
-                                                <td>ПК Dell OptiPlex 3070</td>
-                                                <td>ООО "Вектор"</td>
-                                                <td>08.11.2023</td>
-                                                <td><span class="badge bg-secondary">Новый</span></td>
-                                                <td>Не назначен</td>
-                                                <td>
-                                                    <a href="order-detail.html" class="btn btn-sm btn-outline-primary">Подробнее</a>
-                                                </td>
-                                            </tr>
-                                        </tbody>
                                     </table>
                                 </div>
                             </div>
@@ -258,18 +224,12 @@
                                 <label for="clientSelect" class="form-label">Клиент</label>
                                 <select class="form-select" id="clientSelect" required>
                                     <option selected disabled value="">Выберите клиента...</option>
-                                    <option value="1">Иванов Алексей Сергеевич</option>
-                                    <option value="2">Сидорова Мария Петровна</option>
-                                    <option value="3">ООО "Вектор"</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="deviceSelect" class="form-label">Устройство</label>
                                 <select class="form-select" id="deviceSelect" required>
                                     <option selected disabled value="">Выберите устройство...</option>
-                                    <option value="1">Ноутбук ASUS X543MA (серийный: ABCD1234)</option>
-                                    <option value="2">Смартфон Xiaomi Redmi Note 10 (серийный: EFGH5678)</option>
-                                    <option value="3">ПК Dell OptiPlex 3070 (серийный: IJKL9012)</option>
                                 </select>
                             </div>
                         </div>
@@ -281,8 +241,6 @@
                             <label for="masterSelect" class="form-label">Назначить мастера</label>
                             <select class="form-select" id="masterSelect">
                                 <option selected value="">Не назначать</option>
-                                <option value="1">Петров Иван Васильевич</option>
-                                <option value="2">Смирнов Алексей Константинович</option>
                             </select>
                         </div>
                     </form>
@@ -310,7 +268,7 @@
             data: {
                 labels: ['Новые', 'В работе', 'Готовы', 'Выданы'],
                 datasets: [{
-                    data: [12, 24, 8, 15],
+                    data: [], // Надо сделать динамичным
                     backgroundColor: [
                         '#6c757d',
                         '#ffc107',
@@ -330,15 +288,15 @@
         const monthChart = new Chart(monthCtx, {
             type: 'line',
             data: {
-                labels: ['1 ноя', '2 ноя', '3 ноя', '4 ноя', '5 ноя', '6 ноя', '7 ноя'],
+                labels: [], // Надо сделать динамичным
                 datasets: [{
                     label: 'Новые заявки',
-                    data: [5, 8, 12, 9, 7, 10, 12],
+                    data: [],  // Надо сделать динамичным
                     borderColor: '#0d6efd',
                     tension: 0.1
                 }, {
                     label: 'Завершённые заявки',
-                    data: [3, 5, 8, 6, 9, 7, 10],
+                    data: [],  // Надо сделать динамичным
                     borderColor: '#198754',
                     tension: 0.1
                 }]
@@ -354,29 +312,155 @@
             }
         });
 
-        // Функция создания новой заявки (заглушка)
+        // Функция создания новой заявки
         function createNewOrder() {
-            alert('Заявка создана! (в демо-режиме данные не сохраняются)');
-            // Закрыть модальное окно
-            const modal = bootstrap.Modal.getInstance(document.getElementById('newOrderModal'));
-            modal.hide();
-            // Сброс формы
-            document.getElementById('newOrderForm').reset();
-        }
-        // Функция для обновления данных аватара
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedData = localStorage.getItem('currentUser');
-            if (savedData) {
-                const user = JSON.parse(savedData);
-                if (user.avatar) {
-                    // Ищем все картинки с классом sidebar-avatar и ставим им сохраненное фото
-                    const avatars = document.querySelectorAll('.sidebar-avatar');
-                    avatars.forEach(img => {
-                        img.src = user.avatar;
-                    });
-                }
+            const clientId = parseInt(document.getElementById('clientSelect').value);
+            const deviceId = parseInt(document.getElementById('deviceSelect').value);
+            const masterVal = document.getElementById('masterSelect').value;
+            const description = document.getElementById('problemDescription').value.trim();
+
+            if (!clientId || !deviceId || !description) {
+                alert('Заполните обязательные поля!');
+                return;
             }
+
+            const masterId = masterVal ? parseInt(masterVal) : null;
+
+            const devices = JSON.parse(localStorage.getItem('devices')) || [];
+            const device = devices.find(d => d.id === deviceId);
+
+            if (!device || device.clientId !== clientId) {
+                alert('Устройство не принадлежит клиенту!');
+                return;
+            }
+
+            const orders = JSON.parse(localStorage.getItem('orders')) || [];
+            const newId = orders.length ? Math.max(...orders.map(o => o.id)) + 1 : 1;
+
+            const newOrder = {
+                id: newId,
+                clientId,
+                deviceId,
+                masterId,
+                description,
+                status: 'new',
+                createdAt: new Date().toISOString(),
+                price: 0
+            };
+
+            orders.push(newOrder);
+            localStorage.setItem('orders', JSON.stringify(orders));
+
+            alert(`Заявка №${newId} создана`);
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newOrderModal'));
+            if (modal) modal.hide();
+            document.getElementById('newOrderForm').reset();
+
+            // 🔹 ОБНОВЛЯЕМ ДАННЫЕ НА СТРАНИЦЕ
+            refreshDashboard();
+        }
+        function fillSelects() {
+            const clientSelect = document.getElementById('clientSelect');
+            const deviceSelect = document.getElementById('deviceSelect');
+            const masterSelect = document.getElementById('masterSelect');
+
+            const clients = JSON.parse(localStorage.getItem('clients')) || [];
+            const devices = JSON.parse(localStorage.getItem('devices')) || [];
+            const masters = JSON.parse(localStorage.getItem('masters')) || [];
+
+            // --- КЛИЕНТЫ ---
+            clientSelect.innerHTML = '<option disabled selected value="">Выберите клиента...</option>';
+            clients.forEach(c => {
+                clientSelect.add(new Option(c.fullName, c.id));
+            });
+
+            // --- МАСТЕРА ---
+            masterSelect.innerHTML = '<option value="">Не назначать</option>';
+            masters.forEach(m => {
+                masterSelect.add(new Option(m.fullName, m.id));
+            });
+
+            // --- УСТРОЙСТВА (ПОСЛЕ ВЫБОРА КЛИЕНТА) ---
+            clientSelect.addEventListener('change', () => {
+                const devices = JSON.parse(localStorage.getItem('devices')) || [];
+
+                const clientId = clientSelect.value;
+
+                deviceSelect.innerHTML = '<option disabled selected>Выберите устройство...</option>';
+
+                devices
+                    .filter(d => Number(d.clientId) === Number(clientId))
+                    .forEach(d => {
+                        deviceSelect.add(new Option(`${d.model}`, d.id));
+                    });
+            });
+        }
+        // Обновление сайдбара: имя, роль, аватар
+        function updateSidebar() {
+            const userData = localStorage.getItem('currentUser');
+            if (!userData) return;
+
+            let user;
+            try {
+                user = JSON.parse(userData);
+            } catch(e) { return; }
+
+            // Элементы сайдбара (если они есть на странице)
+            const userNameSpan = document.querySelector('.dropdown strong');
+            const userRoleBadge = document.querySelector('.dropdown .badge');
+            const userAvatar = document.querySelector('.sidebar-avatar');
+
+            if (userNameSpan) {
+                let displayName = user.fullName || user.login || 'Пользователь';
+                // Если имя слишком длинное – показываем только имя и фамилию (первые два слова)
+                const nameParts = displayName.split(' ');
+                if (nameParts.length > 2) {
+                    displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
+                }
+                userNameSpan.textContent = displayName;
+            }
+
+            if (userRoleBadge) {
+                let roleText = '';
+                switch (user.role) {
+                    case 'admin': roleText = 'Админ'; break;
+                    case 'manager': roleText = 'Менеджер'; break;
+                    case 'client': roleText = 'Клиент'; break;
+                    case 'master': roleText = 'Мастер'; break;
+                    default: roleText = 'Гость';
+                }
+                userRoleBadge.textContent = roleText;
+                // Меняем цвет бейджа в зависимости от роли
+                userRoleBadge.className = 'badge ms-2';
+                if (user.role === 'admin') userRoleBadge.classList.add('bg-danger');
+                else if (user.role === 'manager') userRoleBadge.classList.add('bg-warning');
+                else if (user.role === 'master') userRoleBadge.classList.add('bg-info');
+                else userRoleBadge.classList.add('bg-success');
+            }
+
+            if (userAvatar && user.avatar) {
+                userAvatar.src = user.avatar;
+            }
+        }
+
+        // Вызываем обновление при загрузке страницы
+        document.addEventListener('DOMContentLoaded', updateSidebar);
+        // Также обновляем при изменении currentUser (например, после логина в другой вкладке)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'currentUser') updateSidebar();
         });
+        document.getElementById('newOrderModal')
+            .addEventListener('show.bs.modal', fillSelects);
+        // Проверка авторизации – если гость, перенаправим
+        if (!checkAuthAndRedirect()) {
+            // код дальше не выполнится, но для надёжности остановим выполнение
+            throw new Error('Не авторизован');
+        }
+        // Применяем скрытие элементов согласно роли
+        applyRoleBasedVisibility();
+        // Обновляем аватар и имя
+        updateUserAvatar();
     </script>
 </body>
 </html>

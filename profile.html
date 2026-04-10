@@ -191,7 +191,7 @@
                                             <option value="admin">Администратор</option>
                                             <option value="manager">Менеджер</option>
                                             <option value="master">Мастер</option>
-                                            <option value="observer">Наблюдатель</option>
+                                            <option value="observer">Гость</option>
                                         </select>
                                     </div>
                                             <div class="mb-3">
@@ -236,10 +236,6 @@
                                                     <span class="input-group-text">@</span>
                                                     <input type="text" class="form-control" id="telegram" value="ivan_admin">
                                                 </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="address" class="form-label">Адрес</label>
-                                                <input type="text" class="form-control" id="address" value="г. Москва, ул. Примерная, д. 10">
                                             </div>
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="fas fa-save me-1"></i> Сохранить контакты
@@ -353,30 +349,7 @@
                                                 </div>
                                                 <span class="badge bg-success">Активна</span>
                                             </div>
-
-                                            <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
-                                                <div class="d-flex">
-                                                    <div class="me-3 text-secondary"><i class="fas fa-mobile-alt fa-lg"></i></div>
-                                                    <div>
-                                                        <strong class="d-block">Safari, iPhone</strong>
-                                                        <span class="text-muted small">Москва, Россия • 2 часа назад</span>
-                                                    </div>
-                                                </div>
-                                                <span class="badge bg-secondary opacity-75">Неактивна</span>
-                                            </div>
-
-                                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                                <div class="d-flex">
-                                                    <div class="me-3 text-secondary"><i class="fas fa-laptop fa-lg"></i></div>
-                                                    <div>
-                                                        <strong class="d-block">Firefox, macOS</strong>
-                                                        <span class="text-muted small">Санкт-Петербург, Россия • 5 дней назад</span>
-                                                    </div>
-                                                </div>
-                                                <span class="badge bg-secondary opacity-75">Неактивна</span>
-                                            </div>
                                         </div>
-
                                         <div class="d-grid">
                                             <button class="btn btn-outline-danger" onclick="logoutAllSessions()">
                                                 <i class="fas fa-sign-out-alt me-1"></i> Завершить все сессии
@@ -734,7 +707,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+    <script src="js/auth.js"></script>
     <script>
         // Данные пользователя
         let currentUser = JSON.parse(localStorage.getItem('currentUser')) || {
@@ -1945,20 +1918,69 @@
             });
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedData = localStorage.getItem('currentUser');
-            if (savedData) {
-                const user = JSON.parse(savedData);
-                if (user.avatar) {
-                    // Ищем все картинки с классом sidebar-avatar и ставим им сохраненное фото
-                    const avatars = document.querySelectorAll('.sidebar-avatar');
-                    avatars.forEach(img => {
-                        img.src = user.avatar;
-                    });
+        // Обновление сайдбара: имя, роль, аватар
+        function updateSidebar() {
+            const userData = localStorage.getItem('currentUser');
+            if (!userData) return;
+
+            let user;
+            try {
+                user = JSON.parse(userData);
+            } catch(e) { return; }
+
+            // Элементы сайдбара (если они есть на странице)
+            const userNameSpan = document.querySelector('.dropdown strong');
+            const userRoleBadge = document.querySelector('.dropdown .badge');
+            const userAvatar = document.querySelector('.sidebar-avatar');
+
+            if (userNameSpan) {
+                let displayName = user.fullName || user.login || 'Пользователь';
+                // Если имя слишком длинное – показываем только имя и фамилию (первые два слова)
+                const nameParts = displayName.split(' ');
+                if (nameParts.length > 2) {
+                    displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
                 }
+                userNameSpan.textContent = displayName;
             }
+
+            if (userRoleBadge) {
+                let roleText = '';
+                switch (user.role) {
+                    case 'admin': roleText = 'Админ'; break;
+                    case 'manager': roleText = 'Менеджер'; break;
+                    case 'client': roleText = 'Клиент'; break;
+                    case 'master': roleText = 'Мастер'; break;
+                    default: roleText = 'Гость';
+                }
+                userRoleBadge.textContent = roleText;
+                // Меняем цвет бейджа в зависимости от роли
+                userRoleBadge.className = 'badge ms-2';
+                if (user.role === 'admin') userRoleBadge.classList.add('bg-danger');
+                else if (user.role === 'manager') userRoleBadge.classList.add('bg-warning');
+                else if (user.role === 'master') userRoleBadge.classList.add('bg-info');
+                else userRoleBadge.classList.add('bg-success');
+            }
+
+            if (userAvatar && user.avatar) {
+                userAvatar.src = user.avatar;
+            }
+        }
+
+        // Вызываем обновление при загрузке страницы
+        document.addEventListener('DOMContentLoaded', updateSidebar);
+        // Также обновляем при изменении currentUser (например, после логина в другой вкладке)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'currentUser') updateSidebar();
         });
+        // Проверка авторизации – если гость, перенаправим
+        if (!checkAuthAndRedirect()) {
+            // код дальше не выполнится, но для надёжности остановим выполнение
+            throw new Error('Не авторизован');
+        }
+        // Применяем скрытие элементов согласно роли
+        applyRoleBasedVisibility();
+        // Обновляем аватар и имя
+        updateUserAvatar();
     </script>
-    
 </body>
 </html>

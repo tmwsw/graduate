@@ -94,7 +94,7 @@
                 </div>
 
                 <!-- Order Header -->
-                <div class="order-header">
+                <!-- <div class="order-header">
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <h3 class="mb-1" id="deviceTitle">Ноутбук ASUS X543MA</h3>
@@ -105,7 +105,7 @@
                             <p class="mb-0 mt-2" id="orderDates">Принят: 10.11.2023 • План: 13.11.2023</p>
                         </div>
                     </div>
-                </div>
+                </div> -->
                 
 
                 <!-- Tabs -->
@@ -140,7 +140,7 @@
                 <!-- Tab Content -->
                 <div class="tab-content" id="orderTabsContent">
                     <!-- Информация -->
-                    <div class="tab-pane fade show active" id="info" role="tabpanel">
+                    <!-- <div class="tab-pane fade show active" id="info" role="tabpanel">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="info-card">
@@ -162,10 +162,10 @@
                                             <small class="text-muted">Примечание</small>
                                             <p class="mb-2"><strong id="clientNote">Постоянный клиент</strong></p>
                                         </div>
-                                    </div>
+                                    </div> -->
                                 </div>
 
-                                <div class="info-card">
+                                <!-- <div class="info-card">
                                     <h6><i class="fas fa-desktop text-primary me-2"></i>Устройство</h6>
                                     <div class="row mt-3">
                                         <div class="col-6">
@@ -185,10 +185,10 @@
                                             <p class="mb-2"><strong id="deviceYear">2020</strong></p>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
 
-                            <div class="col-md-6">
+                            <!-- <div class="col-md-6">
                                 <div class="info-card">
                                     <h6><i class="fas fa-exclamation-triangle text-warning me-2"></i>Проблема</h6>
                                     <p class="mt-3" id="problemDescription">
@@ -205,9 +205,9 @@
                                             <p class="mb-2"><strong>Хороший, небольшие потертости</strong></p>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
 
-                                <div class="info-card">
+                                <!-- <div class="info-card">
                                     <h6><i class="fas fa-user-cog text-primary me-2"></i>Ответственные</h6>
                                     <div class="row mt-3">
                                         <div class="col-6">
@@ -227,7 +227,7 @@
                                             <p class="mb-2"><strong id="plannedDate">13.11.2023 18:00</strong></p>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                         </div>
                     </div>
@@ -596,7 +596,9 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    
+    <script src="js/data.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
     <!-- Order Detail JS -->
     <script>
         // Получение ID заявки из URL
@@ -607,6 +609,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadOrderDetails(orderId);
             updateCalculations();
+            updateAvatarFromStorage();
         });
         
         function loadOrderDetails(orderId) {
@@ -732,6 +735,14 @@
                 alert(`Письмо отправлено на ${email}`);
             }
         }
+        if (!checkAuthAndRedirect()) {
+            // код дальше не выполнится, но для надёжности остановим выполнение
+            throw new Error('Не авторизован');
+        }
+        // Применяем скрытие элементов согласно роли
+        applyRoleBasedVisibility();
+        // Обновляем аватар и имя
+        updateUserAvatar();
     </script>
 </body>
 </html>

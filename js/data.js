@@ -266,3 +266,22 @@ export function addActivity(action, details, type, icon) {
     saveActivityHistory(history);
     return newActivity;
 }
+
+export function initDemoData() {
+
+    // Пользователи (если нет)
+    if (getUsers().length === 0) {
+        const defaultUsers = [
+            { id: 1, login: 'admin', password: 'admin123', role: 'admin', fullName: 'Администратор', email: 'admin@repair.ru', phone: '+7 (999) 111-22-33', avatar: 'https://via.placeholder.com/150' },
+            { id: 2, login: 'manager', password: 'manager123', role: 'manager', fullName: 'Менеджер', email: 'manager@repair.ru', phone: '+7 (999) 222-33-44', avatar: 'https://via.placeholder.com/150' },
+            { id: 3, login: 'client1', password: 'client123', role: 'client', fullName: 'Иванов Иван', email: 'client1@mail.ru', phone: '+7 (999) 333-44-55', avatar: 'https://via.placeholder.com/150' },
+            { id: 4, login: 'client2', password: 'client123', role: 'client', fullName: 'Петрова Анна', email: 'client2@mail.ru', phone: '+7 (999) 444-55-66', avatar: 'https://via.placeholder.com/150' }
+        ];
+        saveUsers(defaultUsers);
+    }
+
+    // Текущий пользователь по умолчанию – гость (не авторизован)
+    if (!getCurrentUser()) {
+        setCurrentUser({ role: 'guest', isAuthenticated: false });
+    }
+}

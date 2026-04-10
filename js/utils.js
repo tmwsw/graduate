@@ -113,3 +113,13 @@ export function getClientTypeName(type) {
     };
     return types[type] || 'Обычный';
 }
+// ==================== вспомогательную функцию для проверки роли ====================
+export function checkRole(allowedRoles) {
+    const user = JSON.parse(localStorage.getItem('currentUser')) || { role: 'guest' };
+    return allowedRoles.includes(user.role);
+}
+
+export function getCurrentUserRole() {
+    const user = JSON.parse(localStorage.getItem('currentUser')) || { role: 'guest' };
+    return user.role;
+}

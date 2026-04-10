@@ -511,6 +511,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Подключаем модули -->
+    <script src="js/auth.js"></script>
     <script type="module">
         import { 
             getMasters, addMaster, updateMaster, deleteMaster,
@@ -1233,15 +1234,69 @@
             }
         }
 
-        function updateAvatarFromStorage() {
-            const user = getCurrentUser();
-            if (user && user.avatar) {
-                const avatars = document.querySelectorAll('.sidebar-avatar');
-                avatars.forEach(img => {
-                    img.src = user.avatar;
-                });
+        // Обновление сайдбара: имя, роль, аватар
+        function updateSidebar() {
+            const userData = localStorage.getItem('currentUser');
+            if (!userData) return;
+
+            let user;
+            try {
+                user = JSON.parse(userData);
+            } catch(e) { return; }
+
+            // Элементы сайдбара (если они есть на странице)
+            const userNameSpan = document.querySelector('.dropdown strong');
+            const userRoleBadge = document.querySelector('.dropdown .badge');
+            const userAvatar = document.querySelector('.sidebar-avatar');
+
+            if (userNameSpan) {
+                let displayName = user.fullName || user.login || 'Пользователь';
+                // Если имя слишком длинное – показываем только имя и фамилию (первые два слова)
+                const nameParts = displayName.split(' ');
+                if (nameParts.length > 2) {
+                    displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
+                }
+                userNameSpan.textContent = displayName;
+            }
+
+            if (userRoleBadge) {
+                let roleText = '';
+                switch (user.role) {
+                    case 'admin': roleText = 'Админ'; break;
+                    case 'manager': roleText = 'Менеджер'; break;
+                    case 'client': roleText = 'Клиент'; break;
+                    case 'master': roleText = 'Мастер'; break;
+                    default: roleText = 'Гость';
+                }
+                userRoleBadge.textContent = roleText;
+                // Меняем цвет бейджа в зависимости от роли
+                userRoleBadge.className = 'badge ms-2';
+                if (user.role === 'admin') userRoleBadge.classList.add('bg-danger');
+                else if (user.role === 'manager') userRoleBadge.classList.add('bg-warning');
+                else if (user.role === 'master') userRoleBadge.classList.add('bg-info');
+                else userRoleBadge.classList.add('bg-success');
+            }
+
+            if (userAvatar && user.avatar) {
+                userAvatar.src = user.avatar;
             }
         }
+
+        // Вызываем обновление при загрузке страницы
+        document.addEventListener('DOMContentLoaded', updateSidebar);
+        // Также обновляем при изменении currentUser (например, после логина в другой вкладке)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'currentUser') updateSidebar();
+        });
+        // Проверка авторизации – если гость, перенаправим
+        if (!checkAuthAndRedirect()) {
+            // код дальше не выполнится, но для надёжности остановим выполнение
+            throw new Error('Не авторизован');
+        }
+        // Применяем скрытие элементов согласно роли
+        applyRoleBasedVisibility();
+        // Обновляем аватар и имя
+        updateUserAvatar();
     </script>
 </body>
 </html>
