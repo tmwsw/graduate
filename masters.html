@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мастера - Система управления ремонтами</title>
+    <title>РемонтТех - Мастера</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/masters.css">
-
+    <link rel="icon" type="image/png" href="img/icon_32x32.png">
 </head>
 <body>
     <div class="container-fluid">
@@ -383,7 +383,7 @@
             </div>
         </div>
     </div>
-            <!-- Модальное окно: Редактирование мастера (ДОБАВЬТЕ ЕГО СЮДА) -->
+            <!-- Модальное окно: Редактирование мастера -->
     <div class="modal fade" id="editMasterModal" tabindex="-1" aria-labelledby="editMasterModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -506,6 +506,29 @@
             </div>
         </div>
     </div>
+    <!-- Modal: Assign Order to Master -->
+    <div class="modal fade" id="assignOrderModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-tasks me-2"></i>Назначить заказ мастеру</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="assignMasterId">
+                    <div id="availableOrdersList">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2">Загрузка доступных заказов...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -513,46 +536,113 @@
     <!-- Подключаем модули -->
     <script src="js/auth.js"></script>
     <script type="module">
+    if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
         import { 
-            getMasters, addMaster, updateMaster, deleteMaster,
-            addActivity, getCurrentUser 
-        } from './js/data.js';
-        import { 
-            showAlert, getSpecializationName, getMasterStatusName, generateRatingStars 
-        } from './js/utils.js';
-
-        // Данные мастеров
-        let masters = getMasters();
-        let currentViewMode = 'table';
-        let currentFilters = {};
-
-        // Цвета для статусов
-        const statusColors = {
-            'active': '#28a745',
-            'inactive': '#6c757d',
-            'vacation': '#ffc107',
-            'sick': '#dc3545'
+            fetchMasters, createMaster, updateMaster, deleteMaster,
+            fetchOrders, updateOrder, fetchClients, fetchDevices
+        } from './js/api.js';
+        
+        // Заглушки для утилит (если нет utils.js)
+        const showAlert = (type, msg) => alert(msg);
+        const getSpecializationName = (spec) => {
+            const map = {
+                'notebooks': 'Ноутбуки', 'smartphones': 'Смартфоны', 'pc': 'ПК',
+                'motherboards': 'Материнские платы', 'displays': 'Дисплеи',
+                'data_recovery': 'Восстановление данных', 'power_supplies': 'Блоки питания',
+                'software': 'ПО/ОС', 'other': 'Другое'
+            };
+            return map[spec] || spec;
+        };
+        const getMasterStatusName = (status) => {
+            const map = { 'active': 'Активный', 'inactive': 'Неактивный', 'vacation': 'В отпуске', 'sick': 'На больничном' };
+            return map[status] || status;
+        };
+        const generateRatingStars = (rating) => {
+            const full = Math.floor(rating);
+            const half = rating % 1 >= 0.5 ? 1 : 0;
+            const empty = 5 - full - half;
+            return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
         };
 
-        // Цвета для аватаров
+        // Состояние
+        let masters = [];
+        let allOrders = [];
+        let currentViewMode = 'table';
+        let filteredMasters = [];
+        let currentFilters = {};
+
+        // Цвета
+        const statusColors = {
+            'active': '#28a745', 'inactive': '#6c757d', 'vacation': '#ffc107', 'sick': '#dc3545'
+        };
         const avatarColors = ['#3498db', '#2ecc71', '#e74c3c', '#9b59b6', '#1abc9c', '#f39c12', '#34495e'];
 
-        // Инициализация страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            loadMasters();
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadOrders();
+            await loadMasters();
             updateStatistics();
-            updateAvatarFromStorage();
+            updateSidebar();
         });
 
-        // Загрузка мастеров
-        function loadMasters() {
-            masters = getMasters();
-            displayMasters();
-            updateNoMastersMessage();
+        async function loadOrders() {
+            try {
+                allOrders = await fetchOrders(0, 10000);
+            } catch (e) {
+                console.warn('Не удалось загрузить заказы для статистики', e);
+            }
         }
 
-        // Отображение мастеров
-        function displayMasters(filteredMasters = masters) {
+        async function loadMasters() {
+            try {
+                const apiMasters = await fetchMasters(0, 1000);
+                masters = apiMasters.map(m => {
+                    // Вычисляем статистику по заказам
+                    const masterOrders = allOrders.filter(o => o.master_id === m.id);
+                    const currentOrders = masterOrders.filter(o => o.status === 'in_repair' || o.status === 'new').length;
+                    const completedOrders = masterOrders.filter(o => o.status === 'ready' || o.status === 'returned').length;
+                    const workload = masters.length ? Math.min(100, currentOrders * 20) : 0; // условно
+
+                    // Преобразуем specialization из строки (если хранится как JSON-строка или просто строка)
+                    let specialization = [];
+                    if (m.specialization) {
+                        try {
+                            specialization = JSON.parse(m.specialization);
+                        } catch {
+                            specialization = m.specialization.split(',').map(s => s.trim());
+                        }
+                    }
+
+                    return {
+                        id: m.id,
+                        fullName: m.full_name,
+                        phone: m.phone,
+                        email: m.email,
+                        experience: m.experience,
+                        specialization: specialization,
+                        skills: m.skills || '',
+                        hourlyRate: m.hourly_rate,
+                        status: m.status || 'active',
+                        rating: m.rating || 4.0,
+                        completedOrders: completedOrders,
+                        currentOrders: currentOrders,
+                        workload: workload,
+                        notes: m.notes,
+                        hireDate: m.hire_date,
+                        avatarColor: avatarColors[m.id % avatarColors.length]
+                    };
+                });
+                filteredMasters = [...masters];
+                displayMasters();
+                updateNoMastersMessage();
+            } catch (e) {
+                console.error(e);
+                showAlert('danger', 'Не удалось загрузить мастеров: ' + e.message);
+            }
+        }
+
+        // Отображение
+        function displayMasters() {
             if (currentViewMode === 'table') {
                 displayMastersTable(filteredMasters);
             } else {
@@ -560,196 +650,86 @@
             }
         }
 
-        // Табличное отображение
         function displayMastersTable(mastersList) {
-            const tableBody = document.getElementById('mastersTableBody');
-            if (!tableBody) return;
-            tableBody.innerHTML = '';
-            
+            const tbody = document.getElementById('mastersTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
             mastersList.forEach(master => {
-                const avatarLetter = master.fullName.split(' ').map(n => n[0]).join('');
+                const avatarLetter = master.fullName.split(' ').map(n => n[0]).join('').slice(0,2);
                 const specializations = master.specialization.map(s => getSpecializationName(s)).join(', ');
-                
-                let workloadClass = 'workload-low';
-                if (master.workload > 70) workloadClass = 'workload-high';
-                else if (master.workload > 40) workloadClass = 'workload-medium';
-                
-                let statusBadge = '';
-                switch(master.status) {
-                    case 'active':
-                        statusBadge = '<span class="badge bg-success">Активный</span>';
-                        break;
-                    case 'inactive':
-                        statusBadge = '<span class="badge bg-secondary">Неактивный</span>';
-                        break;
-                    case 'vacation':
-                        statusBadge = '<span class="badge bg-warning">В отпуске</span>';
-                        break;
-                    case 'sick':
-                        statusBadge = '<span class="badge bg-danger">На больничном</span>';
-                        break;
-                }
-                
+                let workloadClass = master.workload > 70 ? 'workload-high' : (master.workload > 40 ? 'workload-medium' : 'workload-low');
+                const statusBadge = {
+                    'active': '<span class="badge bg-success">Активный</span>',
+                    'inactive': '<span class="badge bg-secondary">Неактивный</span>',
+                    'vacation': '<span class="badge bg-warning">В отпуске</span>',
+                    'sick': '<span class="badge bg-danger">На больничном</span>'
+                }[master.status] || '';
                 const ratingStars = generateRatingStars(master.rating);
-                
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${master.id}</td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="master-avatar me-4" style="background-color: ${master.avatarColor || '#3498db'}">
-                                ${avatarLetter}
-                            </div>
-                            <div class="text-start flex-grow-1">
+                    <td class="master-table-cell">
+                        <div class="master-info-wrapper">
+                            <div class="table-avatar" style="background-color: ${master.avatarColor}">${avatarLetter}</div>
+                            <div>
                                 <strong>${master.fullName}</strong><br>
                                 <small class="text-muted">${master.phone}</small>
                             </div>
                         </div>
                     </td>
-                    <td>
-                        <div class="specialization-tags">
-                            ${master.specialization.map(spec => 
-                                `<span class="specialization-tag">${getSpecializationName(spec)}</span>`
-                            ).join('')}
-                        </div>
-                    </td>
+                    <td><div class="specialization-tags">${master.specialization.map(s => `<span class="specialization-tag">${getSpecializationName(s)}</span>`).join('')}</div></td>
                     <td>${master.experience} лет</td>
+                    <td><div>${ratingStars}</div><small>${master.rating}</small></td>
                     <td>
-                        <div class="rating">${ratingStars}</div>
-                        <small class="text-muted">${master.rating}</small>
-                    </td>
-                    <td>
-                        <div class="d-flex justify-content-between small">
-                            <span>${master.workload}%</span>
-                            <span>${master.currentOrders} зак.</span>
-                        </div>
-                        <div class="workload-bar">
-                            <div class="workload-fill ${workloadClass}" style="width: ${master.workload}%"></div>
-                        </div>
+                        <div class="d-flex justify-content-between small"><span>${master.workload}%</span><span>${master.currentOrders} зак.</span></div>
+                        <div class="workload-bar"><div class="workload-fill ${workloadClass}" style="width: ${master.workload}%"></div></div>
                     </td>
                     <td>${statusBadge}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary action-btn" onclick="viewMasterDetails(${master.id})">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-warning action-btn" onclick="editMaster(${master.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-success action-btn" onclick="assignOrderToMaster(${master.id})">
-                            <i class="fas fa-tasks"></i>
-                        </button>
-                        <button class="btn btn-sm btn-info action-btn" onclick="showMasterStats(${master.id})">
-                            <i class="fas fa-chart-line"></i>
-                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="viewMasterDetails(${master.id})"><i class="fas fa-eye"></i></button>
+                        <button class="btn btn-sm btn-warning" onclick="editMaster(${master.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-success" onclick="assignOrderToMaster(${master.id})"><i class="fas fa-tasks"></i></button>
+                        <button class="btn btn-sm btn-info" onclick="showMasterStats(${master.id})"><i class="fas fa-chart-line"></i></button>
                     </td>
                 `;
-                tableBody.appendChild(row);
+                tbody.appendChild(row);
             });
         }
 
-        // Отображение карточками (сокращено для экономии места, но в вашем коде должно быть полное)
         function displayMastersCards(mastersList) {
             const container = document.getElementById('mastersCardsContainer');
             if (!container) return;
             container.innerHTML = '';
-            
             mastersList.forEach(master => {
-                const avatarLetter = master.fullName.split(' ').map(n => n[0]).join('');
+                const avatarLetter = master.fullName.split(' ').map(n => n[0]).join('').slice(0,2);
                 const specializations = master.specialization.map(s => getSpecializationName(s));
-                
-                let workloadClass = 'workload-low';
-                let workloadText = 'Низкая';
-                if (master.workload > 70) {
-                    workloadClass = 'workload-high';
-                    workloadText = 'Высокая';
-                } else if (master.workload > 40) {
-                    workloadClass = 'workload-medium';
-                    workloadText = 'Средняя';
-                }
-                
-                const statusColor = statusColors[master.status] || '#6c757d';
-                const statusName = getMasterStatusName(master.status);
-                
-                const ratingStars = generateRatingStars(master.rating);
-                
+                let workloadClass = master.workload > 70 ? 'workload-high' : (master.workload > 40 ? 'workload-medium' : 'workload-low');
                 const card = document.createElement('div');
                 card.className = 'col-md-6 col-lg-4 mb-4';
                 card.innerHTML = `
-                    <div class="card master-card h-100" style="border-left-color: ${statusColor}">
+                    <div class="card master-card h-100" style="border-left-color: ${statusColors[master.status] || '#6c757d'}">
                         <div class="card-body">
                             <div class="text-center mb-3">
-                                <div class="master-avatar" style="background-color: ${master.avatarColor || '#3498db'}">
-                                    ${avatarLetter}
-                                </div>
-                                <h5 class="card-title mb-1">${master.fullName}</h5>
-                                <div class="text-muted small mb-2">${master.phone}</div>
-                                <span class="badge" style="background-color: ${statusColor}">${statusName}</span>
+                                <div class="master-avatar" style="background-color: ${master.avatarColor}">${avatarLetter}</div>
+                                <h5>${master.fullName}</h5>
+                                <div class="text-muted small">${master.phone}</div>
+                                <span class="badge" style="background-color: ${statusColors[master.status]}">${getMasterStatusName(master.status)}</span>
                             </div>
-                            
-                            <div class="text-center mb-3">
-                                <div class="rating mb-1">${ratingStars}</div>
-                                <div class="small">
-                                    <strong>${master.rating}</strong> 
-                                    <span class="text-muted">(${master.completedOrders} заказов)</span>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <div class="text-muted small mb-2">Специализация:</div>
-                                <div class="specialization-tags">
-                                    ${specializations.map(spec => 
-                                        `<span class="specialization-tag">${spec}</span>`
-                                    ).join('')}
-                                </div>
-                            </div>
-                            
+                            <div class="text-center mb-3">${generateRatingStars(master.rating)} ${master.rating}</div>
+                            <div class="mb-3"><div class="text-muted small">Специализация:</div><div class="specialization-tags">${specializations.map(s => `<span class="specialization-tag">${s}</span>`).join('')}</div></div>
                             <div class="row text-center mb-3">
-                                <div class="col-4">
-                                    <div class="stat-number">${master.experience}</div>
-                                    <div class="text-muted small">Лет опыта</div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="stat-number">${master.currentOrders}</div>
-                                    <div class="text-muted small">Текущих</div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="stat-number">${master.hourlyRate}</div>
-                                    <div class="text-muted small">₽/час</div>
-                                </div>
+                                <div class="col-4"><div class="stat-number">${master.experience}</div><div class="text-muted small">Лет</div></div>
+                                <div class="col-4"><div class="stat-number">${master.currentOrders}</div><div class="text-muted small">Текущих</div></div>
+                                <div class="col-4"><div class="stat-number">${master.hourlyRate}</div><div class="text-muted small">₽/час</div></div>
                             </div>
-                            
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between small mb-1">
-                                    <span>Загрузка:</span>
-                                    <span>${workloadText} (${master.workload}%)</span>
-                                </div>
-                                <div class="workload-bar">
-                                    <div class="workload-fill ${workloadClass}" style="width: ${master.workload}%"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <div class="text-muted small mb-1">Навыки:</div>
-                                <div class="small">${master.skills ? master.skills.substring(0, 60) + (master.skills.length > 60 ? '...' : '') : ''}</div>
-                            </div>
-                            
+                            <div class="mb-3"><div class="d-flex justify-content-between small"><span>Загрузка:</span><span>${master.workload}%</span></div><div class="workload-bar"><div class="workload-fill ${workloadClass}" style="width: ${master.workload}%"></div></div></div>
                             <div class="d-grid gap-2">
-                                <button class="btn btn-sm btn-primary" onclick="viewMasterDetails(${master.id})">
-                                    <i class="fas fa-eye me-1"></i> Подробнее
-                                </button>
-                                <div class="btn-group" role="group">
-                                    <button class="btn btn-sm btn-outline-warning" onclick="editMaster(${master.id})">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-success" onclick="assignOrderToMaster(${master.id})">
-                                        <i class="fas fa-tasks"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-info" onclick="showMasterStats(${master.id})">
-                                        <i class="fas fa-chart-line"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteMaster(${master.id})">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                <button class="btn btn-sm btn-primary" onclick="viewMasterDetails(${master.id})"><i class="fas fa-eye me-1"></i>Подробнее</button>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-warning" onclick="editMaster(${master.id})"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="assignOrderToMaster(${master.id})"><i class="fas fa-tasks"></i></button>
+                                    <button class="btn btn-sm btn-outline-info" onclick="showMasterStats(${master.id})"><i class="fas fa-chart-line"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteMaster(${master.id})"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -759,276 +739,68 @@
             });
         }
 
-        // Обновление статистики
         function updateStatistics() {
-            const totalMasters = masters.length;
-            const activeMasters = masters.filter(m => m.status === 'active').length;
-            const busyMasters = masters.filter(m => m.status === 'active' && m.currentOrders > 0).length;
-            const avgRating = masters.length > 0 
-                ? (masters.reduce((sum, m) => sum + m.rating, 0) / masters.length).toFixed(1)
-                : 0;
-            
-            document.getElementById('totalMasters').textContent = totalMasters;
-            document.getElementById('activeMasters').textContent = activeMasters;
-            document.getElementById('busyMasters').textContent = busyMasters;
+            const total = masters.length;
+            const active = masters.filter(m => m.status === 'active').length;
+            const busy = masters.filter(m => m.status === 'active' && m.currentOrders > 0).length;
+            const avgRating = total ? (masters.reduce((s,m) => s + m.rating, 0) / total).toFixed(1) : 0;
+            document.getElementById('totalMasters').textContent = total;
+            document.getElementById('activeMasters').textContent = active;
+            document.getElementById('busyMasters').textContent = busy;
             document.getElementById('avgRating').textContent = avgRating;
         }
 
-        // Поиск и фильтры
-        window.searchMasters = function() {
-            const searchText = document.getElementById('searchInput')?.value.toLowerCase() || '';
-            const status = document.getElementById('statusFilter')?.value || '';
-            const specialization = document.getElementById('specializationFilter')?.value || '';
-            
-            let filteredMasters = masters;
-            
-            if (searchText) {
-                filteredMasters = filteredMasters.filter(master =>
-                    master.fullName.toLowerCase().includes(searchText) ||
-                    master.phone.toLowerCase().includes(searchText) ||
-                    (master.email && master.email.toLowerCase().includes(searchText)) ||
-                    (master.skills && master.skills.toLowerCase().includes(searchText))
-                );
-            }
-            
-            if (status) {
-                filteredMasters = filteredMasters.filter(master => master.status === status);
-            }
-            
-            if (specialization) {
-                filteredMasters = filteredMasters.filter(master => 
-                    master.specialization.includes(specialization)
-                );
-            }
-            
-            if (currentFilters.specialization) {
-                filteredMasters = filteredMasters.filter(master => 
-                    master.specialization.includes(currentFilters.specialization)
-                );
-            }
-            if (currentFilters.status) {
-                filteredMasters = filteredMasters.filter(master => master.status === currentFilters.status);
-            }
-            if (currentFilters.rating) {
-                filteredMasters = filteredMasters.filter(master => master.rating >= parseFloat(currentFilters.rating));
-            }
-            
-            displayMasters(filteredMasters);
-            updateNoMastersMessage(filteredMasters.length === 0);
-        };
-
-        window.filterMasters = function() {
-            searchMasters();
-        };
-
-        window.setQuickFilter = function(type, value) {
-            currentFilters[type] = value;
-            
-            if (type === 'specialization') {
-                document.getElementById('specializationFilter').value = value;
-                document.getElementById('statusFilter').value = '';
-                document.getElementById('searchInput').value = '';
-            } else if (type === 'status') {
-                document.getElementById('statusFilter').value = value;
-                document.getElementById('specializationFilter').value = '';
-                document.getElementById('searchInput').value = '';
-            } else if (type === 'rating') {
-                document.getElementById('searchInput').value = 'рейтинг ' + value + '+';
-            }
-            
-            searchMasters();
-        };
-
-        window.clearSearch = function() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('statusFilter').value = '';
-            document.getElementById('specializationFilter').value = '';
-            currentFilters = {};
-            displayMasters();
-            updateNoMastersMessage(masters.length === 0);
-        };
-
-        window.setViewMode = function(mode) {
-            currentViewMode = mode;
-            const tableView = document.getElementById('tableView');
-            const cardsView = document.getElementById('cardsView');
-            
-            if (mode === 'table') {
-                tableView.style.display = 'block';
-                cardsView.style.display = 'none';
-            } else {
-                tableView.style.display = 'none';
-                cardsView.style.display = 'block';
-            }
-            
-            displayMasters();
-        };
-
         // Сохранение нового мастера
-        window.saveNewMaster = function() {
-            const fullName = document.getElementById('masterFullName').value;
-            const phone = document.getElementById('masterPhone').value;
-            const email = document.getElementById('masterEmail').value;
+        window.saveNewMaster = async function() {
+            const fullName = document.getElementById('masterFullName').value.trim();
+            const phone = document.getElementById('masterPhone').value.trim();
+            const email = document.getElementById('masterEmail').value.trim();
             const experience = parseInt(document.getElementById('masterExperience').value);
             const hourlyRate = parseInt(document.getElementById('hourlyRate').value) || 0;
             const status = document.getElementById('masterStatus').value;
-            const skills = document.getElementById('masterSkills').value;
-            const notes = document.getElementById('masterNotes').value;
+            const skills = document.getElementById('masterSkills').value.trim();
+            const notes = document.getElementById('masterNotes').value.trim();
 
             const specialization = [];
-            const specCheckboxes = ['specNotebooks', 'specSmartphones', 'specPC', 'specMotherboards', 
-                                   'specDisplays', 'specDataRecovery', 'specPowerSupplies', 'specSoftware', 'specOther'];
-            
-            specCheckboxes.forEach(id => {
-                const checkbox = document.getElementById(id);
-                if (checkbox && checkbox.checked) {
-                    specialization.push(checkbox.value);
-                }
+            ['specNotebooks','specSmartphones','specPC','specMotherboards','specDisplays','specDataRecovery','specPowerSupplies','specSoftware','specOther'].forEach(id => {
+                const cb = document.getElementById(id);
+                if (cb?.checked) specialization.push(cb.value);
             });
 
             if (!fullName || !phone || !experience || specialization.length === 0) {
-                showAlert('danger', 'Пожалуйста, заполните обязательные поля (ФИО, телефон, опыт, специализация)');
+                showAlert('danger', 'Заполните обязательные поля');
                 return;
             }
 
-            const newMaster = {
-                fullName: fullName,
-                phone: phone,
+            const data = {
+                full_name: fullName,
+                phone,
                 email: email || null,
-                experience: experience,
-                specialization: specialization,
+                experience,
+                specialization: JSON.stringify(specialization), // храним как JSON-строку
                 skills: skills || null,
-                hourlyRate: hourlyRate,
-                status: status,
+                hourly_rate: hourlyRate,
+                status,
                 rating: 4.0,
-                completedOrders: 0,
-                currentOrders: 0,
-                workload: 0,
-                notes: notes || null,
-                hireDate: new Date().toISOString().split('T')[0],
-                avatarColor: avatarColors[Math.floor(Math.random() * avatarColors.length)]
+                notes: notes || null
             };
 
-            addMaster(newMaster);
-            masters = getMasters();
-
-            const modal = bootstrap.Modal.getInstance(document.getElementById('newMasterModal'));
-            modal.hide();
-
-            displayMasters();
-            updateStatistics();
-            updateNoMastersMessage();
-
-            document.getElementById('newMasterForm').reset();
-
-            showAlert('success', `Мастер "${fullName}" успешно добавлен!`);
-            addActivity('Добавление мастера', `Добавлен мастер ${fullName}`, 'system', 'fa-user-plus');
+            try {
+                await createMaster(data);
+                bootstrap.Modal.getInstance(document.getElementById('newMasterModal')).hide();
+                document.getElementById('newMasterForm').reset();
+                await loadOrders(); // обновим заказы
+                await loadMasters();
+                showAlert('success', 'Мастер добавлен');
+            } catch (e) {
+                showAlert('danger', 'Ошибка: ' + e.message);
+            }
         };
 
-        // Просмотр деталей мастера
-        window.viewMasterDetails = function(masterId) {
-            const master = masters.find(m => m.id === masterId);
-            if (!master) return;
-            
-            const specializations = master.specialization.map(s => getSpecializationName(s)).join(', ');
-            const hireDate = new Date(master.hireDate).toLocaleDateString('ru-RU');
-            const ratingStars = generateRatingStars(master.rating);
-            
-            const details = `
-                <div class="row">
-                    <div class="col-md-4 text-center">
-                        <div class="master-avatar mx-auto mb-3" style="background-color: ${master.avatarColor || '#3498db'}; width: 80px; height: 80px; font-size: 32px;">
-                            ${master.fullName.split(' ').map(n => n[0]).join('')}
-                        </div>
-                        <h5>${master.fullName}</h5>
-                        <div class="text-muted mb-2">${master.phone}</div>
-                        <div class="mb-3">${master.email || ''}</div>
-                        <span class="badge" style="background-color: ${statusColors[master.status]}; font-size: 1em;">
-                            ${getMasterStatusName(master.status)}
-                        </span>
-                    </div>
-                    
-                    <div class="col-md-8">
-                        <h6><i class="fas fa-chart-line text-primary me-2"></i>Статистика</h6>
-                        <div class="row mb-3">
-                            <div class="col-4 text-center">
-                                <div class="stat-number">${master.experience}</div>
-                                <div class="text-muted small">Лет опыта</div>
-                            </div>
-                            <div class="col-4 text-center">
-                                <div class="stat-number">${master.completedOrders}</div>
-                                <div class="text-muted small">Завершено</div>
-                            </div>
-                            <div class="col-4 text-center">
-                                <div class="stat-number">${master.currentOrders}</div>
-                                <div class="text-muted small">Текущих</div>
-                            </div>
-                        </div>
-                        
-                        <h6><i class="fas fa-star text-primary me-2"></i>Рейтинг</h6>
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="rating me-2">${ratingStars}</div>
-                            <div>
-                                <strong>${master.rating}</strong> из 5
-                            </div>
-                        </div>
-                        
-                        <h6><i class="fas fa-tools text-primary me-2"></i>Специализация</h6>
-                        <div class="mb-3">
-                            ${master.specialization.map(spec => 
-                                `<span class="badge bg-primary me-1 mb-1">${getSpecializationName(spec)}</span>`
-                            ).join('')}
-                        </div>
-                        
-                        <h6><i class="fas fa-money-bill-wave text-primary me-2"></i>Финансы</h6>
-                        <div class="mb-3">
-                            <div><strong>Ставка в час:</strong> ${master.hourlyRate} ₽</div>
-                            <div><strong>Принят на работу:</strong> ${hireDate}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-cogs text-primary me-2"></i>Навыки</h6>
-                        <div class="card">
-                            <div class="card-body">
-                                ${master.skills || 'Не указаны'}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-sticky-note text-primary me-2"></i>Примечания</h6>
-                        <div class="card">
-                            <div class="card-body">
-                                ${master.notes || 'Нет примечаний'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-footer mt-4">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                    <button type="button" class="btn btn-warning" onclick="editMaster(${master.id})" data-bs-dismiss="modal">
-                        <i class="fas fa-edit me-1"></i> Редактировать
-                    </button>
-                    <button type="button" class="btn btn-success" onclick="assignOrderToMaster(${master.id})" data-bs-dismiss="modal">
-                        <i class="fas fa-tasks me-1"></i> Назначить заказ
-                    </button>
-                </div>
-            `;
-            
-            document.getElementById('masterDetailsBody').innerHTML = details;
-            const modal = new bootstrap.Modal(document.getElementById('masterDetailsModal'));
-            modal.show();
-        };
-
-        // Редактирование мастера
+        // Редактирование
         window.editMaster = function(masterId) {
             const master = masters.find(m => m.id === masterId);
             if (!master) return;
-
             document.getElementById('editMasterId').value = master.id;
             document.getElementById('editFullName').value = master.fullName;
             document.getElementById('editPhone').value = master.phone;
@@ -1038,203 +810,206 @@
             document.getElementById('editStatus').value = master.status;
             document.getElementById('editSkills').value = master.skills || '';
             document.getElementById('editNotes').value = master.notes || '';
-
-            const specCheckboxes = {
-                'editSpecNotebooks': 'notebooks',
-                'editSpecSmartphones': 'smartphones',
-                'editSpecPC': 'pc',
-                'editSpecMotherboards': 'motherboards',
-                'editSpecDisplays': 'displays',
-                'editSpecDataRecovery': 'data_recovery',
-                'editSpecPowerSupplies': 'power_supplies',
-                'editSpecSoftware': 'software',
-                'editSpecOther': 'other'
-            };
-
-            for (const [id, value] of Object.entries(specCheckboxes)) {
-                const checkbox = document.getElementById(id);
-                if (checkbox) {
-                    checkbox.checked = master.specialization.includes(value);
-                }
-            }
-
-            const modal = new bootstrap.Modal(document.getElementById('editMasterModal'));
-            modal.show();
+            // Отмечаем чекбоксы специализации
+            const specValues = master.specialization;
+            ['editSpecNotebooks','editSpecSmartphones','editSpecPC','editSpecMotherboards','editSpecDisplays','editSpecDataRecovery','editSpecPowerSupplies','editSpecSoftware','editSpecOther'].forEach(id => {
+                const cb = document.getElementById(id);
+                if (cb) cb.checked = specValues.includes(cb.value);
+            });
+            new bootstrap.Modal(document.getElementById('editMasterModal')).show();
         };
 
-        // Сохранение отредактированного мастера
-        window.saveEditedMaster = function() {
-            const masterId = parseInt(document.getElementById('editMasterId').value);
-            const fullName = document.getElementById('editFullName').value;
-            const phone = document.getElementById('editPhone').value;
-            const email = document.getElementById('editEmail').value;
+        window.saveEditedMaster = async function() {
+            const id = parseInt(document.getElementById('editMasterId').value);
+            const fullName = document.getElementById('editFullName').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
             const experience = parseInt(document.getElementById('editExperience').value);
             const hourlyRate = parseInt(document.getElementById('editHourlyRate').value) || 0;
             const status = document.getElementById('editStatus').value;
-            const skills = document.getElementById('editSkills').value;
-            const notes = document.getElementById('editNotes').value;
+            const skills = document.getElementById('editSkills').value.trim();
+            const notes = document.getElementById('editNotes').value.trim();
 
             const specialization = [];
-            const specCheckboxes = {
-                'editSpecNotebooks': 'notebooks',
-                'editSpecSmartphones': 'smartphones',
-                'editSpecPC': 'pc',
-                'editSpecMotherboards': 'motherboards',
-                'editSpecDisplays': 'displays',
-                'editSpecDataRecovery': 'data_recovery',
-                'editSpecPowerSupplies': 'power_supplies',
-                'editSpecSoftware': 'software',
-                'editSpecOther': 'other'
-            };
-
-            for (const [id, value] of Object.entries(specCheckboxes)) {
-                const checkbox = document.getElementById(id);
-                if (checkbox && checkbox.checked) {
-                    specialization.push(value);
-                }
-            }
+            ['editSpecNotebooks','editSpecSmartphones','editSpecPC','editSpecMotherboards','editSpecDisplays','editSpecDataRecovery','editSpecPowerSupplies','editSpecSoftware','editSpecOther'].forEach(id => {
+                const cb = document.getElementById(id);
+                if (cb?.checked) specialization.push(cb.value);
+            });
 
             if (!fullName || !phone || !experience || specialization.length === 0) {
-                showAlert('danger', 'Пожалуйста, заполните обязательные поля (ФИО, телефон, опыт, специализация)');
+                showAlert('danger', 'Заполните обязательные поля');
                 return;
             }
 
-            const updatedData = {
-                fullName,
+            const data = {
+                full_name: fullName,
                 phone,
                 email: email || null,
                 experience,
-                specialization,
-                hourlyRate,
-                status,
+                specialization: JSON.stringify(specialization),
                 skills: skills || null,
+                hourly_rate: hourlyRate,
+                status,
                 notes: notes || null
             };
 
-            const updated = updateMaster(masterId, updatedData);
-            if (updated) {
-                masters = getMasters();
-                const modal = bootstrap.Modal.getInstance(document.getElementById('editMasterModal'));
-                modal.hide();
-                displayMasters();
-                updateStatistics();
-                showAlert('success', 'Данные мастера обновлены!');
-                addActivity('Редактирование мастера', `Изменены данные мастера ${fullName}`, 'system', 'fa-edit');
+            try {
+                await updateMaster(id, data);
+                bootstrap.Modal.getInstance(document.getElementById('editMasterModal')).hide();
+                await loadMasters();
+                showAlert('success', 'Мастер обновлён');
+            } catch (e) {
+                showAlert('danger', 'Ошибка: ' + e.message);
             }
         };
 
-        // Удаление мастера (из модального окна редактирования)
+        window.deleteMaster = async function(masterId) {
+            if (!confirm('Удалить мастера?')) return;
+            try {
+                await deleteMaster(masterId);
+                await loadMasters();
+                showAlert('success', 'Мастер удалён');
+            } catch (e) {
+                showAlert('danger', 'Ошибка: ' + e.message);
+            }
+        };
         window.deleteMasterFromEdit = function() {
-            const masterId = parseInt(document.getElementById('editMasterId').value);
-            deleteMaster(masterId);
-            masters = getMasters();
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editMasterModal'));
-            modal.hide();
-            displayMasters();
-            updateStatistics();
-            updateNoMastersMessage();
-            showAlert('success', 'Мастер удален');
-            addActivity('Удаление мастера', `Мастер удалён`, 'system', 'fa-user-slash');
+            const id = document.getElementById('editMasterId').value;
+            window.deleteMaster(parseInt(id));
         };
 
-        // Удаление мастера (из карточки или таблицы)
-        window.deleteMaster = function(masterId) {
+        // Назначение заказа (пока заглушка, можно реализовать позже)
+        window.assignOrderToMaster = async function(masterId) {
             const master = masters.find(m => m.id === masterId);
-            if (!confirm('Вы уверены, что хотите удалить этого мастера?')) {
-                return;
-            }
+            if (!master) return;
             
-            if (master && master.currentOrders > 0) {
-                if (!confirm(`У мастера есть ${master.currentOrders} текущих заказов. Удалить вместе с ними?`)) {
+            document.getElementById('assignMasterId').value = masterId;
+            const modal = new bootstrap.Modal(document.getElementById('assignOrderModal'));
+            modal.show();
+            
+            const listContainer = document.getElementById('availableOrdersList');
+            listContainer.innerHTML = `<div class="text-center py-3"><div class="spinner-border text-primary"></div><p class="mt-2">Загрузка доступных заказов...</p></div>`;
+            
+            try {
+                // Загружаем все заказы (можно добавить фильтр на бэкенде, но пока так)
+                const allOrders = await fetchOrders(0, 1000);
+                // Фильтруем заказы без мастера (master_id === null) и не завершённые
+                const availableOrders = allOrders.filter(o => o.master_id === null && o.status !== 'done' && o.status !== 'cancelled');
+                
+                if (availableOrders.length === 0) {
+                    listContainer.innerHTML = `<div class="alert alert-info">Нет доступных заказов для назначения.</div>`;
                     return;
                 }
-            }
-            
-            deleteMaster(masterId);
-            masters = getMasters();
-            
-            displayMasters();
-            updateStatistics();
-            updateNoMastersMessage();
-            
-            showAlert('success', 'Мастер удален');
-            if (master) {
-                addActivity('Удаление мастера', `Удалён мастер ${master.fullName}`, 'system', 'fa-user-slash');
+                
+                // Для каждого заказа получим информацию о клиенте и устройстве (можно загрузить заранее)
+                const clients = await fetchClients(0, 1000);
+                const devices = await fetchDevices(0, 1000); // нужно импортировать fetchDevices
+                
+                let html = `<div class="list-group">`;
+                availableOrders.forEach(order => {
+                    const client = clients.find(c => c.id === order.client_id);
+                    const device = devices.find(d => d.id === order.device_id);
+                    const clientName = client ? client.full_name : `Клиент #${order.client_id}`;
+                    const deviceInfo = device ? `${device.brand} ${device.model}` : `Устройство #${order.device_id}`;
+                    
+                    html += `
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6>Заказ #${order.id} — ${deviceInfo}</h6>
+                                    <p class="mb-1">${order.description || 'Без описания'}</p>
+                                    <small>Клиент: ${clientName} | Стоимость: ${order.price || 0} ₽</small>
+                                </div>
+                                <button class="btn btn-sm btn-primary" onclick="confirmAssignOrder(${order.id})">
+                                    <i class="fas fa-check me-1"></i>Назначить
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                listContainer.innerHTML = html;
+            } catch (error) {
+                console.error('Ошибка загрузки заказов:', error);
+                listContainer.innerHTML = `<div class="alert alert-danger">Ошибка загрузки: ${error.message}</div>`;
             }
         };
-
-        // Назначение заказа мастеру
-        window.assignOrderToMaster = function(masterId) {
-            const orderDescription = prompt('Введите описание заказа для назначения:');
-            if (orderDescription) {
-                const master = masters.find(m => m.id === masterId);
-                if (master) {
-                    master.currentOrders = (master.currentOrders || 0) + 1;
-                    master.workload = Math.min(100, master.workload + 15);
-                    
-                    updateMaster(masterId, { currentOrders: master.currentOrders, workload: master.workload });
-                    masters = getMasters();
-                    
-                    displayMasters();
-                    updateStatistics();
-                    
-                    showAlert('success', `Заказ "${orderDescription}" назначен мастеру ${master.fullName}`);
-                    addActivity('Назначение заказа', `Заказ назначен мастеру ${master.fullName}`, 'orders', 'fa-tasks');
-                }
+        // Подтверждение назначения
+        window.confirmAssignOrder = async function(orderId) {
+            const masterId = parseInt(document.getElementById('assignMasterId').value);
+            if (!masterId) return;
+            
+            try {
+                await updateOrder(orderId, { master_id: masterId, status: 'in_repair' });
+                // Закрываем модалку
+                bootstrap.Modal.getInstance(document.getElementById('assignOrderModal')).hide();
+                // Обновляем список мастеров (чтобы обновить статистику)
+                await loadMasters(); // предполагаем, что есть функция loadMasters, которая обновляет массив masters
+                displayMasters();
+                updateStatistics();
+                showAlert('success', `Заказ #${orderId} назначен мастеру`);
+            } catch (error) {
+                showAlert('danger', 'Ошибка назначения: ' + error.message);
             }
         };
-
-        // Показать статистику мастера
-        window.showMasterStats = function(masterId) {
-            const master = masters.find(m => m.id === masterId);
-            if (master) {
-                const stats = `
-                    Статистика мастера ${master.fullName}:
-                    
-                    🎯 Опыт работы: ${master.experience} лет
-                    ⭐ Рейтинг: ${master.rating}/5
-                    ✅ Завершено заказов: ${master.completedOrders}
-                    🔧 Текущих заказов: ${master.currentOrders}
-                    📊 Загрузка: ${master.workload}%
-                    💰 Ставка в час: ${master.hourlyRate} ₽
-                    📅 Принят на работу: ${new Date(master.hireDate).toLocaleDateString('ru-RU')}
-                    
-                    Специализация: ${master.specialization.map(s => getSpecializationName(s)).join(', ')}
+        window.showMasterStats = (id) => {
+            const m = masters.find(m => m.id === id);
+            if (m) alert(`${m.fullName}\nРейтинг: ${m.rating}\nЗаказов: ${m.completedOrders}\nЗагрузка: ${m.workload}%`);
+        };
+        window.viewMasterDetails = (id) => {
+            const m = masters.find(m => m.id === id);
+            if (m) {
+                document.getElementById('masterDetailsBody').innerHTML = `
+                    <h5>${m.fullName}</h5><p>${m.phone}<br>${m.email||''}</p>
+                    <p>Опыт: ${m.experience} лет, Ставка: ${m.hourlyRate} ₽/ч</p>
+                    <p>Специализация: ${m.specialization.map(getSpecializationName).join(', ')}</p>
+                    <p>${m.notes||''}</p>
                 `;
-                showAlert('info', stats);
+                new bootstrap.Modal(document.getElementById('masterDetailsModal')).show();
             }
         };
 
-        // Экспорт мастеров
-        window.exportMasters = function() {
+        // Поиск и фильтры
+        window.searchMasters = function() {
+            const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+            const status = document.getElementById('statusFilter')?.value;
+            const spec = document.getElementById('specializationFilter')?.value;
+            filteredMasters = masters.filter(m => {
+                if (search && !(m.fullName.toLowerCase().includes(search) || m.phone.includes(search) || (m.email||'').toLowerCase().includes(search) || m.skills.toLowerCase().includes(search))) return false;
+                if (status && m.status !== status) return false;
+                if (spec && !m.specialization.includes(spec)) return false;
+                return true;
+            });
+            displayMasters();
+            updateNoMastersMessage(filteredMasters.length === 0);
+        };
+        window.filterMasters = () => searchMasters();
+        window.clearSearch = () => {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('specializationFilter').value = '';
+            filteredMasters = [...masters];
+            displayMasters();
+            updateNoMastersMessage(false);
+        };
+        window.setViewMode = (mode) => {
+            currentViewMode = mode;
+            document.getElementById('tableView').style.display = mode==='table'?'block':'none';
+            document.getElementById('cardsView').style.display = mode==='cards'?'block':'none';
+            displayMasters();
+        };
+        window.exportMasters = () => {
             const dataStr = JSON.stringify(masters, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
-            const exportFileDefaultName = `masters_export_${new Date().toISOString().split('T')[0]}.json`;
-            
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-            
-            showAlert('info', `Экспортировано ${masters.length} мастеров`);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `masters_export.json`;
+            a.click();
         };
-
-        function updateNoMastersMessage(show = masters.length === 0) {
-            const noMastersMessage = document.getElementById('noMastersMessage');
-            const tableView = document.getElementById('tableView');
-            const cardsView = document.getElementById('cardsView');
-            
-            if (show) {
-                noMastersMessage.style.display = 'block';
-                tableView.style.display = 'none';
-                cardsView.style.display = 'none';
-            } else {
-                noMastersMessage.style.display = 'none';
-            }
+        function updateNoMastersMessage(show = filteredMasters.length === 0) {
+            document.getElementById('noMastersMessage').style.display = show ? 'block' : 'none';
         }
 
-        // Обновление сайдбара: имя, роль, аватар
         function updateSidebar() {
             const userData = localStorage.getItem('currentUser');
             if (!userData) return;
@@ -1244,14 +1019,12 @@
                 user = JSON.parse(userData);
             } catch(e) { return; }
 
-            // Элементы сайдбара (если они есть на странице)
             const userNameSpan = document.querySelector('.dropdown strong');
             const userRoleBadge = document.querySelector('.dropdown .badge');
             const userAvatar = document.querySelector('.sidebar-avatar');
 
             if (userNameSpan) {
-                let displayName = user.fullName || user.login || 'Пользователь';
-                // Если имя слишком длинное – показываем только имя и фамилию (первые два слова)
+                let displayName = user.full_name || user.username || 'Пользователь';
                 const nameParts = displayName.split(' ');
                 if (nameParts.length > 2) {
                     displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
@@ -1269,7 +1042,6 @@
                     default: roleText = 'Гость';
                 }
                 userRoleBadge.textContent = roleText;
-                // Меняем цвет бейджа в зависимости от роли
                 userRoleBadge.className = 'badge ms-2';
                 if (user.role === 'admin') userRoleBadge.classList.add('bg-danger');
                 else if (user.role === 'manager') userRoleBadge.classList.add('bg-warning');
@@ -1281,22 +1053,6 @@
                 userAvatar.src = user.avatar;
             }
         }
-
-        // Вызываем обновление при загрузке страницы
-        document.addEventListener('DOMContentLoaded', updateSidebar);
-        // Также обновляем при изменении currentUser (например, после логина в другой вкладке)
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'currentUser') updateSidebar();
-        });
-        // Проверка авторизации – если гость, перенаправим
-        if (!checkAuthAndRedirect()) {
-            // код дальше не выполнится, но для надёжности остановим выполнение
-            throw new Error('Не авторизован');
-        }
-        // Применяем скрытие элементов согласно роли
-        applyRoleBasedVisibility();
-        // Обновляем аватар и имя
-        updateUserAvatar();
     </script>
 </body>
 </html>

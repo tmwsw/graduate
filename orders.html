@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Заявки на ремонт - Система управления</title>
+    <title>РемонтТех - Заявки на ремонт</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/orders.css">
-
+    <link rel="icon" type="image/png" href="img/icon_32x32.png">
 </head>
 <body>
     <div class="container-fluid">
@@ -359,232 +359,480 @@
             </div>
         </div>
     </div>
+    <!-- Modal: Edit Order -->
+    <div class="modal fade" id="editOrderModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Редактировать заявку</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="editOrderModalBody"></div>
+            </div>
+        </div>
+    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/data.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/api.js" type="module"></script>
     <!-- Orders JS -->
-    <script>
-        // Загрузка данных из localStorage
-        let orders = JSON.parse(localStorage.getItem('repair_orders')) || [];
-        
-        // Статусы и их цвета
-        const statusConfig = {
-            'new': { text: 'Новый', class: 'bg-primary' },
-            'in_progress': { text: 'В работе', class: 'bg-warning' },
-            'waiting': { text: 'Ожидает', class: 'bg-info' },
-            'ready': { text: 'Готов', class: 'bg-success' },
-            'completed': { text: 'Выдан', class: 'bg-secondary' },
-            'cancelled': { text: 'Отменен', class: 'bg-danger' }
-        };
-        
-        // Инициализация страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            loadOrders();
-            updateStats();
-            setCurrentDate();
+    <script type="module">
+    if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+        import { 
+            fetchClients, fetchDevices, fetchMasters, fetchOrders, 
+            createOrder, updateOrder, deleteOrder 
+        } from './js/api.js';
+        import { showAlert } from './js/utils.js';
+
+        let orders = [];
+        let clients = [];
+        let devices = [];
+        let masters = [];
+        let clientsMap = new Map();
+        let devicesMap = new Map();
+        let mastersMap = new Map();
+        let filteredOrders = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadAllData();
+            populateMasterFilter();
+            updateOrdersTable();
+            updateStatistics();
+            setDefaultDates();
+            updateSidebar();
         });
-        
-        function setCurrentDate() {
+
+        async function loadAllData() {
+            try {
+                [clients, devices, masters, orders] = await Promise.all([
+                    fetchClients(0, 1000),
+                    fetchDevices(0, 1000),
+                    fetchMasters(0, 1000),
+                    fetchOrders(0, 1000)
+                ]);
+                clientsMap.clear();
+                clients.forEach(c => clientsMap.set(c.id, c.full_name));
+                devicesMap.clear();
+                devices.forEach(d => devicesMap.set(d.id, `${d.brand} ${d.model}`));
+                mastersMap.clear();
+                masters.forEach(m => mastersMap.set(m.id, m.full_name));
+            } catch (e) {
+                console.error(e);
+                showAlert('danger', 'Не удалось загрузить данные');
+            }
+        }
+
+        function populateMasterFilter() {
+            const masterFilter = document.getElementById('filterMaster');
+            masterFilter.innerHTML = '<option value="">Все мастера</option>';
+            masters.forEach(m => {
+                const option = new Option(m.full_name, m.id);
+                masterFilter.add(option);
+            });
+        }
+
+        function setDefaultDates() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('filterDateFrom').value = today;
             document.getElementById('filterDateTo').value = today;
         }
-        
-        function loadOrders() {
-            // В будущем здесь будет загрузка из базы данных
-            // Пока используем статические данные
-            updateOrdersTable();
-        }
-        
+
         function updateOrdersTable() {
-            const tableBody = document.getElementById('ordersTableBody');
-            if (orders.length > 0) {
-                // Генерируем строки из данных
-                tableBody.innerHTML = orders.map(order => `
-                    <tr>
-                        <td><span class="badge bg-secondary">#${order.id}</span></td>
-                        <td>
-                            <strong>${order.clientName}</strong><br>
-                            <small class="text-muted">${order.deviceType}: ${order.deviceBrand}</small>
-                        </td>
-                        <td>${order.createdDate}</td>
-                        <td>${order.estimatedDate || '-'}</td>
-                        <td><span class="badge ${statusConfig[order.status]?.class || 'bg-secondary'} status-badge">
-                            ${statusConfig[order.status]?.text || order.status}
-                        </span></td>
-                        <td>${order.cost ? order.cost.toLocaleString() + ' ₽' : 'Не оценена'}</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary action-btn" onclick="viewOrder(${order.id})">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-warning action-btn" onclick="editOrder(${order.id})">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            ${order.status === 'ready' ? 
-                                `<button class="btn btn-sm btn-success action-btn" onclick="issueOrder(${order.id})">
-                                    <i class="fas fa-box"></i>
-                                </button>` : 
-                                `<button class="btn btn-sm btn-success action-btn" onclick="completeOrder(${order.id})">
-                                    <i class="fas fa-check"></i>
-                                </button>`
-                            }
-                        </td>
-                    </tr>
-                `).join('');
+            const tbody = document.getElementById('ordersTableBody');
+            const ordersToShow = filteredOrders.length ? filteredOrders : orders;
+            
+            if (ordersToShow.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">Нет заявок</td></tr>`;
+                return;
             }
+
+            const sorted = [...ordersToShow].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            tbody.innerHTML = '';
+            sorted.forEach(order => {
+                const clientName = clientsMap.get(order.client_id) || '—';
+                const deviceName = devicesMap.get(order.device_id) || '—';
+                const masterName = order.master_id ? mastersMap.get(order.master_id) || '—' : 'Не назначен';
+                const date = order.created_at ? new Date(order.created_at).toLocaleDateString('ru-RU') : '—';
+                const readyDate = (order.status === 'ready' || order.status === 'returned') 
+                    ? (order.updated_at ? new Date(order.updated_at).toLocaleDateString('ru-RU') : '—') 
+                    : '—';
+                
+                let statusBadge = '';
+                switch(order.status) {
+                    case 'new': statusBadge = '<span class="badge bg-primary">Новый</span>'; break;
+                    case 'in_repair': statusBadge = '<span class="badge bg-warning">В работе</span>'; break;
+                    case 'ready': statusBadge = '<span class="badge bg-success">Готов</span>'; break;
+                    case 'returned': statusBadge = '<span class="badge bg-secondary">Выдан</span>'; break;
+                    default: statusBadge = '<span class="badge bg-light">' + order.status + '</span>';
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="badge bg-secondary">#${order.id}</span></td>
+                    <td>
+                        <strong>${clientName}</strong><br>
+                        <small class="text-muted">${deviceName}</small>
+                    </td>
+                    <td>${date}</td>
+                    <td>${readyDate}</td>
+                    <td>${statusBadge}</td>
+                    <td>${order.price ? order.price.toLocaleString() + ' ₽' : '—'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary action-btn" onclick="viewOrder(${order.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning action-btn" onclick="editOrder(${order.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${order.status === 'ready' ? 
+                            `<button class="btn btn-sm btn-success action-btn" onclick="issueOrder(${order.id})">
+                                <i class="fas fa-box"></i>
+                            </button>` : 
+                            `<button class="btn btn-sm btn-success action-btn" onclick="completeOrder(${order.id})">
+                                <i class="fas fa-check"></i>
+                            </button>`
+                        }
+                        <button class="btn btn-sm btn-danger action-btn" onclick="deleteOrderHandler(${order.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
         }
-        
-        function updateStats() {
-            // Расчет статистики
+
+        function updateStatistics() {
             const total = orders.length;
             const newOrders = orders.filter(o => o.status === 'new').length;
-            const inProgress = orders.filter(o => o.status === 'in_progress').length;
+            const inProgress = orders.filter(o => o.status === 'in_repair').length;
             const ready = orders.filter(o => o.status === 'ready').length;
-            const urgent = orders.filter(o => o.urgency === 'urgent' || o.urgency === 'express').length;
-            
+            const monthAgo = new Date();
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            const monthOrders = orders.filter(o => new Date(o.created_at) > monthAgo).length;
+            const urgent = 0;
+
             document.getElementById('totalOrders').textContent = total;
             document.getElementById('newOrders').textContent = newOrders;
             document.getElementById('inProgressOrders').textContent = inProgress;
             document.getElementById('readyOrders').textContent = ready;
+            document.getElementById('monthOrders').textContent = monthOrders;
             document.getElementById('urgentOrders').textContent = urgent;
-            document.getElementById('monthOrders').textContent = orders.filter(o => {
-                const orderDate = new Date(o.createdDate);
-                const monthAgo = new Date();
-                monthAgo.setMonth(monthAgo.getMonth() - 1);
-                return orderDate > monthAgo;
-            }).length;
         }
-        
-        function searchOrders() {
+
+        window.searchOrders = function() {
+            applyFilters();
+        };
+
+        function applyFilters() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('filterStatus').value;
-            const masterFilter = document.getElementById('filterMaster').value;
+            const status = document.getElementById('filterStatus').value;
+            const masterId = document.getElementById('filterMaster').value;
             const dateFrom = document.getElementById('filterDateFrom').value;
             const dateTo = document.getElementById('filterDateTo').value;
-            
-            // Здесь будет фильтрация
-            alert(`Поиск: ${searchText}\nСтатус: ${statusFilter}\nМастер: ${masterFilter}\nДата с: ${dateFrom} по: ${dateTo}`);
+
+            filteredOrders = orders.filter(order => {
+                if (status && order.status !== status) return false;
+                if (masterId && order.master_id !== parseInt(masterId)) return false;
+                if (dateFrom) {
+                    const orderDate = order.created_at ? order.created_at.split('T')[0] : '';
+                    if (orderDate < dateFrom) return false;
+                }
+                if (dateTo) {
+                    const orderDate = order.created_at ? order.created_at.split('T')[0] : '';
+                    if (orderDate > dateTo) return false;
+                }
+                if (searchText) {
+                    const clientName = clientsMap.get(order.client_id)?.toLowerCase() || '';
+                    const deviceName = devicesMap.get(order.device_id)?.toLowerCase() || '';
+                    const desc = order.description?.toLowerCase() || '';
+                    const idStr = order.id.toString();
+                    if (!clientName.includes(searchText) && !deviceName.includes(searchText) && 
+                        !desc.includes(searchText) && !idStr.includes(searchText)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            updateOrdersTable();
         }
-        
-        function clearFilters() {
+
+        window.clearFilters = function() {
             document.getElementById('filterStatus').value = '';
             document.getElementById('filterMaster').value = '';
             document.getElementById('filterDateFrom').value = '';
             document.getElementById('filterDateTo').value = '';
             document.getElementById('searchInput').value = '';
-            loadOrders();
-        }
-        
-        function saveNewOrder() {
-            const clientName = document.getElementById('clientName').value;
-            const clientPhone = document.getElementById('clientPhone').value;
-            const deviceType = document.getElementById('deviceType').value;
-            const deviceBrand = document.getElementById('deviceBrand').value;
-            const problem = document.getElementById('problem').value;
-            const serialNumber = document.getElementById('serialNumber').value;
-            const urgency = document.getElementById('urgency').value;
+            filteredOrders = [];
+            updateOrdersTable();
+        };
+
+        document.getElementById('newOrderModal').addEventListener('show.bs.modal', async () => {
+            if (clients.length === 0) await loadAllData();
             
-            // Валидация
-            if (!clientName || !clientPhone || !deviceType || !deviceBrand || !problem) {
-                alert('Пожалуйста, заполните все обязательные поля (отмечены *)');
+            const modalBody = document.querySelector('#newOrderModal .modal-body');
+            modalBody.innerHTML = `
+                <form id="newOrderForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Клиент *</label>
+                            <select class="form-select" id="clientSelect" required>
+                                <option value="">Выберите клиента...</option>
+                                ${clients.map(c => `<option value="${c.id}">${c.full_name} (${c.phone})</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Устройство *</label>
+                            <select class="form-select" id="deviceSelect" required disabled>
+                                <option value="">Сначала выберите клиента</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание проблемы *</label>
+                        <textarea class="form-control" id="problemDescription" rows="3" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Мастер</label>
+                            <select class="form-select" id="masterSelect">
+                                <option value="">Не назначать</option>
+                                ${masters.map(m => `<option value="${m.id}">${m.full_name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Стоимость (₽)</label>
+                            <input type="number" class="form-control" id="orderPrice" min="0" step="100" value="0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Статус</label>
+                        <select class="form-select" id="orderStatus">
+                            <option value="new">Новый</option>
+                            <option value="in_repair">В работе</option>
+                            <option value="ready">Готов</option>
+                            <option value="returned">Выдан</option>
+                        </select>
+                    </div>
+                </form>
+            `;
+
+            document.getElementById('clientSelect').addEventListener('change', function() {
+                const clientId = parseInt(this.value);
+                const deviceSelect = document.getElementById('deviceSelect');
+                deviceSelect.innerHTML = '<option value="">Выберите устройство...</option>';
+                deviceSelect.disabled = !clientId;
+                if (clientId) {
+                    devices.filter(d => d.client_id === clientId).forEach(d => {
+                        const option = new Option(`${d.model}`, d.id);
+                        deviceSelect.add(option);
+                    });
+                }
+            });
+        });
+
+        window.saveNewOrder = async function() {
+            const clientId = parseInt(document.getElementById('clientSelect').value);
+            const deviceId = parseInt(document.getElementById('deviceSelect').value);
+            const masterId = document.getElementById('masterSelect').value;
+            const description = document.getElementById('problemDescription').value.trim();
+            const price = parseFloat(document.getElementById('orderPrice').value) || 0;
+            const status = document.getElementById('orderStatus').value;
+
+            if (!clientId || !deviceId || !description) {
+                showAlert('danger', 'Заполните обязательные поля');
                 return;
             }
-            
-            // Создание новой заявки
-            const newOrder = {
-                id: orders.length > 0 ? Math.max(...orders.map(o => o.id)) + 1 : 1001,
-                clientName: clientName,
-                clientPhone: clientPhone,
-                deviceType: deviceType,
-                deviceBrand: deviceBrand,
-                problem: problem,
-                serialNumber: serialNumber,
-                urgency: urgency,
-                status: 'new',
-                createdDate: new Date().toLocaleDateString('ru-RU'),
-                masterId: null,
-                cost: 0,
-                works: [],
-                parts: []
+
+            const data = {
+                client_id: clientId,
+                device_id: deviceId,
+                master_id: masterId ? parseInt(masterId) : null,
+                description: description,
+                price: price,
+                status: status
             };
-            
-            // Сохранение в localStorage
-            orders.unshift(newOrder);
-            localStorage.setItem('repair_orders', JSON.stringify(orders));
-            
-            // Закрытие модального окна
-            const modal = bootstrap.Modal.getInstance(document.getElementById('newOrderModal'));
-            modal.hide();
-            
-            // Обновление интерфейса
-            updateOrdersTable();
-            updateStats();
-            
-            // Очистка формы
-            document.getElementById('newOrderForm').reset();
-            
-            alert(`Заявка #${newOrder.id} успешно создана!`);
-        }
-        
-        function viewOrder(orderId) {
-            window.location.href = `order-detail.html?id=${orderId}`;
-        }
-        
-        function editOrder(orderId) {
-            alert(`Редактирование заявки #${orderId}`);
-        }
-        
-        function completeOrder(orderId) {
-            if (confirm(`Отметить заявку #${orderId} как выполненную?`)) {
-                const orderIndex = orders.findIndex(o => o.id === orderId);
-                if (orderIndex !== -1) {
-                    orders[orderIndex].status = 'ready';
-                    localStorage.setItem('repair_orders', JSON.stringify(orders));
-                    updateOrdersTable();
-                    updateStats();
-                    alert(`Заявка #${orderId} отмечена как готовая`);
-                }
+
+            try {
+                await createOrder(data);
+                bootstrap.Modal.getInstance(document.getElementById('newOrderModal')).hide();
+                await loadAllData();
+                updateOrdersTable();
+                updateStatistics();
+                showAlert('success', 'Заявка создана');
+            } catch (e) {
+                showAlert('danger', 'Ошибка: ' + e.message);
             }
-        }
-        
-        function issueOrder(orderId) {
-            if (confirm(`Выдать устройство по заявке #${orderId} клиенту?`)) {
-                const orderIndex = orders.findIndex(o => o.id === orderId);
-                if (orderIndex !== -1) {
-                    orders[orderIndex].status = 'completed';
-                    localStorage.setItem('repair_orders', JSON.stringify(orders));
-                    updateOrdersTable();
-                    updateStats();
-                    alert(`Заявка #${orderId} закрыта. Устройство выдано клиенту.`);
-                }
+        };
+
+        window.viewOrder = (id) => {
+            window.location.href = `order-detail.html?id=${id}`;
+        };
+        window.editOrder = function(id) {
+            const order = orders.find(o => o.id === id);
+            if (!order) return;
+
+            const formHtml = `
+                <form id="editOrderForm">
+                    <input type="hidden" id="editOrderId" value="${order.id}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Клиент *</label>
+                            <select class="form-select" id="editClientId" required>
+                                ${clients.map(c => `<option value="${c.id}" ${c.id === order.client_id ? 'selected' : ''}>${c.full_name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Устройство *</label>
+                            <select class="form-select" id="editDeviceId" required>
+                                ${devices.filter(d => d.client_id === order.client_id).map(d => 
+                                    `<option value="${d.id}" ${d.id === order.device_id ? 'selected' : ''}>${d.brand} ${d.model}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание неисправности *</label>
+                        <textarea class="form-control" id="editDescription" rows="3" required>${order.description || ''}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Мастер</label>
+                            <select class="form-select" id="editMasterId">
+                                <option value="">Не назначать</option>
+                                ${masters.map(m => `<option value="${m.id}" ${m.id === order.master_id ? 'selected' : ''}>${m.full_name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Стоимость (₽)</label>
+                            <input type="number" class="form-control" id="editPrice" min="0" value="${order.price || 0}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Статус</label>
+                        <select class="form-select" id="editStatus">
+                            <option value="new" ${order.status === 'new' ? 'selected' : ''}>Новый</option>
+                            <option value="in_repair" ${order.status === 'in_repair' ? 'selected' : ''}>В работе</option>
+                            <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Готов</option>
+                            <option value="returned" ${order.status === 'returned' ? 'selected' : ''}>Выдан</option>
+                        </select>
+                    </div>
+                </form>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEditedOrder()">Сохранить изменения</button>
+                </div>
+            `;
+            document.getElementById('editOrderModalBody').innerHTML = formHtml;
+
+            // Добавляем обработчик смены клиента для обновления списка устройств
+            const editClientSelect = document.getElementById('editClientId');
+            if (editClientSelect) {
+                editClientSelect.addEventListener('change', function() {
+                    const newClientId = parseInt(this.value);
+                    const deviceSelect = document.getElementById('editDeviceId');
+                    deviceSelect.innerHTML = '';
+                    devices.filter(d => d.client_id === newClientId).forEach(d => {
+                        deviceSelect.add(new Option(`${d.brand} ${d.model}`, d.id));
+                    });
+                });
             }
-        }
+
+            new bootstrap.Modal(document.getElementById('editOrderModal')).show();
+        };
         
-        function printOrders() {
-            window.print();
-        }
-        
-        function printReceipt(orderId) {
-            alert(`Печать квитанции для заявки #${orderId}`);
-        }
-        
-        function assignMaster(orderId) {
-            const master = prompt('Введите имя мастера для заявки #' + orderId);
-            if (master) {
-                const orderIndex = orders.findIndex(o => o.id === orderId);
-                if (orderIndex !== -1) {
-                    orders[orderIndex].master = master;
-                    orders[orderIndex].status = 'in_progress';
-                    localStorage.setItem('repair_orders', JSON.stringify(orders));
-                    updateOrdersTable();
-                    updateStats();
-                    alert(`Мастер ${master} назначен на заявку #${orderId}`);
-                }
+        window.saveEditedOrder = async function() {
+            const id = parseInt(document.getElementById('editOrderId').value);
+            const clientId = parseInt(document.getElementById('editClientId').value);
+            const deviceId = parseInt(document.getElementById('editDeviceId').value);
+            const masterVal = document.getElementById('editMasterId').value;
+            const description = document.getElementById('editDescription').value.trim();
+            const price = parseFloat(document.getElementById('editPrice').value);
+            const status = document.getElementById('editStatus').value;
+
+            if (!clientId || !deviceId || !description) {
+                showAlert('danger', 'Заполните обязательные поля');
+                return;
             }
-        }
+
+            const data = {
+                client_id: clientId,
+                device_id: deviceId,
+                master_id: masterVal ? parseInt(masterVal) : null,
+                description,
+                price,
+                status
+            };
+
+            try {
+                await updateOrder(id, data);
+                bootstrap.Modal.getInstance(document.getElementById('editOrderModal')).hide();
+                await loadAllData();
+                updateOrdersTable();
+                updateStatistics();
+                showAlert('success', 'Заявка обновлена');
+            } catch (e) {
+                showAlert('danger', 'Ошибка: ' + e.message);
+            }
+        };
+
+        window.completeOrder = async function(id) {
+            if (!confirm('Отметить заявку как готовую?')) return;
+            try {
+                await updateOrder(id, { status: 'ready' });
+                await loadAllData();
+                updateOrdersTable();
+                updateStatistics();
+                showAlert('success', 'Статус обновлён');
+            } catch (e) {
+                showAlert('danger', 'Ошибка: ' + e.message);
+            }
+        };
+
+        window.issueOrder = async function(id) {
+            if (!confirm('Выдать устройство клиенту?')) return;
+            try {
+                await updateOrder(id, { status: 'returned' });
+                await loadAllData();
+                updateOrdersTable();
+                updateStatistics();
+                showAlert('success', 'Устройство выдано');
+            } catch (e) {
+                showAlert('danger', 'Ошибка: ' + e.message);
+            }
+        };
+
+        window.deleteOrderHandler = async function(id) {
+            if (!confirm('Удалить заявку? Все связанные данные будут потеряны.')) return;
+            try {
+                await deleteOrder(id);
+                await loadAllData();
+                updateOrdersTable();
+                updateStatistics();
+                showAlert('success', 'Заявка удалена');
+            } catch (e) {
+                showAlert('danger', 'Ошибка удаления: ' + e.message);
+            }
+        };
+
+        window.printOrders = () => window.print();
+        window.printReceipt = (id) => alert(`Печать квитанции #${id}`);
+
+        window.assignMaster = async (id) => {
+            const masterId = prompt('Введите ID мастера');
+            if (!masterId) return;
+            try {
+                await updateOrder(id, { master_id: parseInt(masterId), status: 'in_repair' });
+                await loadAllData();
+                updateOrdersTable();
+                updateStatistics();
+                showAlert('success', 'Мастер назначен');
+            } catch (e) {
+                showAlert('danger', 'Ошибка: ' + e.message);
+            }
+        };
         // Обновление сайдбара: имя, роль, аватар
         function updateSidebar() {
             const userData = localStorage.getItem('currentUser');
@@ -601,7 +849,7 @@
             const userAvatar = document.querySelector('.sidebar-avatar');
 
             if (userNameSpan) {
-                let displayName = user.fullName || user.login || 'Пользователь';
+                let displayName = user.full_name || user.username || 'Пользователь';
                 // Если имя слишком длинное – показываем только имя и фамилию (первые два слова)
                 const nameParts = displayName.split(' ');
                 if (nameParts.length > 2) {

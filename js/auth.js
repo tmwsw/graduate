@@ -2,8 +2,19 @@
 
 // Получить роль текущего пользователя
 function getCurrentUserRole() {
-    const user = JSON.parse(localStorage.getItem('currentUser')) || { role: 'guest' };
-    return user.role;
+    const user = getCurrentUser();
+    return user ? user.role : 'guest';
+}
+
+// Получить объект текущего пользователя
+function getCurrentUser() {
+    try {
+        const userStr = localStorage.getItem('currentUser');
+        if (!userStr) return null;
+        return JSON.parse(userStr);
+    } catch (e) {
+        return null;
+    }
 }
 
 // Проверка, авторизован ли пользователь (не гость)
@@ -24,10 +35,8 @@ function checkAuthAndRedirect() {
 function applyRoleBasedVisibility() {
     const role = getCurrentUserRole();
     if (role === 'client') {
-        // Скрыть кнопку "Новая заявка" (если есть)
         const newOrderBtn = document.querySelector('.btn-primary[data-bs-target="#newOrderModal"]');
         if (newOrderBtn) newOrderBtn.style.display = 'none';
-        // Скрыть ссылки на отчёты, мастеров, устройства
         const linksToHide = ['reports.html', 'masters.html', 'devices.html'];
         linksToHide.forEach(link => {
             const el = document.querySelector(`a[href="${link}"]`);
@@ -35,24 +44,46 @@ function applyRoleBasedVisibility() {
         });
     }
     if (role === 'manager') {
-        // Менеджер не видит ссылку на мастеров
         const mastersLink = document.querySelector('a[href="masters.html"]');
         if (mastersLink && mastersLink.parentElement) mastersLink.parentElement.style.display = 'none';
     }
-    // Админ видит всё
+    // admin видит всё
 }
 
 // Обновление аватара и имени пользователя в сайдбаре
 function updateUserAvatar() {
-    const user = JSON.parse(localStorage.getItem('currentUser'));
-    if (user && user.avatar) {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    // Аватар (пока заглушка)
+    if (user.avatar) {
         document.querySelectorAll('.sidebar-avatar').forEach(img => {
             img.src = user.avatar;
         });
     }
+
+    // Имя пользователя – используем username (или fullName, если появится)
     const nameSpan = document.querySelector('.dropdown strong');
-    if (user && nameSpan) {
-        nameSpan.textContent = user.fullName || user.login;
+    if (nameSpan) {
+        nameSpan.textContent = user.fullName || user.username || 'Пользователь';
+    }
+
+    // Роль в бейдже
+    const roleBadge = document.querySelector('.dropdown .badge');
+    if (roleBadge) {
+        let roleText = '';
+        switch (user.role) {
+            case 'admin': roleText = 'Админ'; break;
+            case 'manager': roleText = 'Менеджер'; break;
+            case 'master': roleText = 'Мастер'; break;
+            default: roleText = user.role;
+        }
+        roleBadge.textContent = roleText;
+        roleBadge.className = 'badge ms-2';
+        if (user.role === 'admin') roleBadge.classList.add('bg-danger');
+        else if (user.role === 'manager') roleBadge.classList.add('bg-warning');
+        else if (user.role === 'master') roleBadge.classList.add('bg-info');
+        else roleBadge.classList.add('bg-success');
     }
 }
 

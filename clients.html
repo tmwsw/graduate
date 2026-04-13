@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Клиенты - Система управления ремонтами</title>
+    <title>РемонтТех - Клиенты</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/clients.css">
-
+    <link rel="icon" type="image/png" href="img/icon_32x32.png">
 </head>
 <body>
     <div class="container-fluid">
@@ -144,6 +144,7 @@
                                     <option value="regular">Постоянные</option>
                                     <option value="new">Новые</option>
                                     <option value="corporate">Корпоративные</option>
+                                    <option value="vip">VIP</option>
                                 </select>
                             </div>
                         </div>
@@ -242,8 +243,8 @@
                                 <select class="form-select" id="clientType">
                                     <option value="regular">Постоянный</option>
                                     <option value="new">Новый</option>
-                                    <option value="corporate">Корпоративный</option>
                                     <option value="vip">VIP</option>
+                                    <option value="corporate">Корпоративный</option>
                                 </select>
                             </div>
                         </div>
@@ -320,33 +321,70 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Подключаем модули -->
     <script src="js/auth.js"></script>
+    <script src="js/api.js" type="module"></script>
     <script type="module">
+    if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
         import { 
-            getClients, addClient, updateClient, deleteClient, 
-            addActivity, getCurrentUser 
-        } from './js/data.js';
+            fetchClients, createClient, updateClient, deleteClient,
+            createDevice, createOrder
+        } from './js/api.js';
         import { showAlert, getClientTypeName, formatPhone } from './js/utils.js';
 
-        // Данные клиентов
-        let clients = getClients(); // загружаем сразу
+        // Глобальное состояние
+        let clients = [];
         let currentViewMode = 'table';
+        let filteredClients = [];
 
         // Инициализация страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            loadClients();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadClients();
             updateStatistics();
-            updateAvatarFromStorage();
+            updateSidebar();
+            applyRoleBasedVisibility();
+            updateUserAvatar();
         });
 
-        // Загрузка клиентов
-        function loadClients() {
-            clients = getClients(); // обновляем из хранилища
-            displayClients();
-            updateNoClientsMessage();
+        // Загрузка клиентов с сервера
+        async function loadClients() {
+            try {
+                const apiClients = await fetchClients();
+                // Преобразуем поля API в формат, ожидаемый UI
+                clients = apiClients.map(c => ({
+                    id: c.id,
+                    fullName: c.full_name,
+                    phone: c.phone,
+                    email: c.email,
+                    address: c.address,
+                    clientType: c.client_type,
+                    notes: c.notes,
+                    createdAt: new Date(c.created_at).toLocaleDateString('ru-RU'),
+                    // Временные заглушки, пока нет реальных данных
+                    devicesCount: 0,
+                    ordersCount: 0,
+                    totalSpent: 0,
+                    isActive: true
+                }));
+                filteredClients = [...clients];
+                displayClients();
+                updateNoClientsMessage();
+            } catch (error) {
+                console.error('Ошибка загрузки клиентов:', error);
+                showAlert('danger', 'Не удалось загрузить клиентов с сервера: ' + error.message);
+            }
         }
 
-        // Отображение клиентов
-        function displayClients(filteredClients = clients) {
+        // Преобразование client_type из API в UI
+        function mapClientTypeFromApi(apiType) {
+            return apiType; // теперь значения совпадают: 'regular','new','vip','corporate'
+        }
+
+        // Преобразование client_type из UI в API
+        function mapClientTypeToApi(uiType) {
+            return uiType === 'corporate' ? 'legal_entity' : 'individual';
+        }
+
+        // Отображение клиентов (таблица или карточки)
+        function displayClients() {
             if (currentViewMode === 'table') {
                 displayClientsTable(filteredClients);
             } else {
@@ -365,20 +403,11 @@
                 
                 let statusBadge = '';
                 switch(client.clientType) {
-                    case 'regular':
-                        statusBadge = '<span class="badge bg-primary">Постоянный</span>';
-                        break;
-                    case 'new':
-                        statusBadge = '<span class="badge bg-success">Новый</span>';
-                        break;
-                    case 'corporate':
-                        statusBadge = '<span class="badge bg-warning">Корпоративный</span>';
-                        break;
-                    case 'vip':
-                        statusBadge = '<span class="badge bg-danger">VIP</span>';
-                        break;
-                    default:
-                        statusBadge = '<span class="badge bg-secondary">Обычный</span>';
+                    case 'regular': statusBadge = '<span class="badge bg-primary">Постоянный</span>'; break;
+                    case 'new': statusBadge = '<span class="badge bg-success">Новый</span>'; break;
+                    case 'corporate': statusBadge = '<span class="badge bg-warning">Корпоративный</span>'; break;
+                    case 'vip': statusBadge = '<span class="badge bg-danger">VIP</span>'; break;
+                    default: statusBadge = '<span class="badge bg-secondary">Обычный</span>';
                 }
                 
                 row.innerHTML = `
@@ -393,7 +422,7 @@
                         </div>
                     </td>
                     <td>
-                        <div><small>📱 ${client.phone}</small></div>
+                        <div><small>📱 ${formatPhone(client.phone)}</small></div>
                         <div><small>📧 ${client.email || 'Не указан'}</small></div>
                     </td>
                     <td><span class="badge bg-info">${client.devicesCount || 0}</span></td>
@@ -429,20 +458,11 @@
                 
                 let cardColorClass = '';
                 switch(client.clientType) {
-                    case 'regular':
-                        cardColorClass = 'border-primary';
-                        break;
-                    case 'new':
-                        cardColorClass = 'border-success';
-                        break;
-                    case 'corporate':
-                        cardColorClass = 'border-warning';
-                        break;
-                    case 'vip':
-                        cardColorClass = 'border-danger';
-                        break;
-                    default:
-                        cardColorClass = 'border-secondary';
+                    case 'regular': cardColorClass = 'border-primary'; break;
+                    case 'new': cardColorClass = 'border-success'; break;
+                    case 'corporate': cardColorClass = 'border-warning'; break;
+                    case 'vip': cardColorClass = 'border-danger'; break;
+                    default: cardColorClass = 'border-secondary';
                 }
                 
                 const card = document.createElement('div');
@@ -462,7 +482,7 @@
                             
                             <div class="mb-3">
                                 <div class="text-muted small mb-1">
-                                    <i class="fas fa-phone me-1"></i> ${client.phone}
+                                    <i class="fas fa-phone me-1"></i> ${formatPhone(client.phone)}
                                 </div>
                                 <div class="text-muted small">
                                     <i class="fas fa-envelope me-1"></i> ${client.email || 'Email не указан'}
@@ -515,12 +535,12 @@
             });
         }
 
-        // Обновление статистики
+        // Обновление статистики (на основе текущих клиентов)
         function updateStatistics() {
             const totalClients = clients.length;
             const activeClients = clients.filter(c => c.isActive).length;
-            const totalDevices = clients.reduce((sum, client) => sum + (client.devicesCount || 0), 0);
-            const totalSpent = clients.reduce((sum, client) => sum + (client.totalSpent || 0), 0);
+            const totalDevices = clients.reduce((sum, c) => sum + (c.devicesCount || 0), 0);
+            const totalSpent = clients.reduce((sum, c) => sum + (c.totalSpent || 0), 0);
             const avgOrderValue = totalClients > 0 ? Math.round(totalSpent / totalClients) : 0;
             
             document.getElementById('totalClients').textContent = totalClients;
@@ -529,35 +549,36 @@
             document.getElementById('avgOrderValue').textContent = avgOrderValue.toLocaleString() + ' ₽';
         }
 
-        // Поиск клиентов
+        // Поиск и фильтрация
         window.searchClients = function() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
-            const clientType = document.getElementById('clientTypeFilter').value;
+            const clientTypeFilter = document.getElementById('clientTypeFilter').value;
             
-            let filteredClients = clients;
+            filteredClients = clients.filter(client => {
+                let matchesSearch = true;
+                if (searchText) {
+                    matchesSearch = client.fullName.toLowerCase().includes(searchText) ||
+                                client.phone.toLowerCase().includes(searchText) ||
+                                (client.email && client.email.toLowerCase().includes(searchText)) ||
+                                (client.address && client.address.toLowerCase().includes(searchText));
+                }
+                let matchesType = true;
+                if (clientTypeFilter) {
+                    matchesType = client.clientType === clientTypeFilter;
+                }
+                return matchesSearch && matchesType;
+            });
             
-            if (searchText) {
-                filteredClients = filteredClients.filter(client =>
-                    client.fullName.toLowerCase().includes(searchText) ||
-                    client.phone.toLowerCase().includes(searchText) ||
-                    (client.email && client.email.toLowerCase().includes(searchText)) ||
-                    (client.address && client.address.toLowerCase().includes(searchText))
-                );
-            }
-            
-            if (clientType) {
-                filteredClients = filteredClients.filter(client => client.clientType === clientType);
-            }
-            
-            displayClients(filteredClients);
+            displayClients();
             updateNoClientsMessage(filteredClients.length === 0);
         };
 
         window.clearSearch = function() {
             document.getElementById('searchInput').value = '';
             document.getElementById('clientTypeFilter').value = '';
+            filteredClients = [...clients];
             displayClients();
-            updateNoClientsMessage(clients.length === 0);
+            updateNoClientsMessage(filteredClients.length === 0);
         };
 
         window.filterClients = function() {
@@ -566,87 +587,89 @@
 
         window.setViewMode = function(mode) {
             currentViewMode = mode;
-            const tableView = document.getElementById('tableView');
-            const cardsView = document.getElementById('cardsView');
-            
-            if (mode === 'table') {
-                tableView.style.display = 'block';
-                cardsView.style.display = 'none';
-            } else {
-                tableView.style.display = 'none';
-                cardsView.style.display = 'block';
-            }
-            
+            document.getElementById('tableView').style.display = mode === 'table' ? 'block' : 'none';
+            document.getElementById('cardsView').style.display = mode === 'cards' ? 'block' : 'none';
             displayClients();
         };
 
-        // Сохранение нового клиента
-        window.saveNewClient = function() {
-            const fullName = document.getElementById('clientFullName').value;
-            const phone = document.getElementById('clientPhone').value;
-            const email = document.getElementById('clientEmail').value;
-            const address = document.getElementById('clientAddressSearch').value;
-            const clientType = document.getElementById('clientType').value;
-            const notes = document.getElementById('clientNotes').value;
-            
+        // Создание нового клиента
+        window.saveNewClient = async function() {
+            const fullName = document.getElementById('clientFullName').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+            const email = document.getElementById('clientEmail').value.trim();
+            const address = document.getElementById('clientAddressSearch').value.trim();
+            const clientTypeUI = document.getElementById('clientType').value;
+            const notes = document.getElementById('clientNotes').value.trim();
+
             if (!fullName || !phone) {
                 showAlert('danger', 'Пожалуйста, заполните обязательные поля (ФИО и телефон)');
                 return;
             }
-            
-            const newClient = {
+
+            const newClientData = {
                 fullName: fullName,
                 phone: phone,
                 email: email || null,
                 address: address || null,
-                clientType: clientType,
-                notes: notes || null,
-                createdAt: new Date().toLocaleDateString('ru-RU'),
-                devicesCount: 0,
-                ordersCount: 0,
-                totalSpent: 0,
-                isActive: true
+                clientType: clientTypeUI,   // 'regular','new','vip','corporate'
+                notes: notes || null
             };
-            
-            addClient(newClient); // сохраняем через модуль
-            clients = getClients(); // обновляем локальный массив
-            
-            const modal = bootstrap.Modal.getInstance(document.getElementById('newClientModal'));
-            modal.hide();
-            
-            displayClients();
-            updateStatistics();
-            updateNoClientsMessage();
-            
-            document.getElementById('newClientForm').reset();
-            
-            if (document.getElementById('sendWelcome').checked && email) {
-                showAlert('info', `Приветственное сообщение отправлено на ${email}`);
+
+            try {
+                const created = await createClient(newClientData);
+                const newClient = {
+                    id: created.id,
+                    fullName: created.full_name,
+                    phone: created.phone,
+                    email: created.email,
+                    address: created.address,
+                    clientType: mapClientTypeFromApi(created.client_type),
+                    notes: created.notes,
+                    createdAt: new Date(created.created_at).toLocaleDateString('ru-RU'),
+                    devicesCount: 0,
+                    ordersCount: 0,
+                    totalSpent: 0,
+                    isActive: true
+                };
+                clients.push(newClient);
+                filteredClients = [...clients];
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newClientModal'));
+                modal.hide();
+                document.getElementById('newClientForm').reset();
+                
+                displayClients();
+                updateStatistics();
+                updateNoClientsMessage();
+                showAlert('success', `Клиент "${fullName}" успешно добавлен!`);
+                
+                // Здесь можно добавить вызов addActivity из data.js, если нужно
+            } catch (error) {
+                console.error('Ошибка при добавлении:', error);
+                showAlert('danger', 'Ошибка при добавлении клиента: ' + error.message);
             }
-            
-            showAlert('success', `Клиент "${fullName}" успешно добавлен!`);
-            addActivity('Добавление клиента', `Добавлен клиент ${fullName}`, 'system', 'fa-user-plus');
         };
 
+        // Просмотр клиента (упрощённо)
         window.viewClient = function(clientId) {
             const client = clients.find(c => c.id === clientId);
-            if (client) {
-                alert(`
-                    ==== КЛИЕНТ #${client.id} ====
-                    ФИО: ${client.fullName}
-                    Телефон: ${client.phone}
-                    Email: ${client.email || 'Не указан'}
-                    Адрес: ${client.address || 'Не указан'}
-                    Тип: ${getClientTypeName(client.clientType)}
-                    Устройств: ${client.devicesCount || 0}
-                    Заявок: ${client.ordersCount || 0}
-                    Всего потрачено: ${client.totalSpent?.toLocaleString() || 0} ₽
-                    Дата регистрации: ${client.createdAt}
-                    Примечания: ${client.notes || 'Нет'}
-                `);
-            }
+            if (!client) return;
+            alert(`
+                ==== КЛИЕНТ #${client.id} ====
+                ФИО: ${client.fullName}
+                Телефон: ${client.phone}
+                Email: ${client.email || 'Не указан'}
+                Адрес: ${client.address || 'Не указан'}
+                Тип: ${getClientTypeName(client.clientType)}
+                Устройств: ${client.devicesCount || 0}
+                Заявок: ${client.ordersCount || 0}
+                Всего потрачено: ${(client.totalSpent || 0).toLocaleString()} ₽
+                Дата регистрации: ${client.createdAt}
+                Примечания: ${client.notes || 'Нет'}
+            `);
         };
 
+        // Редактирование клиента
         window.editClient = function(clientId) {
             const client = clients.find(c => c.id === clientId);
             if (!client) return;
@@ -692,9 +715,7 @@
                     
                     <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" id="editIsActive" ${client.isActive ? 'checked' : ''}>
-                        <label class="form-check-label" for="editIsActive">
-                            Активный клиент
-                        </label>
+                        <label class="form-check-label" for="editIsActive">Активный клиент</label>
                     </div>
                     
                     <input type="hidden" id="editClientId" value="${client.id}">
@@ -715,39 +736,61 @@
             modal.show();
         };
 
-        window.saveEditedClient = function() {
+        // Сохранение изменений клиента
+        window.saveEditedClient = async function() {
             const clientId = parseInt(document.getElementById('editClientId').value);
-            const fullName = document.getElementById('editFullName').value;
-            const phone = document.getElementById('editPhone').value;
-            const email = document.getElementById('editEmail').value;
-            const address = document.getElementById('editAddress').value;
-            const clientType = document.getElementById('editClientType').value;
-            const notes = document.getElementById('editNotes').value;
+            const fullName = document.getElementById('editFullName').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const address = document.getElementById('editAddress').value.trim();
+            const clientTypeUI = document.getElementById('editClientType').value;
+            const notes = document.getElementById('editNotes').value.trim();
             const isActive = document.getElementById('editIsActive').checked;
-            
+
             if (!fullName || !phone) {
-                showAlert('danger', 'Пожалуйста, заполните обязательные поля (ФИО и телефон)');
+                showAlert('danger', 'Заполните обязательные поля (ФИО и телефон)');
                 return;
             }
-            
-            const updated = updateClient(clientId, {
-                fullName, phone, email: email || null,
-                address: address || null, clientType,
-                notes: notes || null, isActive
-            });
-            
-            if (updated) {
-                clients = getClients();
+
+            const updateData = {
+                fullName,
+                phone,
+                email: email || null,
+                address: address || null,
+                clientType: clientTypeUI,
+                notes: notes || null
+            };
+
+            try {
+                const updated = await updateClient(clientId, updateData);
+                const index = clients.findIndex(c => c.id === clientId);
+                if (index !== -1) {
+                    clients[index] = {
+                        ...clients[index],
+                        fullName: updated.full_name,
+                        phone: updated.phone,
+                        email: updated.email,
+                        address: updated.address,
+                        clientType: mapClientTypeFromApi(updated.client_type),
+                        notes: updated.notes,
+                        isActive: isActive
+                    };
+                }
+                filteredClients = [...clients];
+                
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
                 modal.hide();
                 displayClients();
                 updateStatistics();
                 showAlert('success', 'Данные клиента обновлены!');
-                addActivity('Редактирование клиента', `Изменены данные клиента ${fullName}`, 'system', 'fa-edit');
+            } catch (error) {
+                console.error('Ошибка обновления:', error);
+                showAlert('danger', 'Ошибка при обновлении клиента: ' + error.message);
             }
         };
 
-        window.deleteClient = function(clientId) {
+        // Удаление клиента
+        window.deleteClient = async function(clientId) {
             if (!confirm('Вы уверены, что хотите удалить этого клиента?')) {
                 return;
             }
@@ -759,68 +802,94 @@
                 }
             }
             
-            deleteClient(clientId);
-            clients = getClients();
-            
-            const editModal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
-            if (editModal) editModal.hide();
-            
-            displayClients();
-            updateStatistics();
-            updateNoClientsMessage();
-            
-            showAlert('success', 'Клиент удален');
-            addActivity('Удаление клиента', `Удалён клиент ${client?.fullName}`, 'system', 'fa-user-slash');
-        };
-
-        window.addDeviceToClient = function(clientId) {
-            const deviceName = prompt('Введите название устройства:');
-            if (deviceName) {
-                const client = clients.find(c => c.id === clientId);
-                if (client) {
-                    client.devicesCount = (client.devicesCount || 0) + 1;
-                    updateClient(clientId, { devicesCount: client.devicesCount });
-                    clients = getClients();
-                    displayClients();
-                    updateStatistics();
-                    showAlert('success', `Устройство "${deviceName}" добавлено клиенту ${client.fullName}`);
-                    addActivity('Добавление устройства', `Добавлено устройство клиенту ${client.fullName}`, 'devices', 'fa-laptop');
-                }
+            try {
+                await deleteClient(clientId);
+                clients = clients.filter(c => c.id !== clientId);
+                filteredClients = filteredClients.filter(c => c.id !== clientId);
+                
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
+                if (editModal) editModal.hide();
+                
+                displayClients();
+                updateStatistics();
+                updateNoClientsMessage();
+                showAlert('success', 'Клиент удалён');
+            } catch (error) {
+                console.error('Ошибка удаления:', error);
+                showAlert('danger', 'Ошибка при удалении клиента: ' + error.message);
             }
         };
 
-        window.addOrderToClient = function(clientId) {
-            const orderAmount = prompt('Введите сумму заявки:');
-            if (orderAmount && !isNaN(orderAmount)) {
-                const client = clients.find(c => c.id === clientId);
-                if (client) {
-                    client.ordersCount = (client.ordersCount || 0) + 1;
-                    client.totalSpent = (client.totalSpent || 0) + parseFloat(orderAmount);
-                    updateClient(clientId, { ordersCount: client.ordersCount, totalSpent: client.totalSpent });
-                    clients = getClients();
-                    displayClients();
-                    updateStatistics();
-                    showAlert('success', `Заявка на сумму ${orderAmount} ₽ добавлена клиенту ${client.fullName}`);
-                    addActivity('Добавление заявки', `Добавлена заявка клиенту ${client.fullName}`, 'orders', 'fa-plus-circle');
-                }
+        // Вспомогательные функции для устройств и заказов (пока заглушки)
+        window.addDeviceToClient = async function(clientId) {
+            const deviceType = prompt('Введите тип устройства (например, "Ноутбук"):');
+            if (!deviceType) return;
+            const brand = prompt('Введите бренд (например, "Apple"):');
+            if (!brand) return;
+            const model = prompt('Введите модель (например, "MacBook Pro"):');
+            const serialNumber = prompt('Введите серийный номер (опционально):');
+            const notes = prompt('Примечания (опционально):');
+
+            const deviceData = {
+                client_id: clientId,
+                device_type: deviceType,
+                brand: brand,
+                model: model || null,
+                serial_number: serialNumber || null,
+                notes: notes || null
+            };
+
+            try {
+                const { createDevice } = await import('./js/api.js');
+                await createDevice(deviceData);
+                showAlert('success', `Устройство "${deviceType} ${brand}" добавлено`);
+                // Вместо ручного обновления счетчика просто перезагрузим список клиентов
+                await loadClients(); // эта функция обновит clients, перерисует таблицу и статистику
+            } catch (error) {
+                console.error('Ошибка добавления устройства:', error);
+                showAlert('danger', 'Не удалось добавить устройство: ' + error.message);
             }
         };
 
+        window.addOrderToClient = async function(clientId) {
+            const deviceId = prompt('Введите ID устройства:');
+            if (!deviceId) return;
+            const description = prompt('Опишите неисправность:');
+            const price = prompt('Введите стоимость ремонта (₽):', '0');
+
+            const orderData = {
+                client_id: clientId,
+                device_id: parseInt(deviceId),
+                description: description || 'Без описания',
+                price: parseFloat(price) || 0,
+                status: 'Новый'
+            };
+
+            try {
+                const { createOrder } = await import('./js/api.js');
+                await createOrder(orderData);
+                showAlert('success', `Заказ создан на сумму ${price} ₽`);
+                await loadClients(); // перезагружаем клиентов для обновления счетчиков
+            } catch (error) {
+                console.error('Ошибка создания заказа:', error);
+                showAlert('danger', 'Не удалось создать заказ: ' + error.message);
+            }
+        };
+
+        // Экспорт клиентов (просто выгрузка текущего массива в JSON)
         window.exportClients = function() {
             const dataStr = JSON.stringify(clients, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
             const exportFileDefaultName = `clients_export_${new Date().toISOString().split('T')[0]}.json`;
-            
             const linkElement = document.createElement('a');
             linkElement.setAttribute('href', dataUri);
             linkElement.setAttribute('download', exportFileDefaultName);
             linkElement.click();
-            
             showAlert('info', `Экспортировано ${clients.length} клиентов`);
         };
 
-        function updateNoClientsMessage(show = clients.length === 0) {
+        // Управление сообщением "Нет клиентов"
+        function updateNoClientsMessage(show = filteredClients.length === 0) {
             const noClientsMessage = document.getElementById('noClientsMessage');
             const tableView = document.getElementById('tableView');
             const cardsView = document.getElementById('cardsView');
@@ -831,10 +900,15 @@
                 cardsView.style.display = 'none';
             } else {
                 noClientsMessage.style.display = 'none';
+                if (currentViewMode === 'table') {
+                    tableView.style.display = 'block';
+                } else {
+                    cardsView.style.display = 'block';
+                }
             }
         }
 
-                // Обновление сайдбара: имя, роль, аватар
+        // Обновление сайдбара (пользователь, роль)
         function updateSidebar() {
             const userData = localStorage.getItem('currentUser');
             if (!userData) return;
@@ -844,14 +918,12 @@
                 user = JSON.parse(userData);
             } catch(e) { return; }
 
-            // Элементы сайдбара (если они есть на странице)
             const userNameSpan = document.querySelector('.dropdown strong');
             const userRoleBadge = document.querySelector('.dropdown .badge');
             const userAvatar = document.querySelector('.sidebar-avatar');
 
             if (userNameSpan) {
-                let displayName = user.fullName || user.login || 'Пользователь';
-                // Если имя слишком длинное – показываем только имя и фамилию (первые два слова)
+                let displayName = user.full_name || user.username || 'Пользователь';
                 const nameParts = displayName.split(' ');
                 if (nameParts.length > 2) {
                     displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
@@ -869,7 +941,6 @@
                     default: roleText = 'Гость';
                 }
                 userRoleBadge.textContent = roleText;
-                // Меняем цвет бейджа в зависимости от роли
                 userRoleBadge.className = 'badge ms-2';
                 if (user.role === 'admin') userRoleBadge.classList.add('bg-danger');
                 else if (user.role === 'manager') userRoleBadge.classList.add('bg-warning');
@@ -882,20 +953,22 @@
             }
         }
 
-        // Вызываем обновление при загрузке страницы
-        document.addEventListener('DOMContentLoaded', updateSidebar);
-        // Также обновляем при изменении currentUser (например, после логина в другой вкладке)
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'currentUser') updateSidebar();
-        });
-        if (!checkAuthAndRedirect()) {
-            // код дальше не выполнится, но для надёжности остановим выполнение
-            throw new Error('Не авторизован');
+        // Заглушки для функций, которые могут отсутствовать
+        function applyRoleBasedVisibility() {
+            // Можно реализовать позже
         }
-        // Применяем скрытие элементов согласно роли
-        applyRoleBasedVisibility();
-        // Обновляем аватар и имя
-        updateUserAvatar();
+
+        function updateUserAvatar() {
+            // Можно реализовать позже
+        }
+
+        // Экспортируем функции в глобальную область для onclick
+        window.viewClient = viewClient;
+        window.editClient = editClient;
+        window.saveEditedClient = saveEditedClient;
+        window.deleteClient = deleteClient;
+        window.addDeviceToClient = addDeviceToClient;
+        window.addOrderToClient = addOrderToClient;
     </script>
 </body>
 </html>

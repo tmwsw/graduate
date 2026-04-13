@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Система управления ремонтами - Главная</title>
+    <title>РемонтТех - Главная</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Chart.js -->
@@ -11,6 +11,7 @@
     <!-- Font Awesome для иконок -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/index.css">
+    <link rel="icon" type="image/png" href="img/icon_32x32.png">
 </head>
 <body>
     <div class="container-fluid">
@@ -188,7 +189,6 @@
                                 <div class="table-responsive">
                                     <table class="table table-hover">
                                         <thead>
-                                            <tbody id="recentOrdersBody"></tbody>
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Устройство</th>
@@ -199,6 +199,7 @@
                                                 <th>Действия</th>
                                             </tr>
                                         </thead>
+                                        <tbody id="recentOrdersBody">
                                     </table>
                                 </div>
                             </div>
@@ -247,7 +248,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="createNewOrder()">Создать заявку</button>
+                    <button type="button" class="btn btn-primary" onclick="createNewOrder()">
+                    <i class="fas fa-save me-1"></i> Создать заявку
                 </div>
             </div>
         </div>
@@ -256,64 +258,90 @@
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
-    <script>
-        // Установка текущей даты
-        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('ru-RU');
+    <script src="js/api.js" type="module"></script>
+    <script src="js/auth.js"></script>
+    <script type="module">
+    if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
 
-        // Инициализация графиков
-        // График статусов (круговая диаграмма)
-        const statusCtx = document.getElementById('statusChart').getContext('2d');
-        const statusChart = new Chart(statusCtx, {
-            type: 'pie',
-            data: {
-                labels: ['Новые', 'В работе', 'Готовы', 'Выданы'],
-                datasets: [{
-                    data: [], // Надо сделать динамичным
-                    backgroundColor: [
-                        '#6c757d',
-                        '#ffc107',
-                        '#198754',
-                        '#0dcaf0'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
+        import { 
+            fetchClients, fetchDevices, fetchMasters, fetchOrders, createOrder 
+        } from './js/api.js';
+        import { showAlert } from './js/utils.js';
+
+        // Состояние данных
+        let clients = [];
+        let devices = [];
+        let masters = [];
+        let orders = [];
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                document.getElementById('currentDate').textContent = new Date().toLocaleDateString('ru-RU');
+                await loadAllData();
+                updateStatisticsCards();
+                updateCharts();
+                updateRecentOrdersTable();
+            } catch (e) {
+                console.error('Ошибка инициализации:', e);
+            } finally {
+                updateSidebar(); // гарантированно выполнится
             }
         });
 
-        // График динамики (линейный)
-        const monthCtx = document.getElementById('monthChart').getContext('2d');
-        const monthChart = new Chart(monthCtx, {
-            type: 'line',
-            data: {
-                labels: [], // Надо сделать динамичным
-                datasets: [{
-                    label: 'Новые заявки',
-                    data: [],  // Надо сделать динамичным
-                    borderColor: '#0d6efd',
-                    tension: 0.1
-                }, {
-                    label: 'Завершённые заявки',
-                    data: [],  // Надо сделать динамичным
-                    borderColor: '#198754',
-                    tension: 0.1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
+        // Загрузка всех необходимых данных
+        async function loadAllData() {
+            try {
+                [clients, devices, masters, orders] = await Promise.all([
+                    fetchClients(0, 1000),
+                    fetchDevices(0, 1000),
+                    fetchMasters(0, 1000),
+                    fetchOrders(0, 1000)
+                ]);
+            } catch (e) {
+                console.error('Ошибка загрузки данных:', e);
+                showAlert('danger', 'Не удалось загрузить данные с сервера');
             }
-        });
+        }
 
-        // Функция создания новой заявки
-        function createNewOrder() {
+        // Заполнение выпадающих списков в модальном окне новой заявки
+        function fillSelects() {
+            const clientSelect = document.getElementById('clientSelect');
+            const masterSelect = document.getElementById('masterSelect');
+            
+            // Клиенты
+            clientSelect.innerHTML = '<option selected disabled value="">Выберите клиента...</option>';
+            clients.forEach(c => {
+                const option = new Option(`${c.full_name} (${c.phone})`, c.id);
+                clientSelect.add(option);
+            });
+
+            // Мастера
+            masterSelect.innerHTML = '<option value="">Не назначать</option>';
+            masters.forEach(m => {
+                const option = new Option(m.full_name, m.id);
+                masterSelect.add(option);
+            });
+
+            // Обработчик смены клиента – загружаем его устройства
+            clientSelect.addEventListener('change', onClientChange);
+        }
+
+        // При выборе клиента показываем только его устройства
+        function onClientChange() {
+            const clientId = parseInt(document.getElementById('clientSelect').value);
+            const deviceSelect = document.getElementById('deviceSelect');
+            deviceSelect.innerHTML = '<option selected disabled value="">Выберите устройство...</option>';
+            
+            const clientDevices = devices.filter(d => d.client_id === clientId);
+            clientDevices.forEach(d => {
+                const option = new Option(`${d.model}`, d.id);
+                deviceSelect.add(option);
+            });
+        }
+
+        // Создание новой заявки
+        window.createNewOrder = async function() {
             const clientId = parseInt(document.getElementById('clientSelect').value);
             const deviceId = parseInt(document.getElementById('deviceSelect').value);
             const masterVal = document.getElementById('masterSelect').value;
@@ -324,79 +352,261 @@
                 return;
             }
 
-            const masterId = masterVal ? parseInt(masterVal) : null;
-
-            const devices = JSON.parse(localStorage.getItem('devices')) || [];
+            // Проверка принадлежности устройства клиенту
             const device = devices.find(d => d.id === deviceId);
-
-            if (!device || device.clientId !== clientId) {
-                alert('Устройство не принадлежит клиенту!');
+            if (!device || device.client_id !== clientId) {
+                alert('Устройство не принадлежит выбранному клиенту!');
                 return;
             }
 
-            const orders = JSON.parse(localStorage.getItem('orders')) || [];
-            const newId = orders.length ? Math.max(...orders.map(o => o.id)) + 1 : 1;
-
-            const newOrder = {
-                id: newId,
-                clientId,
-                deviceId,
-                masterId,
-                description,
+            const orderData = {
+                client_id: clientId,
+                device_id: deviceId,
+                master_id: masterVal ? parseInt(masterVal) : null,
+                description: description,
                 status: 'new',
-                createdAt: new Date().toISOString(),
                 price: 0
             };
 
-            orders.push(newOrder);
-            localStorage.setItem('orders', JSON.stringify(orders));
-
-            alert(`Заявка №${newId} создана`);
-
-            const modal = bootstrap.Modal.getInstance(document.getElementById('newOrderModal'));
-            if (modal) modal.hide();
-            document.getElementById('newOrderForm').reset();
-
-            // 🔹 ОБНОВЛЯЕМ ДАННЫЕ НА СТРАНИЦЕ
-            refreshDashboard();
-        }
-        function fillSelects() {
-            const clientSelect = document.getElementById('clientSelect');
-            const deviceSelect = document.getElementById('deviceSelect');
-            const masterSelect = document.getElementById('masterSelect');
-
-            const clients = JSON.parse(localStorage.getItem('clients')) || [];
-            const devices = JSON.parse(localStorage.getItem('devices')) || [];
-            const masters = JSON.parse(localStorage.getItem('masters')) || [];
-
-            // --- КЛИЕНТЫ ---
-            clientSelect.innerHTML = '<option disabled selected value="">Выберите клиента...</option>';
-            clients.forEach(c => {
-                clientSelect.add(new Option(c.fullName, c.id));
-            });
-
-            // --- МАСТЕРА ---
-            masterSelect.innerHTML = '<option value="">Не назначать</option>';
-            masters.forEach(m => {
-                masterSelect.add(new Option(m.fullName, m.id));
-            });
-
-            // --- УСТРОЙСТВА (ПОСЛЕ ВЫБОРА КЛИЕНТА) ---
-            clientSelect.addEventListener('change', () => {
-                const devices = JSON.parse(localStorage.getItem('devices')) || [];
-
-                const clientId = clientSelect.value;
-
-                deviceSelect.innerHTML = '<option disabled selected>Выберите устройство...</option>';
-
-                devices
-                    .filter(d => Number(d.clientId) === Number(clientId))
-                    .forEach(d => {
-                        deviceSelect.add(new Option(`${d.model}`, d.id));
+            try {
+                const newOrder = await createOrder(orderData);
+                showAlert('success', `Заявка №${newOrder.id} создана`);
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newOrderModal'));
+                modal.hide();
+                document.getElementById('newOrderForm').reset();
+                
+                // Обновляем данные и отображение
+                await loadAllData();
+                updateStatisticsCards();
+                updateCharts();
+                updateRecentOrdersTable();
+            } catch (e) {
+                console.error(e);
+                showAlert('danger', 'Ошибка создания заявки: ' + e.message);
+            }
+            // Отправляем уведомление клиенту (если email указан)
+            const client = clients.find(c => c.id === clientId);
+            if (client && client.email) {
+                const publicUrl = `${window.location.origin}/public-order.html?id=${newOrder.id}`;
+                try {
+                    await fetch(`${API_BASE}/notifications/order-created`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            client_email: client.email,
+                            client_name: client.full_name,
+                            order_id: newOrder.id,
+                            public_url: publicUrl
+                        })
                     });
+                    showAlert('info', `Ссылка для отслеживания отправлена на ${client.email}`);
+                } catch (e) {
+                    console.warn('Не удалось отправить уведомление', e);
+                }
+            }
+        };
+
+        // Обновление карточек статистики
+        function updateStatisticsCards() {
+            const today = new Date().toISOString().split('T')[0];
+            const newToday = orders.filter(o => o.created_at && o.created_at.startsWith(today) && o.status === 'new').length;
+            const inRepair = orders.filter(o => o.status === 'in_repair').length;
+            const ready = orders.filter(o => o.status === 'ready').length;
+            
+            let avgDays = 0;
+            const completed = orders.filter(o => o.status === 'returned' || o.status === 'ready');
+            if (completed.length > 0) {
+                const totalDays = completed.reduce((sum, o) => {
+                    if (o.created_at && o.updated_at) {
+                        const created = new Date(o.created_at);
+                        const updated = new Date(o.updated_at);
+                        return sum + (updated - created) / (1000 * 60 * 60 * 24);
+                    }
+                    return sum;
+                }, 0);
+                avgDays = Math.round(totalDays / completed.length);
+            }
+
+            // Прямые селекторы на h2 внутри карточек
+            document.querySelector('.bg-primary .card-text') && (document.querySelector('.bg-primary .card-text').textContent = newToday);
+            document.querySelector('.bg-warning .card-text') && (document.querySelector('.bg-warning .card-text').textContent = inRepair);
+            document.querySelector('.bg-success .card-text') && (document.querySelector('.bg-success .card-text').textContent = ready);
+            document.querySelector('.bg-info .card-text') && (document.querySelector('.bg-info .card-text').textContent = avgDays + ' д');
+        }
+
+        // Обновление графиков
+        function updateCharts() {
+            // Круговая диаграмма (без изменений)
+            const statusCounts = { 'new': 0, 'in_repair': 0, 'ready': 0, 'returned': 0 };
+            orders.forEach(o => { if (statusCounts.hasOwnProperty(o.status)) statusCounts[o.status]++; });
+            statusChart.data.datasets[0].data = [
+                statusCounts.new,
+                statusCounts.in_repair,
+                statusCounts.ready,
+                statusCounts.returned
+            ];
+            statusChart.update();
+
+            // Линейный график: последние 7 дней по 4 статусам
+            const last7Days = [];
+            const newPerDay = [], inRepairPerDay = [], readyPerDay = [], returnedPerDay = [];
+            const today = new Date();
+            
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                last7Days.push(d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }));
+                
+                const dayOrders = orders.filter(o => o.created_at && o.created_at.startsWith(dateStr));
+                newPerDay.push(dayOrders.filter(o => o.status === 'new').length);
+                inRepairPerDay.push(dayOrders.filter(o => o.status === 'in_repair').length);
+                readyPerDay.push(dayOrders.filter(o => o.status === 'ready').length);
+                returnedPerDay.push(dayOrders.filter(o => o.status === 'returned').length);
+            }
+            
+            monthChart.data.labels = last7Days;
+            monthChart.data.datasets[0].data = newPerDay;
+            monthChart.data.datasets[1].data = inRepairPerDay;
+            monthChart.data.datasets[2].data = readyPerDay;
+            monthChart.data.datasets[3].data = returnedPerDay;
+            monthChart.update();
+        }
+
+        // Таблица последних заявок (последние 3)
+        function updateRecentOrdersTable() {
+            const tbody = document.getElementById('recentOrdersBody');
+            if (!tbody) return;
+            const recentOrders = [...orders]
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .slice(0, 3);
+            
+            tbody.innerHTML = '';
+            recentOrders.forEach(order => {
+                const client = clients.find(c => c.id === order.client_id);
+                const device = devices.find(d => d.id === order.device_id);
+                const master = masters.find(m => m.id === order.master_id);
+                
+                const clientName = client ? client.full_name : '—';
+                const deviceInfo = device ? `${device.brand} ${device.model}` : '—';
+                const masterName = master ? master.full_name : 'Не назначен';
+                const date = order.created_at ? new Date(order.created_at).toLocaleDateString('ru-RU') : '—';
+                
+                let statusBadge = '';
+                switch(order.status) {
+                    case 'new': statusBadge = '<span class="badge bg-secondary">Новый</span>'; break;
+                    case 'in_repair': statusBadge = '<span class="badge bg-warning">В ремонте</span>'; break;
+                    case 'ready': statusBadge = '<span class="badge bg-success">Готов</span>'; break;
+                    case 'returned': statusBadge = '<span class="badge bg-info">Выдан</span>'; break;
+                    default: statusBadge = '<span class="badge bg-light">' + order.status + '</span>';
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${order.id}</td>
+                    <td>${deviceInfo}</td>
+                    <td>${clientName}</td>
+                    <td>${date}</td>
+                    <td>${statusBadge}</td>
+                    <td>${masterName}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewOrder(${order.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
             });
         }
-        // Обновление сайдбара: имя, роль, аватар
+
+        // Просмотр заказа (заглушка)
+        window.viewOrder = (id) => {
+            window.location.href = `order-detail.html?id=${id}`;
+        };
+
+        // Настройка модального окна при открытии
+        document.getElementById('newOrderModal').addEventListener('show.bs.modal', async () => {
+            // Если данные ещё не загружены, подождём
+            if (clients.length === 0) await loadAllData();
+            fillSelects();
+        });
+
+        // Графики (определены глобально, чтобы функции updateCharts могли их обновлять)
+        const statusChart = new Chart(document.getElementById('statusChart').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: ['Новые', 'В работе', 'Готовы', 'Выданы'],
+                datasets: [{
+                    data: [0, 0, 0, 0],
+                    backgroundColor: ['#6c757d', '#ffc107', '#198754', '#0dcaf0']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const monthChart = new Chart(document.getElementById('monthChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { 
+                        label: 'Новые', 
+                        data: [], 
+                        borderColor: '#6c757d', 
+                        backgroundColor: 'transparent',
+                        tension: 0.1,
+                        pointBackgroundColor: '#6c757d',
+                        borderWidth: 2
+                    },
+                    { 
+                        label: 'В ремонте', 
+                        data: [], 
+                        borderColor: '#ffc107', 
+                        backgroundColor: 'transparent',
+                        tension: 0.1,
+                        pointBackgroundColor: '#ffc107',
+                        borderWidth: 2
+                    },
+                    { 
+                        label: 'Готовы', 
+                        data: [], 
+                        borderColor: '#198754', 
+                        backgroundColor: 'transparent',
+                        tension: 0.1,
+                        pointBackgroundColor: '#198754',
+                        borderWidth: 2
+                    },
+                    { 
+                        label: 'Выданы', 
+                        data: [], 
+                        borderColor: '#0dcaf0', 
+                        backgroundColor: 'transparent',
+                        tension: 0.1,
+                        pointBackgroundColor: '#0dcaf0',
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { 
+                    y: { 
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            callback: (value) => Number.isInteger(value) ? value : null
+                        }
+                    } 
+                },
+                plugins: {
+                    tooltip: { mode: 'index', intersect: false },
+                    legend: { labels: { usePointStyle: true, boxWidth: 10 } }
+                }
+            }
+        });
+
         function updateSidebar() {
             const userData = localStorage.getItem('currentUser');
             if (!userData) return;
@@ -406,14 +616,12 @@
                 user = JSON.parse(userData);
             } catch(e) { return; }
 
-            // Элементы сайдбара (если они есть на странице)
             const userNameSpan = document.querySelector('.dropdown strong');
             const userRoleBadge = document.querySelector('.dropdown .badge');
             const userAvatar = document.querySelector('.sidebar-avatar');
 
             if (userNameSpan) {
-                let displayName = user.fullName || user.login || 'Пользователь';
-                // Если имя слишком длинное – показываем только имя и фамилию (первые два слова)
+                let displayName = user.full_name || user.username || 'Пользователь';
                 const nameParts = displayName.split(' ');
                 if (nameParts.length > 2) {
                     displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
@@ -431,7 +639,6 @@
                     default: roleText = 'Гость';
                 }
                 userRoleBadge.textContent = roleText;
-                // Меняем цвет бейджа в зависимости от роли
                 userRoleBadge.className = 'badge ms-2';
                 if (user.role === 'admin') userRoleBadge.classList.add('bg-danger');
                 else if (user.role === 'manager') userRoleBadge.classList.add('bg-warning');
@@ -443,24 +650,6 @@
                 userAvatar.src = user.avatar;
             }
         }
-
-        // Вызываем обновление при загрузке страницы
-        document.addEventListener('DOMContentLoaded', updateSidebar);
-        // Также обновляем при изменении currentUser (например, после логина в другой вкладке)
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'currentUser') updateSidebar();
-        });
-        document.getElementById('newOrderModal')
-            .addEventListener('show.bs.modal', fillSelects);
-        // Проверка авторизации – если гость, перенаправим
-        if (!checkAuthAndRedirect()) {
-            // код дальше не выполнится, но для надёжности остановим выполнение
-            throw new Error('Не авторизован');
-        }
-        // Применяем скрытие элементов согласно роли
-        applyRoleBasedVisibility();
-        // Обновляем аватар и имя
-        updateUserAvatar();
     </script>
 </body>
 </html>
