@@ -22,8 +22,8 @@ def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(
         username=user.username,
         hashed_password=get_password_hash(user.password),
-        full_name=user.full_name,      # ← сохраняем
-        email=user.email,              # ← сохраняем
+        full_name=user.full_name,
+        email=user.email,
         role=user.role,
         master_id=user.master_id,
     )

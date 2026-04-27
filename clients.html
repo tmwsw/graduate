@@ -326,7 +326,7 @@
     if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
         import { 
             fetchClients, createClient, updateClient, deleteClient,
-            createDevice, createOrder
+            createDevice, createOrder, fetchDevices, fetchOrders
         } from './js/api.js';
         import { showAlert, getClientTypeName, formatPhone } from './js/utils.js';
 
@@ -347,26 +347,45 @@
         // Загрузка клиентов с сервера
         async function loadClients() {
             try {
-                const apiClients = await fetchClients();
-                // Преобразуем поля API в формат, ожидаемый UI
-                clients = apiClients.map(c => ({
-                    id: c.id,
-                    fullName: c.full_name,
-                    phone: c.phone,
-                    email: c.email,
-                    address: c.address,
-                    clientType: c.client_type,
-                    notes: c.notes,
-                    createdAt: new Date(c.created_at).toLocaleDateString('ru-RU'),
-                    // Временные заглушки, пока нет реальных данных
-                    devicesCount: 0,
-                    ordersCount: 0,
-                    totalSpent: 0,
-                    isActive: true
-                }));
+                // Параллельно запрашиваем клиентов, все устройства и все заказы
+                const [apiClients, apiDevices, apiOrders] = await Promise.all([
+                    fetchClients(),
+                    fetchDevices(0, 10000),   // достаточно большое limit, чтобы забрать все записи
+                    fetchOrders(0, 10000)
+                ]);
+
+                // Сохраняем устройства и заказы глобально (пригодятся)
+                window.allDevices = apiDevices;
+                window.allOrders = apiOrders;
+
+                // Преобразуем каждого клиента, подсчитывая реальные цифры
+                clients = apiClients.map(c => {
+                    const clientId = c.id;
+                    const deviceCount = apiDevices.filter(d => d.client_id === clientId).length;
+                    const clientOrders = apiOrders.filter(o => o.client_id === clientId);
+                    const orderCount = clientOrders.length;
+                    const totalSpent = clientOrders.reduce((sum, o) => sum + (o.price || 0), 0);
+
+                    return {
+                        id: clientId,
+                        fullName: c.full_name,
+                        phone: c.phone,
+                        email: c.email,
+                        address: c.address,
+                        clientType: c.client_type,
+                        notes: c.notes,
+                        createdAt: new Date(c.created_at).toLocaleDateString('ru-RU'),
+                        devicesCount: deviceCount,
+                        ordersCount: orderCount,
+                        totalSpent: totalSpent,
+                        isActive: true
+                    };
+                });
+
                 filteredClients = [...clients];
                 displayClients();
                 updateNoClientsMessage();
+                updateStatistics(); // обновляем сводные показатели
             } catch (error) {
                 console.error('Ошибка загрузки клиентов:', error);
                 showAlert('danger', 'Не удалось загрузить клиентов с сервера: ' + error.message);
