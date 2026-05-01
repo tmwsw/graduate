@@ -881,6 +881,12 @@
             }
         }
 
+        // Автоматически открываем форму создания заявки, если пришли по ссылке с параметром
+        if (new URLSearchParams(window.location.search).get('openNewOrder') === 'true') {
+            const newOrderModal = new bootstrap.Modal(document.getElementById('newOrderModal'));
+            newOrderModal.show();
+        }
+
         // Вызываем обновление при загрузке страницы
         document.addEventListener('DOMContentLoaded', updateSidebar);
         // Также обновляем при изменении currentUser (например, после логина в другой вкладке)

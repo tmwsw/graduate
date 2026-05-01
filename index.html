@@ -80,7 +80,7 @@
                         <div class="btn-group me-2">
                             <button type="button" class="btn btn-sm btn-outline-secondary">Сегодня: <span id="currentDate"></span></button>
                         </div>
-                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newOrderModal">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="redirectToNewOrder()">
                             <i class="fas fa-plus"></i> Новая заявка
                         </button>
                     </div>
@@ -523,6 +523,10 @@
         // Просмотр заказа (заглушка)
         window.viewOrder = (id) => {
             window.location.href = `order-detail.html?id=${id}`;
+        };
+
+        window.redirectToNewOrder = function() {
+            window.location.href = 'orders.html?openNewOrder=true';
         };
 
         // Настройка модального окна при открытии
