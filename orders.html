@@ -135,7 +135,7 @@
                         <div class="card border-primary">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">Всего</h6>
-                                <h4 class="card-title text-primary" id="totalOrders">48</h4>
+                                <h4 class="card-title text-primary" id="totalOrders">0</h4>
                             </div>
                         </div>
                     </div>
@@ -143,7 +143,7 @@
                         <div class="card border-warning">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">Новые</h6>
-                                <h4 class="card-title text-warning" id="newOrders">12</h4>
+                                <h4 class="card-title text-warning" id="newOrders">0</h4>
                             </div>
                         </div>
                     </div>
@@ -151,7 +151,7 @@
                         <div class="card border-info">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">В работе</h6>
-                                <h4 class="card-title text-info" id="inProgressOrders">24</h4>
+                                <h4 class="card-title text-info" id="inProgressOrders">0</h4>
                             </div>
                         </div>
                     </div>
@@ -159,7 +159,7 @@
                         <div class="card border-success">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">Готово</h6>
-                                <h4 class="card-title text-success" id="readyOrders">8</h4>
+                                <h4 class="card-title text-success" id="readyOrders">0</h4>
                             </div>
                         </div>
                     </div>
@@ -167,15 +167,15 @@
                         <div class="card border-secondary">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">За месяц</h6>
-                                <h4 class="card-title text-secondary" id="monthOrders">156</h4>
+                                <h4 class="card-title text-secondary" id="monthOrders">0</h4>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-2 col-6">
                         <div class="card border-danger">
                             <div class="card-body text-center py-2">
-                                <h6 class="card-subtitle mb-1 text-muted">Срочные</h6>
-                                <h4 class="card-title text-danger" id="urgentOrders">3</h4>
+                                <h6 class="card-subtitle mb-1 text-muted">Выдано</h6>
+                                <h4 class="card-title text-danger" id="urgentOrders">0</h4>
                             </div>
                         </div>
                     </div>
@@ -512,7 +512,7 @@
             const monthAgo = new Date();
             monthAgo.setMonth(monthAgo.getMonth() - 1);
             const monthOrders = orders.filter(o => new Date(o.created_at) > monthAgo).length;
-            const urgent = 0;
+            const urgent = orders.filter(o => o.status === 'returned').length;
 
             document.getElementById('totalOrders').textContent = total;
             document.getElementById('newOrders').textContent = newOrders;

@@ -881,6 +881,7 @@
         };
 
         // Сохранить новый ремонт (создать заказ)
+        // Сохранить новый ремонт (создать заказ)
         window.saveNewRepair = async function() {
             const deviceId = parseInt(document.getElementById('repairDeviceId').value);
             const device = devices.find(d => d.id === deviceId);
@@ -908,12 +909,20 @@
 
             try {
                 await createOrder(orderData);
-                // Обновить статус устройства, если ремонт начат
-                if (status === 'in_repair') {
-                    await updateDevice(deviceId, { status: 'in_repair' });
+                // Обновляем статус устройства в БД и локально
+                const newDeviceStatus = status === 'new' ? 'in_repair' : status;
+                await updateDevice(deviceId, { status: newDeviceStatus });
+                
+                // Локально обновляем статус, чтобы не ждать перезагрузки списка
+                const idx = devices.findIndex(d => d.id === deviceId);
+                if (idx !== -1) {
+                    devices[idx].status = newDeviceStatus;
                 }
+                filteredDevices = [...devices];
+                displayDevices();
+                updateStatistics();
+                
                 bootstrap.Modal.getInstance(document.getElementById('addRepairModal')).hide();
-                await loadDevices();
                 showAlert('success', 'Ремонт добавлен');
             } catch (e) {
                 showAlert('danger', 'Ошибка создания ремонта: ' + e.message);
