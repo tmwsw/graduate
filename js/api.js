@@ -22,6 +22,15 @@ export async function fetchClients(skip = 0, limit = 1000) {
     return await apiRequest(`/clients/?skip=${skip}&limit=${limit}`);
 }
 
+// Получить одного пользователя по ID
+export async function fetchUser(userId) {
+    const response = await fetch(`${API_BASE}/users/${userId}`);
+    if (!response.ok) {
+        throw new Error(`Ошибка загрузки пользователя: ${response.status}`);
+    }
+    return await response.json();
+}
+
 export async function createClient(clientData) {
     const apiData = {
         full_name: clientData.fullName,
@@ -116,4 +125,14 @@ export async function registerUser(userData) {
 }
 export async function loginUser(credentials) {
     return await apiRequest('/auth/login', 'POST', credentials);
+}
+
+// Обновить данные текущего пользователя
+export async function updateCurrentUser(userId, userData) {
+    return await apiRequest(`/users/${userId}`, 'PUT', userData);
+}
+
+// Смена пароля
+export async function changeUserPassword(userId, passwordData) {
+    return await apiRequest(`/users/${userId}/password`, 'PUT', passwordData);
 }

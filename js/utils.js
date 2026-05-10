@@ -1,5 +1,3 @@
-// js/utils.js
-
 // ==================== УВЕДОМЛЕНИЯ (ALERT) ====================
 export function showAlert(type, message, timeout = 5000) {
     const alertDiv = document.createElement('div');
@@ -9,13 +7,9 @@ export function showAlert(type, message, timeout = 5000) {
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
     document.body.appendChild(alertDiv);
-    
     setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.remove();
-        }
+        if (alertDiv.parentNode) alertDiv.remove();
     }, timeout);
 }
 

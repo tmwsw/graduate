@@ -54,7 +54,7 @@
                     
                     <hr class="text-white-50">
                     
-                    <div class="dropdown">
+                    <div class="dropdown" id="profileAdminDropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
                             <strong>Администратор</strong>
@@ -65,6 +65,13 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
                         </ul>
+                    </div>
+                    <div id="profileOffcanvasTrigger" style="display: none;">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="offcanvas" data-bs-target="#profileOffcanvas" onclick="updateProfileOffcanvas()">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                            <strong id="sidebarUserName">Администратор</strong>
+                            <span class="badge bg-success ms-2">Online</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -89,7 +96,7 @@
 
                 <!-- Statistics -->
                 <div class="row mb-4">
-                    <div class="col-md-3 col-6">
+                    <div class="col-md col-6">
                         <div class="card border-primary">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">Всего устройств</h6>
@@ -97,7 +104,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-6">
+                    <div class="col-md col-6">
                         <div class="card border-warning">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">В ремонте</h6>
@@ -105,19 +112,11 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-6">
+                    <div class="col-md col-6">
                         <div class="card border-success">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">Готовы</h6>
                                 <h4 class="card-title text-success" id="devicesReady">0</h4>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6">
-                        <div class="card border-info">
-                            <div class="card-body text-center py-2">
-                                <h6 class="card-subtitle mb-1 text-muted">Ноутбуки</h6>
-                                <h4 class="card-title text-info" id="notebooksCount">0</h4>
                             </div>
                         </div>
                     </div>
@@ -494,7 +493,22 @@
             </div>
         </div>
     </div>
-
+    <!-- Выдвижная панель профиля для менеджера и мастера -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="profileOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Профиль</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body text-center">
+            <img id="offcanvasAvatar" src="https://via.placeholder.com/80" class="rounded-circle mb-3" width="80" height="80" alt="Аватар">
+            <h5 id="offcanvasName">Имя пользователя</h5>
+            <p><span id="offcanvasRoleBadge" class="badge">Роль</span></p>
+            <hr>
+            <button class="btn btn-outline-danger btn-sm" onclick="logout()">
+                <i class="fas fa-sign-out-alt me-1"></i> Выйти
+            </button>
+        </div>
+    </div>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Подключаем модули -->
@@ -743,7 +757,6 @@
             document.getElementById('totalDevices').textContent = devices.length;
             document.getElementById('devicesInRepair').textContent = devices.filter(d => d.status === 'in_repair').length;
             document.getElementById('devicesReady').textContent = devices.filter(d => d.status === 'ready').length;
-            document.getElementById('notebooksCount').textContent = devices.filter(d => d.deviceType === 'notebook').length;
         }
 
         // Создание нового устройства
@@ -881,7 +894,6 @@
         };
 
         // Сохранить новый ремонт (создать заказ)
-        // Сохранить новый ремонт (создать заказ)
         window.saveNewRepair = async function() {
             const deviceId = parseInt(document.getElementById('repairDeviceId').value);
             const device = devices.find(d => d.id === deviceId);
@@ -1012,50 +1024,6 @@
 
         function updateNoDevicesMessage(show = filteredDevices.length === 0) {
             document.getElementById('noDevicesMessage').style.display = show ? 'block' : 'none';
-        }
-
-        function updateSidebar() {
-            const userData = localStorage.getItem('currentUser');
-            if (!userData) return;
-
-            let user;
-            try {
-                user = JSON.parse(userData);
-            } catch(e) { return; }
-
-            const userNameSpan = document.querySelector('.dropdown strong');
-            const userRoleBadge = document.querySelector('.dropdown .badge');
-            const userAvatar = document.querySelector('.sidebar-avatar');
-
-            if (userNameSpan) {
-                let displayName = user.full_name || user.username || 'Пользователь';
-                const nameParts = displayName.split(' ');
-                if (nameParts.length > 2) {
-                    displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
-                }
-                userNameSpan.textContent = displayName;
-            }
-
-            if (userRoleBadge) {
-                let roleText = '';
-                switch (user.role) {
-                    case 'admin': roleText = 'Админ'; break;
-                    case 'manager': roleText = 'Менеджер'; break;
-                    case 'client': roleText = 'Клиент'; break;
-                    case 'master': roleText = 'Мастер'; break;
-                    default: roleText = 'Гость';
-                }
-                userRoleBadge.textContent = roleText;
-                userRoleBadge.className = 'badge ms-2';
-                if (user.role === 'admin') userRoleBadge.classList.add('bg-danger');
-                else if (user.role === 'manager') userRoleBadge.classList.add('bg-warning');
-                else if (user.role === 'master') userRoleBadge.classList.add('bg-info');
-                else userRoleBadge.classList.add('bg-success');
-            }
-
-            if (userAvatar && user.avatar) {
-                userAvatar.src = user.avatar;
-            }
         }
     </script>
 </body>

@@ -49,6 +49,17 @@ class User(BaseModel):
 
     class Config:
         from_attributes = True
+        
+class UserOut(BaseModel):
+    id: int
+    username: str
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    role: str
+    avatar: Optional[str] = None
+
+    class Config:
+        orm_mode = True   # ← позволяет работать с объектами SQLAlchemy
 
 # ========== Client ==========
 class ClientBase(BaseModel):

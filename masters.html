@@ -54,7 +54,7 @@
                     
                     <hr class="text-white-50">
                     
-                    <div class="dropdown">
+                    <div class="dropdown" id="profileAdminDropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
                             <strong>Администратор</strong>
@@ -66,9 +66,16 @@
                             <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
                         </ul>
                     </div>
+                    <!-- Видно только не-админам -->
+                    <div id="profileOffcanvasTrigger" style="display: none;">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="offcanvas" data-bs-target="#profileOffcanvas" onclick="updateProfileOffcanvas()">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                            <strong id="sidebarUserName">Администратор</strong>
+                            <span class="badge bg-success ms-2">Online</span>
+                        </a>
+                    </div>
                 </div>
             </div>
-
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <!-- Header -->
@@ -89,7 +96,7 @@
 
                 <!-- Statistics -->
                 <div class="row mb-4">
-                    <div class="col-md-3 col-6">
+                    <div class="col-md col-6">
                         <div class="card border-primary">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">Всего мастеров</h6>
@@ -97,7 +104,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-6">
+                    <div class="col-md col-6">
                         <div class="card border-success">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">Активные</h6>
@@ -105,19 +112,11 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-6">
+                    <div class="col-md col-6">
                         <div class="card border-warning">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">В работе сейчас</h6>
                                 <h4 class="card-title text-warning" id="busyMasters">0</h4>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6">
-                        <div class="card border-info">
-                            <div class="card-body text-center py-2">
-                                <h6 class="card-subtitle mb-1 text-muted">Средний рейтинг</h6>
-                                <h4 class="card-title text-info" id="avgRating">0.0</h4>
                             </div>
                         </div>
                     </div>
@@ -166,7 +165,6 @@
                             <span class="badge bg-primary filter-tag" onclick="setQuickFilter('specialization', 'smartphones')">Смартфоны</span>
                             <span class="badge bg-primary filter-tag" onclick="setQuickFilter('specialization', 'pc')">ПК</span>
                             <span class="badge bg-success filter-tag" onclick="setQuickFilter('status', 'active')">Активные</span>
-                            <span class="badge bg-warning filter-tag" onclick="setQuickFilter('rating', '4')">Рейтинг 4+</span>
                         </div>
                     </div>
                 </div>
@@ -188,17 +186,16 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-hover">
+                                <table class="table table-hover" style="width:100%;">
                                     <thead>
                                         <tr>
-                                            <th width="60">ID</th>
-                                            <th width="350">Мастер</th>
-                                            <th width="180">Специализация</th>
-                                            <th width="100">Опыт</th>
-                                            <th width="120">Рейтинг</th>
-                                            <th width="120">Загрузка</th>
-                                            <th width="100">Статус</th>
-                                            <th width="180">Действия</th>
+                                            <th style="width: 5%;">ID</th>
+                                            <th style="width: 25%;">Мастер</th>
+                                            <th style="width: 20%;">Специализация</th>
+                                            <th style="width: 10%;">Опыт</th>
+                                            <th style="width: 13%;">Загрузка</th>
+                                            <th style="width: 13%;">Статус</th>
+                                            <th style="width: 20%;">Действия</th>
                                         </tr>
                                     </thead>
                                     <tbody id="mastersTableBody">
@@ -529,7 +526,22 @@
             </div>
         </div>
     </div>
-
+    <!-- Выдвижная панель профиля для менеджера и мастера -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="profileOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Профиль</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body text-center">
+            <img id="offcanvasAvatar" src="https://via.placeholder.com/80" class="rounded-circle mb-3" width="80" height="80" alt="Аватар">
+            <h5 id="offcanvasName">Имя пользователя</h5>
+            <p><span id="offcanvasRoleBadge" class="badge">Роль</span></p>
+            <hr>
+            <button class="btn btn-outline-danger btn-sm" onclick="logout()">
+                <i class="fas fa-sign-out-alt me-1"></i> Выйти
+            </button>
+        </div>
+    </div>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -537,6 +549,7 @@
     <script src="js/auth.js"></script>
     <script type="module">
     if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+    if (!checkPageAccess(['admin'])) throw new Error('Доступ запрещён');
         import { 
             fetchMasters, createMaster, updateMaster, deleteMaster,
             fetchOrders, updateOrder, fetchClients, fetchDevices
@@ -556,12 +569,6 @@
         const getMasterStatusName = (status) => {
             const map = { 'active': 'Активный', 'inactive': 'Неактивный', 'vacation': 'В отпуске', 'sick': 'На больничном' };
             return map[status] || status;
-        };
-        const generateRatingStars = (rating) => {
-            const full = Math.floor(rating);
-            const half = rating % 1 >= 0.5 ? 1 : 0;
-            const empty = 5 - full - half;
-            return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
         };
 
         // Состояние
@@ -599,9 +606,10 @@
                 masters = apiMasters.map(m => {
                     // Вычисляем статистику по заказам
                     const masterOrders = allOrders.filter(o => o.master_id === m.id);
+                    const totalOrders = masterOrders.length;
                     const currentOrders = masterOrders.filter(o => o.status === 'in_repair' || o.status === 'new').length;
                     const completedOrders = masterOrders.filter(o => o.status === 'ready' || o.status === 'returned').length;
-                    const workload = masters.length ? Math.min(100, currentOrders * 20) : 0; // условно
+                    const workload = totalOrders ? Math.round((currentOrders / totalOrders) * 100) : 0;
 
                     // Преобразуем specialization из строки (если хранится как JSON-строка или просто строка)
                     let specialization = [];
@@ -623,9 +631,9 @@
                         skills: m.skills || '',
                         hourlyRate: m.hourly_rate,
                         status: m.status || 'active',
-                        rating: m.rating || 4.0,
                         completedOrders: completedOrders,
                         currentOrders: currentOrders,
+                        totalOrders: totalOrders,
                         workload: workload,
                         notes: m.notes,
                         hireDate: m.hire_date,
@@ -664,7 +672,6 @@
                     'vacation': '<span class="badge bg-warning">В отпуске</span>',
                     'sick': '<span class="badge bg-danger">На больничном</span>'
                 }[master.status] || '';
-                const ratingStars = generateRatingStars(master.rating);
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${master.id}</td>
@@ -679,7 +686,6 @@
                     </td>
                     <td><div class="specialization-tags">${master.specialization.map(s => `<span class="specialization-tag">${getSpecializationName(s)}</span>`).join('')}</div></td>
                     <td>${master.experience} лет</td>
-                    <td><div>${ratingStars}</div><small>${master.rating}</small></td>
                     <td>
                         <div class="d-flex justify-content-between small"><span>${master.workload}%</span><span>${master.currentOrders} зак.</span></div>
                         <div class="workload-bar"><div class="workload-fill ${workloadClass}" style="width: ${master.workload}%"></div></div>
@@ -715,7 +721,6 @@
                                 <div class="text-muted small">${master.phone}</div>
                                 <span class="badge" style="background-color: ${statusColors[master.status]}">${getMasterStatusName(master.status)}</span>
                             </div>
-                            <div class="text-center mb-3">${generateRatingStars(master.rating)} ${master.rating}</div>
                             <div class="mb-3"><div class="text-muted small">Специализация:</div><div class="specialization-tags">${specializations.map(s => `<span class="specialization-tag">${s}</span>`).join('')}</div></div>
                             <div class="row text-center mb-3">
                                 <div class="col-4"><div class="stat-number">${master.experience}</div><div class="text-muted small">Лет</div></div>
@@ -743,11 +748,9 @@
             const total = masters.length;
             const active = masters.filter(m => m.status === 'active').length;
             const busy = masters.filter(m => m.status === 'active' && m.currentOrders > 0).length;
-            const avgRating = total ? (masters.reduce((s,m) => s + m.rating, 0) / total).toFixed(1) : 0;
             document.getElementById('totalMasters').textContent = total;
             document.getElementById('activeMasters').textContent = active;
             document.getElementById('busyMasters').textContent = busy;
-            document.getElementById('avgRating').textContent = avgRating;
         }
 
         // Сохранение нового мастера
@@ -954,16 +957,20 @@
         };
         window.showMasterStats = (id) => {
             const m = masters.find(m => m.id === id);
-            if (m) alert(`${m.fullName}\nРейтинг: ${m.rating}\nЗаказов: ${m.completedOrders}\nЗагрузка: ${m.workload}%`);
+            if (m) {
+                alert(`${m.fullName}\nВсего заказов: ${m.totalOrders}\nАктивных (новые/в работе): ${m.currentOrders}\nЗагрузка: ${m.workload}%`);
+            }
         };
         window.viewMasterDetails = (id) => {
             const m = masters.find(m => m.id === id);
             if (m) {
                 document.getElementById('masterDetailsBody').innerHTML = `
-                    <h5>${m.fullName}</h5><p>${m.phone}<br>${m.email||''}</p>
-                    <p>Опыт: ${m.experience} лет, Ставка: ${m.hourlyRate} ₽/ч</p>
-                    <p>Специализация: ${m.specialization.map(getSpecializationName).join(', ')}</p>
-                    <p>${m.notes||''}</p>
+                    <h5 class="mb-2">${m.fullName}</h5>
+                    <p class="mb-1"><strong>Телефон:</strong> ${m.phone}</p>
+                    <p class="mb-1"><strong>Email:</strong> ${m.email || 'не указан'}</p>
+                    <p class="mb-2">Опыт: ${m.experience} лет, Ставка: ${m.hourlyRate} ₽/ч</p>
+                    <p class="mb-2">Специализация: ${m.specialization.map(getSpecializationName).join(', ')}</p>
+                    <p>${m.notes || ''}</p>
                 `;
                 new bootstrap.Modal(document.getElementById('masterDetailsModal')).show();
             }
@@ -1008,50 +1015,6 @@
         };
         function updateNoMastersMessage(show = filteredMasters.length === 0) {
             document.getElementById('noMastersMessage').style.display = show ? 'block' : 'none';
-        }
-
-        function updateSidebar() {
-            const userData = localStorage.getItem('currentUser');
-            if (!userData) return;
-
-            let user;
-            try {
-                user = JSON.parse(userData);
-            } catch(e) { return; }
-
-            const userNameSpan = document.querySelector('.dropdown strong');
-            const userRoleBadge = document.querySelector('.dropdown .badge');
-            const userAvatar = document.querySelector('.sidebar-avatar');
-
-            if (userNameSpan) {
-                let displayName = user.full_name || user.username || 'Пользователь';
-                const nameParts = displayName.split(' ');
-                if (nameParts.length > 2) {
-                    displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
-                }
-                userNameSpan.textContent = displayName;
-            }
-
-            if (userRoleBadge) {
-                let roleText = '';
-                switch (user.role) {
-                    case 'admin': roleText = 'Админ'; break;
-                    case 'manager': roleText = 'Менеджер'; break;
-                    case 'client': roleText = 'Клиент'; break;
-                    case 'master': roleText = 'Мастер'; break;
-                    default: roleText = 'Гость';
-                }
-                userRoleBadge.textContent = roleText;
-                userRoleBadge.className = 'badge ms-2';
-                if (user.role === 'admin') userRoleBadge.classList.add('bg-danger');
-                else if (user.role === 'manager') userRoleBadge.classList.add('bg-warning');
-                else if (user.role === 'master') userRoleBadge.classList.add('bg-info');
-                else userRoleBadge.classList.add('bg-success');
-            }
-
-            if (userAvatar && user.avatar) {
-                userAvatar.src = user.avatar;
-            }
         }
     </script>
 </body>

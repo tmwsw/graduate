@@ -55,7 +55,7 @@
                         </li>
                         <hr class="text-white-50">
                     
-                    <div class="dropdown">
+                    <div class="dropdown" id="profileAdminDropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
                             <strong>Администратор</strong>
@@ -67,7 +67,14 @@
                             <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
                         </ul>
                     </div>
-                    </ul>
+                    <!-- Видно только не-админам -->
+                    <div id="profileOffcanvasTrigger" style="display: none;">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="offcanvas" data-bs-target="#profileOffcanvas" onclick="updateProfileOffcanvas()">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                            <strong id="sidebarUserName">Администратор</strong>
+                            <span class="badge bg-success ms-2">Online</span>
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -88,7 +95,7 @@
 
                 <!-- Cards -->
                 <div class="row">
-                    <div class="col-md-3 mb-4">
+                    <div class="col-md-4 mb-4">
                         <div class="card dashboard-card text-white bg-primary">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
@@ -104,7 +111,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 mb-4">
+                    <div class="col-md-4 mb-4">
                         <div class="card dashboard-card text-white bg-warning">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
@@ -120,7 +127,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 mb-4">
+                    <div class="col-md-4 mb-4">
                         <div class="card dashboard-card text-white bg-success">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
@@ -133,22 +140,6 @@
                                     </div>
                                 </div>
                                 <p class="card-text">Ожидают выдачи</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-4">
-                        <div class="card dashboard-card text-white bg-info">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <h5 class="card-title">Среднее время</h5>
-                                        <h2 class="card-text">0 д</h2>
-                                    </div>
-                                    <div class="card-icon">
-                                        <i class="fas fa-clock"></i>
-                                    </div>
-                                </div>
-                                <p class="card-text">На ремонт</p>
                             </div>
                         </div>
                     </div>
@@ -254,7 +245,22 @@
             </div>
         </div>
     </div>
-
+    <!-- Выдвижная панель профиля для менеджера и мастера -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="profileOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Профиль</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body text-center">
+            <img id="offcanvasAvatar" src="https://via.placeholder.com/80" class="rounded-circle mb-3" width="80" height="80" alt="Аватар">
+            <h5 id="offcanvasName">Имя пользователя</h5>
+            <p><span id="offcanvasRoleBadge" class="badge">Роль</span></p>
+            <hr>
+            <button class="btn btn-outline-danger btn-sm" onclick="logout()">
+                <i class="fas fa-sign-out-alt me-1"></i> Выйти
+            </button>
+        </div>
+    </div>
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
@@ -453,7 +459,7 @@
             const newPerDay = [], inRepairPerDay = [], readyPerDay = [], returnedPerDay = [];
             const today = new Date();
             
-            for (let i = 6; i >= 0; i--) {
+            for (let i = 29; i >= 0; i--) {
                 const d = new Date(today);
                 d.setDate(today.getDate() - i);
                 const dateStr = d.toISOString().split('T')[0];
@@ -595,14 +601,25 @@
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false, 
-                scales: { 
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: function(value, index) {
+                                // Показываем подпись только для каждого 5-го индекса (0,5,10,...)
+                                return index % 5 === 0 ? this.getLabelForValue(value) : '';
+                            },
+                            autoSkip: false,   // отключаем встроенный автоскип, чтобы управлять вручную
+                            maxRotation: 45,  // можно повернуть подписи, если нужно
+                            align: 'center'
+                        }
+                    },
                     y: { 
                         beginAtZero: true,
                         ticks: {
                             stepSize: 1,
                             callback: (value) => Number.isInteger(value) ? value : null
                         }
-                    } 
+                    }
                 },
                 plugins: {
                     tooltip: { mode: 'index', intersect: false },
@@ -610,50 +627,6 @@
                 }
             }
         });
-
-        function updateSidebar() {
-            const userData = localStorage.getItem('currentUser');
-            if (!userData) return;
-
-            let user;
-            try {
-                user = JSON.parse(userData);
-            } catch(e) { return; }
-
-            const userNameSpan = document.querySelector('.dropdown strong');
-            const userRoleBadge = document.querySelector('.dropdown .badge');
-            const userAvatar = document.querySelector('.sidebar-avatar');
-
-            if (userNameSpan) {
-                let displayName = user.full_name || user.username || 'Пользователь';
-                const nameParts = displayName.split(' ');
-                if (nameParts.length > 2) {
-                    displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
-                }
-                userNameSpan.textContent = displayName;
-            }
-
-            if (userRoleBadge) {
-                let roleText = '';
-                switch (user.role) {
-                    case 'admin': roleText = 'Админ'; break;
-                    case 'manager': roleText = 'Менеджер'; break;
-                    case 'client': roleText = 'Клиент'; break;
-                    case 'master': roleText = 'Мастер'; break;
-                    default: roleText = 'Гость';
-                }
-                userRoleBadge.textContent = roleText;
-                userRoleBadge.className = 'badge ms-2';
-                if (user.role === 'admin') userRoleBadge.classList.add('bg-danger');
-                else if (user.role === 'manager') userRoleBadge.classList.add('bg-warning');
-                else if (user.role === 'master') userRoleBadge.classList.add('bg-info');
-                else userRoleBadge.classList.add('bg-success');
-            }
-
-            if (userAvatar && user.avatar) {
-                userAvatar.src = user.avatar;
-            }
-        }
     </script>
 </body>
 </html>

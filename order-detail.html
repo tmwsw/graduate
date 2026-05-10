@@ -27,7 +27,7 @@
                     <li class="nav-item"><a class="nav-link" href="reports.html"><i class="fas fa-chart-bar me-2"></i>Отчеты</a></li>
                 </ul>
                 <hr class="text-white-50">
-                <div class="dropdown">
+                <div class="dropdown" id="profileAdminDropdown">
                     <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
                         <strong>Администратор</strong>
@@ -39,9 +39,16 @@
                         <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
                     </ul>
                 </div>
+                <!-- Видно только не-админам -->
+                <div id="profileOffcanvasTrigger" style="display: none;">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="offcanvas" data-bs-target="#profileOffcanvas" onclick="updateProfileOffcanvas()">
+                        <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                        <strong id="sidebarUserName">Администратор</strong>
+                        <span class="badge bg-success ms-2">Online</span>
+                    </a>
+                </div>
             </div>
         </div>
-
         <!-- Main Content -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
@@ -111,48 +118,63 @@
     </div>
 </div>
 
-<!-- Модальное окно редактирования -->
-<div class="modal fade" id="editOrderModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Редактировать заявку</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editOrderForm">
-                    <input type="hidden" id="editOrderId">
-                    <div class="mb-3">
-                        <label class="form-label">Мастер</label>
-                        <select class="form-select" id="editMasterId"></select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Статус</label>
-                        <select class="form-select" id="editStatus">
-                            <option value="new">Новый</option>
-                            <option value="in_repair">В ремонте</option>
-                            <option value="ready">Готов</option>
-                            <option value="returned">Выдан</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Стоимость (₽)</label>
-                        <input type="number" class="form-control" id="editPrice" min="0" step="100">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Описание</label>
-                        <textarea class="form-control" id="editDescription" rows="3"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" onclick="saveEditedOrder()">Сохранить</button>
+    <!-- Модальное окно редактирования -->
+    <div class="modal fade" id="editOrderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактировать заявку</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editOrderForm">
+                        <input type="hidden" id="editOrderId">
+                        <div class="mb-3">
+                            <label class="form-label">Мастер</label>
+                            <select class="form-select" id="editMasterId"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Статус</label>
+                            <select class="form-select" id="editStatus">
+                                <option value="new">Новый</option>
+                                <option value="in_repair">В ремонте</option>
+                                <option value="ready">Готов</option>
+                                <option value="returned">Выдан</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Стоимость (₽)</label>
+                            <input type="number" class="form-control" id="editPrice" min="0" step="100">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Описание</label>
+                            <textarea class="form-control" id="editDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEditedOrder()">Сохранить</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
+    <!-- Выдвижная панель профиля для менеджера и мастера -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="profileOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Профиль</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body text-center">
+            <img id="offcanvasAvatar" src="https://via.placeholder.com/80" class="rounded-circle mb-3" width="80" height="80" alt="Аватар">
+            <h5 id="offcanvasName">Имя пользователя</h5>
+            <p><span id="offcanvasRoleBadge" class="badge">Роль</span></p>
+            <hr>
+            <button class="btn btn-outline-danger btn-sm" onclick="logout()">
+                <i class="fas fa-sign-out-alt me-1"></i> Выйти
+            </button>
+        </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/api.js" type="module"></script>
     <script src="js/auth.js"></script>
@@ -275,32 +297,6 @@
         };
 
         window.printOrder = () => window.print();
-
-        function updateSidebar() {
-            const userData = localStorage.getItem('currentUser');
-            if (!userData) return;
-            try {
-                const user = JSON.parse(userData);
-                const userNameSpan = document.querySelector('.dropdown strong');
-                const userRoleBadge = document.querySelector('.dropdown .badge');
-                const userAvatar = document.querySelector('.sidebar-avatar');
-                if (userNameSpan) {
-                    let displayName = user.full_name || user.username || 'Пользователь';
-                    const nameParts = displayName.split(' ');
-                    if (nameParts.length > 2) {
-                        displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
-                    }
-                    userNameSpan.textContent = displayName;
-                }
-                if (userRoleBadge) {
-                    let roleText = { admin: 'Админ', manager: 'Менеджер', master: 'Мастер' }[user.role] || 'Гость';
-                    userRoleBadge.textContent = roleText;
-                    userRoleBadge.className = 'badge ms-2';
-                    userRoleBadge.classList.add(user.role === 'admin' ? 'bg-danger' : user.role === 'manager' ? 'bg-warning' : user.role === 'master' ? 'bg-info' : 'bg-success');
-                }
-                if (userAvatar && user.avatar) userAvatar.src = user.avatar;
-            } catch(e) {}
-        }
     </script>
 </body>
 </html>

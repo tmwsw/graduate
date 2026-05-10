@@ -53,7 +53,7 @@
                     
                     <hr class="text-white-50">
                     
-                    <div class="dropdown">
+                    <div class="dropdown" id="profileAdminDropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
                             <strong>Администратор</strong>
@@ -65,9 +65,16 @@
                             <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
                         </ul>
                     </div>
+                    <!-- Видно только не-админам -->
+                    <div id="profileOffcanvasTrigger" style="display: none;">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="offcanvas" data-bs-target="#profileOffcanvas" onclick="updateProfileOffcanvas()">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                            <strong id="sidebarUserName">Администратор</strong>
+                            <span class="badge bg-success ms-2">Online</span>
+                        </a>
+                    </div>
                 </div>
             </div>
-
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <!-- Header -->
@@ -95,7 +102,6 @@
                                 <option value="">Все статусы</option>
                                 <option value="new">Новая</option>
                                 <option value="in_progress">В работе</option>
-                                <option value="waiting">Ожидает запчасти</option>
                                 <option value="ready">Готов</option>
                                 <option value="completed">Выдано</option>
                                 <option value="cancelled">Отменено</option>
@@ -131,7 +137,7 @@
 
                 <!-- Statistics -->
                 <div class="row mb-4">
-                    <div class="col-md-2 col-6">
+                    <div class="col-md col-6">
                         <div class="card border-primary">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">Всего</h6>
@@ -139,7 +145,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-2 col-6">
+                    <div class="col-md col-6">
                         <div class="card border-warning">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">Новые</h6>
@@ -147,7 +153,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-2 col-6">
+                    <div class="col-md col-6">
                         <div class="card border-info">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">В работе</h6>
@@ -155,7 +161,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-2 col-6">
+                    <div class="col-md col-6">
                         <div class="card border-success">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">Готово</h6>
@@ -163,15 +169,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-2 col-6">
-                        <div class="card border-secondary">
-                            <div class="card-body text-center py-2">
-                                <h6 class="card-subtitle mb-1 text-muted">За месяц</h6>
-                                <h4 class="card-title text-secondary" id="monthOrders">0</h4>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-2 col-6">
+                    <div class="col-md col-6">
                         <div class="card border-danger">
                             <div class="card-body text-center py-2">
                                 <h6 class="card-subtitle mb-1 text-muted">Выдано</h6>
@@ -199,69 +197,6 @@
                                 </thead>
                                 <tbody id="ordersTableBody">
                                     <!-- Заявки будут загружены через JS -->
-                                    <tr>
-                                        <td><span class="badge bg-secondary">#1001</span></td>
-                                        <td>
-                                            <strong>Иванов Алексей</strong><br>
-                                            <small class="text-muted">Ноутбук ASUS X543MA</small>
-                                        </td>
-                                        <td>10.11.2023</td>
-                                        <td>13.11.2023</td>
-                                        <td><span class="badge bg-warning status-badge">В работе</span></td>
-                                        <td>3 500 ₽</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-primary action-btn" onclick="viewOrder(1001)">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-warning action-btn" onclick="editOrder(1001)">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-success action-btn" onclick="completeOrder(1001)">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="badge bg-secondary">#1002</span></td>
-                                        <td>
-                                            <strong>Сидорова Мария</strong><br>
-                                            <small class="text-muted">Смартфон iPhone 12</small>
-                                        </td>
-                                        <td>09.11.2023</td>
-                                        <td>12.11.2023</td>
-                                        <td><span class="badge bg-success status-badge">Готов</span></td>
-                                        <td>8 900 ₽</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-primary action-btn" onclick="viewOrder(1002)">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-info action-btn" onclick="printReceipt(1002)">
-                                                <i class="fas fa-print"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-success action-btn" onclick="issueOrder(1002)">
-                                                <i class="fas fa-box"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="badge bg-secondary">#1003</span></td>
-                                        <td>
-                                            <strong>ООО "Вектор"</strong><br>
-                                            <small class="text-muted">ПК Dell OptiPlex</small>
-                                        </td>
-                                        <td>08.11.2023</td>
-                                        <td>15.11.2023</td>
-                                        <td><span class="badge bg-primary status-badge">Новый</span></td>
-                                        <td>2 200 ₽</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-primary action-btn" onclick="viewOrder(1003)">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-warning action-btn" onclick="assignMaster(1003)">
-                                                <i class="fas fa-user-cog"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -372,6 +307,23 @@
         </div>
     </div>
 
+    <!-- Выдвижная панель профиля для менеджера и мастера -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="profileOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Профиль</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body text-center">
+            <img id="offcanvasAvatar" src="https://via.placeholder.com/80" class="rounded-circle mb-3" width="80" height="80" alt="Аватар">
+            <h5 id="offcanvasName">Имя пользователя</h5>
+            <p><span id="offcanvasRoleBadge" class="badge">Роль</span></p>
+            <hr>
+            <button class="btn btn-outline-danger btn-sm" onclick="logout()">
+                <i class="fas fa-sign-out-alt me-1"></i> Выйти
+            </button>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/utils.js"></script>
@@ -380,6 +332,7 @@
     <!-- Orders JS -->
     <script type="module">
     if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+    if (!checkPageAccess(['admin', 'manager', 'master'])) throw new Error('Доступ запрещён');
         import { 
             fetchClients, fetchDevices, fetchMasters, fetchOrders, 
             createOrder, updateOrder, deleteOrder 
@@ -505,22 +458,19 @@
         }
 
         function updateStatistics() {
-            const total = orders.length;
-            const newOrders = orders.filter(o => o.status === 'new').length;
-            const inProgress = orders.filter(o => o.status === 'in_repair').length;
-            const ready = orders.filter(o => o.status === 'ready').length;
-            const monthAgo = new Date();
-            monthAgo.setMonth(monthAgo.getMonth() - 1);
-            const monthOrders = orders.filter(o => new Date(o.created_at) > monthAgo).length;
-            const urgent = orders.filter(o => o.status === 'returned').length;
+        const total = orders.length;
+        const newOrders = orders.filter(o => o.status === 'new').length;
+        const inProgress = orders.filter(o => o.status === 'in_repair').length;
+        const ready = orders.filter(o => o.status === 'ready').length;
+        const urgent = orders.filter(o => o.status === 'returned').length;
 
-            document.getElementById('totalOrders').textContent = total;
-            document.getElementById('newOrders').textContent = newOrders;
-            document.getElementById('inProgressOrders').textContent = inProgress;
-            document.getElementById('readyOrders').textContent = ready;
-            document.getElementById('monthOrders').textContent = monthOrders;
-            document.getElementById('urgentOrders').textContent = urgent;
-        }
+        // Убедись, что в HTML есть элементы с такими id
+        document.getElementById('totalOrders').textContent = total;
+        document.getElementById('newOrders').textContent = newOrders;
+        document.getElementById('inProgressOrders').textContent = inProgress;
+        document.getElementById('readyOrders').textContent = ready;
+        document.getElementById('urgentOrders').textContent = urgent;
+    }
 
         window.searchOrders = function() {
             applyFilters();
@@ -833,53 +783,6 @@
                 showAlert('danger', 'Ошибка: ' + e.message);
             }
         };
-        // Обновление сайдбара: имя, роль, аватар
-        function updateSidebar() {
-            const userData = localStorage.getItem('currentUser');
-            if (!userData) return;
-
-            let user;
-            try {
-                user = JSON.parse(userData);
-            } catch(e) { return; }
-
-            // Элементы сайдбара (если они есть на странице)
-            const userNameSpan = document.querySelector('.dropdown strong');
-            const userRoleBadge = document.querySelector('.dropdown .badge');
-            const userAvatar = document.querySelector('.sidebar-avatar');
-
-            if (userNameSpan) {
-                let displayName = user.full_name || user.username || 'Пользователь';
-                // Если имя слишком длинное – показываем только имя и фамилию (первые два слова)
-                const nameParts = displayName.split(' ');
-                if (nameParts.length > 2) {
-                    displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
-                }
-                userNameSpan.textContent = displayName;
-            }
-
-            if (userRoleBadge) {
-                let roleText = '';
-                switch (user.role) {
-                    case 'admin': roleText = 'Админ'; break;
-                    case 'manager': roleText = 'Менеджер'; break;
-                    case 'client': roleText = 'Клиент'; break;
-                    case 'master': roleText = 'Мастер'; break;
-                    default: roleText = 'Гость';
-                }
-                userRoleBadge.textContent = roleText;
-                // Меняем цвет бейджа в зависимости от роли
-                userRoleBadge.className = 'badge ms-2';
-                if (user.role === 'admin') userRoleBadge.classList.add('bg-danger');
-                else if (user.role === 'manager') userRoleBadge.classList.add('bg-warning');
-                else if (user.role === 'master') userRoleBadge.classList.add('bg-info');
-                else userRoleBadge.classList.add('bg-success');
-            }
-
-            if (userAvatar && user.avatar) {
-                userAvatar.src = user.avatar;
-            }
-        }
 
         // Автоматически открываем форму создания заявки, если пришли по ссылке с параметром
         if (new URLSearchParams(window.location.search).get('openNewOrder') === 'true') {
@@ -887,20 +790,10 @@
             newOrderModal.show();
         }
 
-        // Вызываем обновление при загрузке страницы
-        document.addEventListener('DOMContentLoaded', updateSidebar);
-        // Также обновляем при изменении currentUser (например, после логина в другой вкладке)
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'currentUser') updateSidebar();
-        });
         if (!checkAuthAndRedirect()) {
             // код дальше не выполнится, но для надёжности остановим выполнение
             throw new Error('Не авторизован');
         }
-        // Применяем скрытие элементов согласно роли
-        applyRoleBasedVisibility();
-        // Обновляем аватар и имя
-        updateUserAvatar();
     </script>
 </body>
 </html>

@@ -40,9 +40,9 @@
                         </li>
                     </ul>
                     <hr class="text-white-50">
-                    <div class="dropdown">
+                    <div class="dropdown" id="profileAdminDropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23cccccc'/%3E%3Ctext x='16' y='21' font-size='14' text-anchor='middle' fill='white'%3EU%3C/text%3E%3C/svg%3E" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
                             <strong>Администратор</strong>
                             <span class="badge bg-success ms-2">Online</span>
                         </a>
@@ -51,6 +51,14 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
                         </ul>
+                    </div>
+                    <!-- Видно только не-админам -->
+                    <div id="profileOffcanvasTrigger" style="display: none;">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="offcanvas" data-bs-target="#profileOffcanvas" onclick="updateProfileOffcanvas()">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                            <strong id="sidebarUserName">Администратор</strong>
+                            <span class="badge bg-success ms-2">Online</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -111,7 +119,16 @@
 
                 <!-- Table View -->
                 <div id="tableView" class="view-section">
-                    <div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-hover"><thead><tr><th width="50">#</th><th>Клиент</th><th width="150">Контакты</th><th width="100">Устройства</th><th width="100">Заявок</th><th width="120">Всего потрачено</th><th width="100">Статус</th><th width="200">Действия</th></tr></thead><tbody id="clientsTableBody"></tbody></table></div></div></div>
+                    <div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-hover"><thead><tr>
+                        <th width="50">#</th>
+                        <th>Клиент</th>
+                        <th width="300">Контакты</th>
+                        <th width="100">Устройства</th>
+                        <th width="100">Заявок</th>
+                        <th width="120">Всего потрачено</th>
+                        <th width="100">Статус</th>
+                        <th width="200">Действия</th>
+                    </tr></thead><tbody id="clientsTableBody"></tbody></table></div></div></div>
                 </div>
 
                 <!-- Cards View -->
@@ -216,12 +233,30 @@
             </div>
         </div>
     </div>
-
+    <!-- Выдвижная панель профиля для менеджера и мастера -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="profileOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Профиль</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body text-center">
+            <img id="offcanvasAvatar" src="https://via.placeholder.com/80" class="rounded-circle mb-3" width="80" height="80" alt="Аватар">
+            <h5 id="offcanvasName">Имя пользователя</h5>
+            <p><span id="offcanvasRoleBadge" class="badge">Роль</span></p>
+            <hr>
+            <button class="btn btn-outline-danger btn-sm" onclick="logout()">
+                <i class="fas fa-sign-out-alt me-1"></i> Выйти
+            </button>
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/api.js" type="module"></script>
     <script type="module">
     if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+
+    if (!checkPageAccess(['admin', 'manager'])) throw new Error('Доступ запрещён');
 
     import { 
         fetchClients, createClient, updateClient, deleteClient,
@@ -292,7 +327,13 @@
         const tableBody = document.getElementById('clientsTableBody');
         tableBody.innerHTML = '';
         clientsList.forEach(client => {
-            const avatarLetter = client.fullName.charAt(0);
+            const nameParts = client.fullName.trim().split(/\s+/);
+            let initials = '?';
+            if (nameParts.length >= 2) {
+                initials = nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase();
+            } else {
+                initials = nameParts[0].charAt(0).toUpperCase();
+            }
             const row = document.createElement('tr');
             let statusBadge = '';
             switch(client.clientType) {
@@ -306,7 +347,7 @@
                 <td>${client.id}</td>
                 <td>
                     <div class="d-flex align-items-center">
-                        <div class="avatar me-3">${avatarLetter}</div>
+                        <div class="avatar me-3">${initials}</div>
                         <div>
                             <strong>${client.fullName}</strong><br>
                             <small class="text-muted">Добавлен: ${client.createdAt}</small>
@@ -336,7 +377,13 @@
         const container = document.getElementById('clientsCardsContainer');
         container.innerHTML = '';
         clientsList.forEach(client => {
-            const avatarLetter = client.fullName.charAt(0);
+            const nameParts = client.fullName.trim().split(/\s+/);
+            let initials = '?';
+            if (nameParts.length >= 2) {
+                initials = nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase();
+            } else {
+                initials = nameParts[0].charAt(0).toUpperCase();
+            }
             let cardColorClass = '';
             switch(client.clientType) {
                 case 'regular': cardColorClass = 'border-primary'; break;
@@ -350,12 +397,12 @@
             card.innerHTML = `
                 <div class="card client-card h-100 ${cardColorClass}">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="avatar">${avatarLetter}</div>
-                            <div>
-                                ${client.clientType === 'vip' ? '<span class="badge bg-danger stats-badge">VIP</span>' : ''}
-                                ${client.clientType === 'corporate' ? '<span class="badge bg-warning stats-badge">Корп.</span>' : ''}
+                        <div class="text-center mb-3">
+                            <div class="avatar mx-auto" style="width:80px; height:80px; line-height:80px; font-size:2rem; border-radius:50%; background-color:#3498db; color:#fff;">
+                                ${initials}
                             </div>
+                            ${client.clientType === 'vip' ? '<br><span class="badge bg-danger stats-badge mt-1">VIP</span>' : ''}
+                            ${client.clientType === 'corporate' ? '<br><span class="badge bg-warning stats-badge mt-1">Корп.</span>' : ''}
                         </div>
                         <h5 class="card-title">${client.fullName}</h5>
                         <div class="mb-3">
@@ -703,50 +750,6 @@
         } else {
             noClientsMessage.style.display = 'none';
             document.getElementById(currentViewMode === 'table' ? 'tableView' : 'cardsView').style.display = 'block';
-        }
-    }
-
-    function updateSidebar() {
-        const userData = localStorage.getItem('currentUser');
-        if (!userData) return;
-
-        let user;
-        try {
-            user = JSON.parse(userData);
-        } catch(e) { return; }
-
-        const userNameSpan = document.querySelector('.dropdown strong');
-        const userRoleBadge = document.querySelector('.dropdown .badge');
-        const userAvatar = document.querySelector('.sidebar-avatar');
-
-        if (userNameSpan) {
-            let displayName = user.full_name || user.username || 'Пользователь';
-            const nameParts = displayName.split(' ');
-            if (nameParts.length > 2) {
-                displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
-            }
-            userNameSpan.textContent = displayName;
-        }
-
-        if (userRoleBadge) {
-            let roleText = '';
-            switch (user.role) {
-                case 'admin': roleText = 'Админ'; break;
-                case 'manager': roleText = 'Менеджер'; break;
-                case 'client': roleText = 'Клиент'; break;
-                case 'master': roleText = 'Мастер'; break;
-                default: roleText = 'Гость';
-            }
-            userRoleBadge.textContent = roleText;
-            userRoleBadge.className = 'badge ms-2';
-            if (user.role === 'admin') userRoleBadge.classList.add('bg-danger');
-            else if (user.role === 'manager') userRoleBadge.classList.add('bg-warning');
-            else if (user.role === 'master') userRoleBadge.classList.add('bg-info');
-            else userRoleBadge.classList.add('bg-success');
-        }
-
-        if (userAvatar && user.avatar) {
-            userAvatar.src = user.avatar;
         }
     }
     </script>

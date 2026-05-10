@@ -5,7 +5,7 @@ from typing import List
 from .. import crud, schemas
 from ..database import SessionLocal
 
-router = APIRouter(prefix="/...", tags=["..."])
+router = APIRouter(prefix="/users", tags=["users"])
 
 def get_db():
     db = SessionLocal()

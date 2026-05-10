@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="css/profile.css">
+    <link rel="icon" type="image/png" href="img/icon_32x32.png">
 
 </head>
 <body>
@@ -62,7 +63,7 @@
                     
                     <hr class="text-white-50">
                     
-                    <div class="dropdown">
+                    <div class="dropdown" id="profileAdminDropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
                             <strong>Администратор</strong>
@@ -83,11 +84,7 @@
                 <div class="profile-header">
                     <div class="row align-items-center">
                         <div class="col-md-3 text-center">
-                            <img src="https://via.placeholder.com/200" alt="Аватар" class="profile-avatar mb-3">
-                            <button class="btn btn-outline-light btn-sm" onclick="changeAvatar()">
-                                <i class="fas fa-camera me-1"></i> Сменить фото
-                            </button>
-                            <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="uploadAvatar(event)">
+                            <img src="https://via.placeholder.com/200" alt="Аватар" class="profile-avatar mb-3" style="width:150px; height:150px; object-fit:cover; border: none;">
                         </div>
                         <div class="col-md-6">
                             <h2 class="mb-2" id="userFullName">Марин Виктор Васильевич</h2>
@@ -692,45 +689,11 @@
     <script src="js/api.js" type="module"></script>
     <script>
         if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
-            // Данные пользователя
-            let currentUser = JSON.parse(localStorage.getItem('currentUser')) || {
-                id: 1,
-                fullName: 'Марин Виктор Васильевич',
-                firstName: 'Виктор',
-                lastName: 'Марин',
-                middleName: 'Васильевич',
-                email: 'admin@remonttech.ru',
-                phone: '+7 (977) 661-24-04',
-                position: 'Администратор системы',
-                department: 'service',
-                joinDate: '15.03.2023',
-                lastLogin: 'Сегодня, 10:30',
-                avatar: 'https://via.placeholder.com/150',
-                bio: 'Администратор системы управления ремонтами. Работаю в компании с 2023 года.',
-                birthDate: '1990-05-15',
-                telegram: '@ivan_admin',
-                address: 'г. Москва, ул. Примерная, д. 10',
-                theme: 'light',
-                language: 'ru',
-                timezone: 'Europe/Moscow',
-                dateFormat: 'dd.mm.yyyy',
-                emailNotifications: true,
-                pushNotifications: true,
-                smsNotifications: false,
-                newOrdersNotify: true,
-                completedOrdersNotify: true,
-                systemAlertsNotify: true,
-                reportReadyNotify: false,
-                animations: true,
-                compactMode: false,
-                sidebarCollapsed: false,
-                telegramIntegration: false,
-                googleCalendarIntegration: false,
-                accountingIntegration: false,
-                smsIntegration: false,
-                twoFactorEnabled: true,
-                authMethod: 'sms'
-            };
+
+        if (!checkPageAccess(['admin'])) throw new Error('Доступ запрещён');
+
+        // Данные пользователя
+        let currentUser = null;   
             
             // Уведомления
             let notifications = JSON.parse(localStorage.getItem('notifications')) || [
@@ -834,8 +797,8 @@
             ];
             
             // Инициализация страницы
-            document.addEventListener('DOMContentLoaded', function() {
-                loadUserData();
+            document.addEventListener('DOMContentLoaded', async () => {
+                await loadUserData();   // дождёмся загрузки пользователя
                 loadNotifications();
                 loadActivityHistory();
                 setupEventListeners();
@@ -843,73 +806,61 @@
             });
             
             // Загрузка данных пользователя
-            function loadUserData() {
-            if (!currentUser) return;
+            async function loadUserData() {
+                const stored = localStorage.getItem('currentUser');
+                if (!stored) return;
+                const loginData = JSON.parse(stored);
+                if (!loginData.id) return;
 
-            // Шапка профиля
-            document.getElementById('userFullName').textContent = currentUser.fullName || currentUser.username;
-            document.getElementById('userPosition').textContent = getRoleDisplay(currentUser.role);
-            document.getElementById('userEmail').textContent = currentUser.email || '—';
-            document.getElementById('userPhone').textContent = currentUser.phone || '—';
-            document.getElementById('joinDate').textContent = '—';  // нет данных
-            document.getElementById('lastLogin').textContent = '—'; // нет данных
+                try {
+                    const users = await fetchUsers(0, 1000);   // загружаем всех
+                    const user = users.find(u => u.id === loginData.id);
+                    if (!user) {
+                        console.warn('Пользователь не найден в базе');
+                        return;
+                    }
+                    currentUser = user;   // теперь у нас объект пользователя из БД
 
-            // Аватар
-            const avatarImg = document.querySelector('.profile-avatar');
-            if (avatarImg) {
-                avatarImg.src = currentUser.avatar
-                    ? `data:image/png;base64,${currentUser.avatar}`
-                    : 'https://via.placeholder.com/200';
-            }
+                    // Шапка профиля
+                    document.getElementById('userFullName').textContent = user.full_name || '';
+                    document.getElementById('userPosition').textContent = getRoleDisplay(user.role);
+                    document.getElementById('userEmail').textContent = user.email || '—';
+                    document.getElementById('userPhone').textContent = user.phone || '—';
 
-            // Форма личных данных
-            if (currentUser.fullName) {
-                const parts = currentUser.fullName.split(' ');
-                document.getElementById('lastName').value = parts[0] || '';
-                document.getElementById('firstName').value = parts[1] || '';
-                document.getElementById('middleName').value = parts.slice(2).join(' ') || '';
-            }
-            document.getElementById('position').value = currentUser.role || 'manager';
-            document.getElementById('department').value = '';  // нет данных
-            document.getElementById('bio').value = '';        // нет данных
-            document.getElementById('birthDate').value = '';  // нет данных
+                    // === АВАТАР ===
+                    const avatarImg = document.querySelector('.profile-avatar');
+                    if (avatarImg) {
+                        avatarImg.src = getUserAvatar(user);
+                    }
 
-            // Контакты
-            document.getElementById('email').value = currentUser.email || '';
-            document.getElementById('phone').value = (currentUser.phone || '').replace(/[^+\d]/g, '');
-            document.getElementById('telegram').value = '';
-            document.getElementById('address').value = '';
+                    // Заполняем ФИО в форме
+                    const parts = (user.full_name || '').split(' ');
+                    document.getElementById('lastName').value = parts[0] || '';
+                    document.getElementById('firstName').value = parts[1] || '';
+                    document.getElementById('middleName').value = parts.slice(2).join(' ') || '';
 
-            // Статистика (пока заглушка)
-            updateStatistics();
+                    // Остальные поля
+                    document.getElementById('email').value = user.email || '';
+                    document.getElementById('phone').value = (user.phone || '').replace(/[^+\d]/g, '');
+                    document.getElementById('telegram').value = user.telegram || '';
+                    document.getElementById('address').value = user.address || '';
+                    document.getElementById('bio').value = user.bio || '';
+                    document.getElementById('birthDate').value = user.birth_date || '';
+                    document.getElementById('position').value = user.role || 'manager';
+                    document.getElementById('department').value = user.department || '';
 
-            // Настройки уведомлений (временные, не сохраняются)
-            document.getElementById('emailNotifications').checked = true;
-            document.getElementById('pushNotifications').checked = true;
-            document.getElementById('smsNotifications').checked = false;
-            document.getElementById('newOrdersNotify').checked = true;
-            document.getElementById('completedOrdersNotify').checked = true;
-            document.getElementById('systemAlertsNotify').checked = true;
-            document.getElementById('reportReadyNotify').checked = false;
-
-            // Настройки интерфейса (временные)
-            document.getElementById('theme').value = 'light';
-            document.getElementById('language').value = 'ru';
-            document.getElementById('timezone').value = 'Europe/Moscow';
-            document.getElementById('dateFormat').value = 'dd.mm.yyyy';
-            document.getElementById('animations').checked = true;
-            document.getElementById('compactMode').checked = false;
-            document.getElementById('sidebarCollapsed').checked = false;
-
-            // Интеграции
-            document.getElementById('telegramIntegration').checked = false;
-            document.getElementById('googleCalendarIntegration').checked = false;
-            document.getElementById('accountingIntegration').checked = false;
-            document.getElementById('smsIntegration').checked = false;
-
-            // Безопасность
-            document.getElementById('authMethod').value = 'sms';
-            
+                    // Обновляем localStorage, чтобы сайдбар подхватил актуальное имя и роль
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        id: user.id,
+                        username: user.username,
+                        full_name: user.full_name,
+                        role: user.role,
+                        avatar: user.avatar
+                    }));
+                    if (typeof updateSidebar === 'function') updateSidebar();
+                } catch (e) {
+                    console.error('Ошибка загрузки профиля:', e);
+                }
             }
             
             // Обновление статистики
@@ -1053,7 +1004,10 @@
             
             // Инициализация графика активности
             function initActivityChart() {
-                const ctx = document.getElementById('activityChart').getContext('2d');
+                const canvas = document.getElementById('activityChart');
+                if (!canvas) return;   // если элемента нет, просто выходим
+
+                const ctx = canvas.getContext('2d');
                 new Chart(ctx, {
                     type: 'doughnut',
                     data: {
@@ -1085,37 +1039,6 @@
             
             // ============= ФУНКЦИИ ПРОФИЛЯ =============
             
-            // Смена аватара
-             // Смена аватара
-            function changeAvatar() {
-                document.getElementById('avatarInput').click();
-            }
-            
-            function uploadAvatar(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const imageData = e.target.result;
-                        
-                        // Обновляем фото в профиле
-                        document.querySelector('.profile-avatar').src = imageData;
-                        
-                        // Обновляем фото в выпадающем меню (если мы на странице профиля)
-                        const navAvatar = document.querySelector('.sidebar-avatar');
-                        if (navAvatar) navAvatar.src = imageData;
-
-                        // СОХРАНЕНИЕ: записываем в localStorage
-                        // Если у тебя объект currentUser, делаем так:
-                        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || {};
-                        currentUser.avatar = imageData;
-                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                        
-                        alert('Аватар обновлен!');
-                    };
-                    reader.readAsDataURL(file);
-                }
-            }
                 
             // Сохранение личных данных
             function savePersonalInfo() {
@@ -1917,69 +1840,11 @@
                 });
             });
 
-            // Обновление сайдбара: имя, роль, аватар
-            function updateSidebar() {
-                const userData = localStorage.getItem('currentUser');
-                if (!userData) return;
-
-                let user;
-                try {
-                    user = JSON.parse(userData);
-                } catch(e) { return; }
-
-                // Элементы сайдбара (если они есть на странице)
-                const userNameSpan = document.querySelector('.dropdown strong');
-                const userRoleBadge = document.querySelector('.dropdown .badge');
-                const userAvatar = document.querySelector('.sidebar-avatar');
-
-                if (userNameSpan) {
-                    let displayName = user.full_name || user.username || 'Пользователь';
-                    // Если имя слишком длинное – показываем только имя и фамилию (первые два слова)
-                    const nameParts = displayName.split(' ');
-                    if (nameParts.length > 2) {
-                        displayName = nameParts[0] + ' ' + nameParts[1] + (nameParts[2] ? ' ' + nameParts[2].charAt(0) + '.' : '');
-                    }
-                    userNameSpan.textContent = displayName;
-                }
-
-                if (userRoleBadge) {
-                    let roleText = '';
-                    switch (user.role) {
-                        case 'admin': roleText = 'Админ'; break;
-                        case 'manager': roleText = 'Менеджер'; break;
-                        case 'client': roleText = 'Клиент'; break;
-                        case 'master': roleText = 'Мастер'; break;
-                        default: roleText = 'Гость';
-                    }
-                    userRoleBadge.textContent = roleText;
-                    // Меняем цвет бейджа в зависимости от роли
-                    userRoleBadge.className = 'badge ms-2';
-                    if (user.role === 'admin') userRoleBadge.classList.add('bg-danger');
-                    else if (user.role === 'manager') userRoleBadge.classList.add('bg-warning');
-                    else if (user.role === 'master') userRoleBadge.classList.add('bg-info');
-                    else userRoleBadge.classList.add('bg-success');
-                }
-
-                if (userAvatar && user.avatar) {
-                    userAvatar.src = user.avatar;
-                }
-            }
-
-            // Вызываем обновление при загрузке страницы
-            document.addEventListener('DOMContentLoaded', updateSidebar);
-            // Также обновляем при изменении currentUser (например, после логина в другой вкладке)
-            window.addEventListener('storage', function(e) {
-                if (e.key === 'currentUser') updateSidebar();
-            });
             // Проверка авторизации – если гость, перенаправим
             if (!checkAuthAndRedirect()) {
                 // код дальше не выполнится, но для надёжности остановим выполнение
                 throw new Error('Не авторизован');
             }
-            // Применяем скрытие элементов согласно роли
-            applyRoleBasedVisibility();
-            // Обновляем аватар и имя
-            updateUserAvatar();
     </script>
 </body>
 </html>
