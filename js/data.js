@@ -1,6 +1,10 @@
-// js/data.js
+// ========== data.js — МОДУЛЬ РАБОТЫ С ЛОКАЛЬНЫМ ХРАНИЛИЩЕМ (localStorage) ==========
+// Используется для демонстрации и прототипирования, когда нет сервера.
+// Хранит все основные сущности: клиенты, устройства, мастера, заявки, пользователи,
+// уведомления, историю активности. ID генерируются автоматически на основе максимального значения.
 
 // ==================== КЛИЕНТЫ ====================
+
 /**
  * Получить всех клиентов из localStorage
  * @returns {Array} массив клиентов
@@ -18,9 +22,9 @@ export function saveClients(clients) {
 }
 
 /**
- * Добавить нового клиента (ID генерируется автоматически)
+ * Добавить нового клиента. ID генерируется автоматически как max(id) + 1.
  * @param {Object} client - объект клиента без поля id
- * @returns {Object} добавленный клиент с id
+ * @returns {Object} добавленный клиент с присвоенным id
  */
 export function addClient(client) {
     const clients = getClients();
@@ -31,10 +35,10 @@ export function addClient(client) {
 }
 
 /**
- * Обновить данные клиента по ID
+ * Обновить данные клиента по ID (частичное обновление)
  * @param {number} clientId
- * @param {Object} newData - частичные данные для обновления
- * @returns {Object|null} обновлённый клиент или null
+ * @param {Object} newData - объект с полями, которые нужно изменить
+ * @returns {Object|null} обновлённый клиент или null, если не найден
  */
 export function updateClient(clientId, newData) {
     const clients = getClients();
@@ -57,6 +61,7 @@ export function deleteClient(clientId) {
 }
 
 // ==================== УСТРОЙСТВА ====================
+
 export function getDevices() {
     return JSON.parse(localStorage.getItem('devices')) || [];
 }
@@ -90,6 +95,7 @@ export function deleteDevice(deviceId) {
 }
 
 // ==================== МАСТЕРА ====================
+
 export function getMasters() {
     return JSON.parse(localStorage.getItem('masters')) || [];
 }
@@ -122,7 +128,8 @@ export function deleteMaster(masterId) {
     saveMasters(masters);
 }
 
-// ==================== ЗАЯВКИ ====================
+// ==================== ЗАЯВКИ (ЗАКАЗЫ) ====================
+
 export function getOrders() {
     return JSON.parse(localStorage.getItem('repair_orders')) || [];
 }
@@ -133,7 +140,7 @@ export function saveOrders(orders) {
 
 export function addOrder(order) {
     const orders = getOrders();
-    order.id = orders.length ? Math.max(...orders.map(o => o.id)) + 1 : 1001;
+    order.id = orders.length ? Math.max(...orders.map(o => o.id)) + 1 : 1001; // старт с 1001 для наглядности
     orders.push(order);
     saveOrders(orders);
     return order;
@@ -156,6 +163,7 @@ export function deleteOrder(orderId) {
 }
 
 // ==================== ПОЛЬЗОВАТЕЛИ ====================
+
 export function getUsers() {
     return JSON.parse(localStorage.getItem('users')) || [];
 }
@@ -188,7 +196,7 @@ export function deleteUser(userId) {
     saveUsers(users);
 }
 
-// Текущий пользователь (отдельно)
+// Текущий авторизованный пользователь (отдельная запись)
 export function getCurrentUser() {
     return JSON.parse(localStorage.getItem('currentUser')) || null;
 }
@@ -207,6 +215,7 @@ export function updateCurrentUser(newData) {
 }
 
 // ==================== УВЕДОМЛЕНИЯ ====================
+
 export function getNotifications() {
     return JSON.parse(localStorage.getItem('notifications')) || [];
 }
@@ -218,7 +227,7 @@ export function saveNotifications(notifications) {
 export function addNotification(notification) {
     const notifications = getNotifications();
     notification.id = notifications.length ? Math.max(...notifications.map(n => n.id)) + 1 : 1;
-    notifications.unshift(notification);
+    notifications.unshift(notification); // новые уведомления в начало массива
     saveNotifications(notifications);
     return notification;
 }
@@ -238,6 +247,7 @@ export function deleteNotification(notificationId) {
 }
 
 // ==================== ИСТОРИЯ АКТИВНОСТИ ====================
+
 export function getActivityHistory() {
     return JSON.parse(localStorage.getItem('activityHistory')) || [];
 }
@@ -246,11 +256,18 @@ export function saveActivityHistory(history) {
     localStorage.setItem('activityHistory', JSON.stringify(history));
 }
 
+/**
+ * Добавить новую запись в историю активности
+ * @param {string} action - название действия
+ * @param {string} details - подробности
+ * @param {string} type - тип: 'system', 'security', 'orders' и т.п.
+ * @param {string} icon - иконка из Font Awesome (например, 'fa-user-plus')
+ * @returns {Object} созданная запись
+ */
 export function addActivity(action, details, type, icon) {
     const history = getActivityHistory();
     const now = new Date();
     const timeString = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-    const dateString = now.toLocaleDateString('ru-RU');
     
     const newActivity = {
         id: history.length + 1,
@@ -262,13 +279,17 @@ export function addActivity(action, details, type, icon) {
     };
     
     history.unshift(newActivity);
-    if (history.length > 50) history.pop();
+    if (history.length > 50) history.pop(); // ограничиваем историю 50 записями
     saveActivityHistory(history);
     return newActivity;
 }
 
+// ==================== ИНИЦИАЛИЗАЦИЯ ДЕМО-ДАННЫХ ====================
+/**
+ * Заполняет localStorage тестовыми данными, если хранилище пусто.
+ * Вызывается при первом запуске приложения (обычно в главном файле).
+ */
 export function initDemoData() {
-
     // Пользователи (если нет)
     if (getUsers().length === 0) {
         const defaultUsers = [

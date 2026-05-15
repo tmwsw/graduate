@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <!-- ========== ЗАГОЛОВОК СТРАНИЦЫ ==========
+         Подключаем Bootstrap 5, Font Awesome, собственный CSS-файл devices.css и фавикон.
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>РемонтТех - Устройства</title>
@@ -12,7 +15,11 @@
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar (одинаковый для всех страниц) -->
+            <!-- ======================== БОКОВОЕ МЕНЮ (SIDEBAR) ========================
+                 Всегда видно слева, содержит навигацию по разделам системы.
+                 Для администратора – выпадающий список профиля (dropdown),
+                 для менеджера/мастера – выдвижная панель (offcanvas).
+            -->
             <div class="col-md-3 col-lg-2 sidebar d-md-block">
                 <div class="position-sticky pt-3">
                     <div class="text-center mb-4">
@@ -51,9 +58,8 @@
                             </a>
                         </li>
                     </ul>
-                    
                     <hr class="text-white-50">
-                    
+                    <!-- Блок профиля для администратора -->
                     <div class="dropdown" id="profileAdminDropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
@@ -66,6 +72,7 @@
                             <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
                         </ul>
                     </div>
+                    <!-- Блок профиля для менеджера/мастера (offcanvas) -->
                     <div id="profileOffcanvasTrigger" style="display: none;">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="offcanvas" data-bs-target="#profileOffcanvas" onclick="updateProfileOffcanvas()">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
@@ -76,9 +83,9 @@
                 </div>
             </div>
 
-            <!-- Main Content -->
+            <!-- ======================== ОСНОВНОЕ СОДЕРЖИМОЕ СТРАНИЦЫ ======================== -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <!-- Header -->
+                <!-- Заголовок и кнопки управления -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">
                         <i class="fas fa-laptop text-primary me-2"></i>
@@ -94,7 +101,7 @@
                     </div>
                 </div>
 
-                <!-- Statistics -->
+                <!-- Карточки статистики (быстрые метрики) -->
                 <div class="row mb-4">
                     <div class="col-md col-6">
                         <div class="card border-primary">
@@ -122,7 +129,7 @@
                     </div>
                 </div>
 
-                <!-- Filters -->
+                <!-- Поиск и фильтрация -->
                 <div class="card mb-4">
                     <div class="card-body">
                         <div class="row g-3">
@@ -158,7 +165,7 @@
                             </div>
                         </div>
                         
-                        <!-- Быстрые фильтры -->
+                        <!-- Быстрые фильтры (теги) -->
                         <div class="filter-tags" id="quickFilters">
                             <small class="text-muted me-2">Быстрые фильтры:</small>
                             <span class="badge bg-primary filter-tag" onclick="setQuickFilter('brand', 'Samsung')">Samsung</span>
@@ -169,7 +176,7 @@
                     </div>
                 </div>
 
-                <!-- View Toggle -->
+                <!-- Переключатель режима отображения: таблица или карточки -->
                 <div class="btn-group mb-4" role="group" aria-label="View toggle">
                     <input type="radio" class="btn-check" name="viewMode" id="viewTable" autocomplete="off" checked onclick="setViewMode('table')">
                     <label class="btn btn-outline-primary" for="viewTable">
@@ -181,7 +188,7 @@
                     </label>
                 </div>
 
-                <!-- Table View -->
+                <!-- Табличное представление списка устройств -->
                 <div id="tableView" class="view-section">
                     <div class="card">
                         <div class="card-body">
@@ -208,14 +215,14 @@
                     </div>
                 </div>
 
-                <!-- Cards View -->
+                <!-- Карточное представление списка устройств -->
                 <div id="cardsView" class="view-section" style="display: none;">
                     <div class="row" id="devicesCardsContainer">
                         <!-- Карточки будут загружены через JS -->
                     </div>
                 </div>
 
-                <!-- No Devices Message -->
+                 <!-- Сообщение, если устройств нет -->
                 <div class="text-center py-5" id="noDevicesMessage" style="display: none;">
                     <i class="fas fa-laptop fa-3x text-muted mb-3"></i>
                     <h4 class="text-muted">Нет устройств</h4>
@@ -228,7 +235,9 @@
         </div>
     </div>
 
-    <!-- Modal: New Device -->
+    <!-- ======================== МОДАЛЬНЫЕ ОКНА ======================== -->
+
+    <!-- Модальное окно: создание нового устройства -->
     <div class="modal fade" id="newDeviceModal" tabindex="-1" aria-labelledby="newDeviceModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -321,23 +330,29 @@
         </div>
     </div>
 
-    <!-- Modal: Device Details -->
+    <!-- Модальное окно: детали устройства -->
     <div class="modal fade" id="deviceDetailsModal" tabindex="-1" aria-labelledby="deviceDetailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deviceDetailsModalLabel">
-                        <i class="fas fa-info-circle me-2"></i>Детали устройства
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header py-2" style="background-color: #2c3e50; color: white;">
+                    <h5 class="modal-title"><i class="fas fa-microchip me-2"></i>Информация об устройстве</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" id="deviceDetailsBody">
-                    <!-- Детали будут загружены динамически -->
+                <div class="modal-body p-3" id="deviceDetailsBody">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-sm btn-success" id="deviceDetailsAddRepairBtn">Добавить ремонт</button>
                 </div>
             </div>
         </div>
     </div>
-        <!-- Modal: Edit Device -->
+    <!-- Модальное окно: редактирование устройства -->
     <div class="modal fade" id="editDeviceModal" tabindex="-1" aria-labelledby="editDeviceModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -433,7 +448,8 @@
             </div>
         </div>
     </div>
-    <!-- Modal: Add Repair -->
+
+    <!-- Модальное окно: добавление ремонта (создание заявки) -->
     <div class="modal fade" id="addRepairModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -481,7 +497,7 @@
         </div>
     </div>
 
-    <!-- Modal: Repair History -->
+    <!-- Модальное окно: история ремонтов устройства -->
     <div class="modal fade" id="historyModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -493,6 +509,7 @@
             </div>
         </div>
     </div>
+
     <!-- Выдвижная панель профиля для менеджера и мастера -->
     <div class="offcanvas offcanvas-end" tabindex="-1" id="profileOffcanvas">
         <div class="offcanvas-header">
@@ -509,29 +526,35 @@
             </button>
         </div>
     </div>
-    <!-- Bootstrap JS -->
+
+    <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Подключаем модули -->
     <script src="js/auth.js"></script>
     <script src="js/api.js" type="module"></script>
     <script type="module">
-    if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+        // ======================== 1. ПРОВЕРКА ДОСТУПА ========================
+        if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+        // Доступ к устройствам имеют admin и manager (мастер только свои, но тут список общий)
+        if (!checkPageAccess(['admin', 'manager'])) throw new Error('Доступ запрещён');
+        
+        // Импорт API-функций и утилит
         import { 
             fetchDevices, createDevice, updateDevice, deleteDevice,
             fetchClients, createOrder, fetchOrders, fetchMasters
         } from './js/api.js';
         import { showAlert, getDeviceTypeName, getStatusName } from './js/utils.js';
 
-        // Состояние
-        let devices = [];
-        let clients = [];
-        let clientsMap = new Map();
-        let masters = [];
-        let mastersMap = new Map();
+        // ======================== 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ========================
+        let devices = [];               // все устройства
+        let clients = [];               // список клиентов
+        let clientsMap = new Map();     // id -> имя клиента
+        let masters = [];               // список мастеров
+        let mastersMap = new Map();     // id -> имя мастера
         let currentViewMode = 'table';
         let filteredDevices = [];
 
-        // Иконки и цвета
+        // Иконки и цвета для разных типов устройств
         const deviceIcons = {
             'notebook': 'fa-laptop', 'pc': 'fa-desktop', 'smartphone': 'fa-mobile-alt',
             'tablet': 'fa-tablet-alt', 'monitor': 'fa-tv', 'printer': 'fa-print', 'other': 'fa-microchip'
@@ -541,7 +564,7 @@
             'tablet': '#9b59b6', 'monitor': '#f39c12', 'printer': '#1abc9c', 'other': '#95a5a6'
         };
 
-        // Инициализация
+        // ======================== 3. ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ========================
         document.addEventListener('DOMContentLoaded', async () => {
             await loadClients();
             await loadMasters();
@@ -550,7 +573,7 @@
             updateSidebar();
         });
 
-        // Загрузка клиентов
+        // ======================== 4. ЗАГРУЗКА СПРАВОЧНЫХ ДАННЫХ ========================
         async function loadClients() {
             try {
                 const apiClients = await fetchClients(0, 1000);
@@ -593,7 +616,7 @@
                 masters.map(m => `<option value="${m.id}">${m.full_name}</option>`).join('');
         }
 
-        // Загрузка устройств
+        // ======================== 5. ЗАГРУЗКА УСТРОЙСТВ С СЕРВЕРА ========================
         async function loadDevices() {
             try {
                 const apiDevices = await fetchDevices(0, 1000);
@@ -616,7 +639,7 @@
                     totalRepairCost: 0
                 }));
                 // Загрузим статистику ремонтов отдельно
-                await loadRepairStats();
+                await loadRepairStats(); // подтягиваем статистику по заказам
                 filteredDevices = [...devices];
                 displayDevices();
                 updateNoDevicesMessage();
@@ -627,6 +650,7 @@
             }
         }
 
+        // Загрузка статистики ремонтов (заказов) для каждого устройства
         async function loadRepairStats() {
             try {
                 const allOrders = await fetchOrders(0, 10000);
@@ -644,7 +668,7 @@
             }
         }
 
-        // Отображение
+        // ======================== 6. ОТОБРАЖЕНИЕ УСТРОЙСТВ (таблица или карточки) ========================
         function displayDevices() {
             if (currentViewMode === 'table') {
                 displayDevicesTable(filteredDevices);
@@ -653,6 +677,7 @@
             }
         }
 
+        // Вспомогательная: получить HTML-бейдж статуса
         function getStatusBadge(status) {
             const map = {
                 'new': '<span class="badge bg-primary">Новое</span>',
@@ -664,6 +689,7 @@
             return map[status] || map['new'];
         }
 
+        // Табличное представление
         function displayDevicesTable(devicesList) {
             const tbody = document.getElementById('devicesTableBody');
             if (!tbody) return;
@@ -699,6 +725,7 @@
             });
         }
 
+        // Карточное представление
         function displayDevicesCards(devicesList) {
             const container = document.getElementById('devicesCardsContainer');
             if (!container) return;
@@ -752,14 +779,59 @@
             });
         }
 
-        // Статистика
+        // ======================== 7. ОБНОВЛЕНИЕ СТАТИСТИКИ ========================
         function updateStatistics() {
             document.getElementById('totalDevices').textContent = devices.length;
             document.getElementById('devicesInRepair').textContent = devices.filter(d => d.status === 'in_repair').length;
             document.getElementById('devicesReady').textContent = devices.filter(d => d.status === 'ready').length;
         }
 
-        // Создание нового устройства
+        // ======================== 8. ПОИСК И ФИЛЬТРАЦИЯ ========================
+        window.searchDevices = function() {
+            const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+            const type = document.getElementById('deviceTypeFilter')?.value || '';
+            const status = document.getElementById('statusFilter')?.value || '';
+            filteredDevices = devices.filter(d => {
+                if (search && !(d.brand.toLowerCase().includes(search) || d.model.toLowerCase().includes(search) || (d.serialNumber||'').toLowerCase().includes(search) || d.clientName.toLowerCase().includes(search))) return false;
+                if (type && d.deviceType !== type) return false;
+                if (status && d.status !== status) return false;
+                return true;
+            });
+            displayDevices();
+            updateNoDevicesMessage(filteredDevices.length === 0);
+        };
+        window.filterDevices = () => window.searchDevices();
+        window.clearSearch = () => {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('deviceTypeFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            filteredDevices = [...devices];
+            displayDevices();
+            updateNoDevicesMessage(false);
+        };
+
+        // Быстрый фильтр через теги
+        window.setQuickFilter = (type, value) => {
+            if (type === 'brand') {
+                document.getElementById('searchInput').value = value;
+                window.searchDevices();
+            } else if (type === 'status') {
+                document.getElementById('statusFilter').value = value;
+                window.searchDevices();
+            }
+        };
+
+        // ======================== 9. ПЕРЕКЛЮЧЕНИЕ РЕЖИМА ОТОБРАЖЕНИЯ ========================
+        window.setViewMode = (mode) => {
+            currentViewMode = mode;
+            document.getElementById('tableView').style.display = mode === 'table' ? 'block' : 'none';
+            document.getElementById('cardsView').style.display = mode === 'cards' ? 'block' : 'none';
+            displayDevices();
+        };
+
+        // ======================== 10. CRUD ОПЕРАЦИИ ========================
+
+        // --- СОЗДАНИЕ НОВОГО УСТРОЙСТВА ---
         window.saveNewDevice = async function() {
             const clientId = parseInt(document.getElementById('clientSelect').value);
             const deviceType = document.getElementById('deviceType').value;
@@ -802,7 +874,7 @@
             }
         };
 
-        // Редактирование
+        // --- РЕДАКТИРОВАНИЕ УСТРОЙСТВА (открытие формы) ---
         window.editDevice = function(deviceId) {
             const device = devices.find(d => d.id === deviceId);
             if (!device) return;
@@ -820,6 +892,7 @@
             new bootstrap.Modal(document.getElementById('editDeviceModal')).show();
         };
 
+        // --- СОХРАНЕНИЕ ИЗМЕНЕНИЙ УСТРОЙСТВА ---
         window.saveEditedDevice = async function() {
             const id = parseInt(document.getElementById('editDeviceId').value);
             const clientId = parseInt(document.getElementById('editClientSelect').value);
@@ -861,6 +934,7 @@
             }
         };
 
+        // --- УДАЛЕНИЕ УСТРОЙСТВА ---
         window.deleteDevice = async function(deviceId) {
             if (!confirm('Удалить устройство?')) return;
             try {
@@ -872,22 +946,17 @@
             }
         };
 
-        // --- РЕМОНТЫ (ЗАКАЗЫ) ---
+        // ======================== 11. УПРАВЛЕНИЕ РЕМОНТАМИ (ЗАКАЗАМИ) ========================
 
         // Открыть модалку добавления ремонта
         window.addRepairToDevice = async function(deviceId) {
             const device = devices.find(d => d.id === deviceId);
             if (!device) return;
             document.getElementById('repairDeviceId').value = deviceId;
-            document.getElementById('repairDeviceInfo').innerHTML = 
-                `<strong>${device.brand} ${device.model}</strong> (${device.clientName})`;
+            document.getElementById('repairDeviceInfo').innerHTML = `<strong>${device.brand} ${device.model}</strong> (${device.clientName})`;
             document.getElementById('repairDescription').value = '';
             document.getElementById('repairPrice').value = '';
-            // Если мастера ещё не загружены, загружаем их
-            if (masters.length === 0) {
-                await loadMasters();
-            }
-            // Сбросим выбор мастера
+            if (masters.length === 0) await loadMasters();
             document.getElementById('repairMasterId').value = '';
             document.getElementById('repairStatus').value = 'in_repair';
             new bootstrap.Modal(document.getElementById('addRepairModal')).show();
@@ -898,11 +967,9 @@
             const deviceId = parseInt(document.getElementById('repairDeviceId').value);
             const device = devices.find(d => d.id === deviceId);
             if (!device) return;
-            
             const description = document.getElementById('repairDescription').value.trim();
             const price = parseFloat(document.getElementById('repairPrice').value);
-            const masterId = document.getElementById('repairMasterId').value ? 
-                            parseInt(document.getElementById('repairMasterId').value) : null;
+            const masterId = document.getElementById('repairMasterId').value ? parseInt(document.getElementById('repairMasterId').value) : null;
             const status = document.getElementById('repairStatus').value;
 
             if (!description || isNaN(price) || price <= 0) {
@@ -921,19 +988,15 @@
 
             try {
                 await createOrder(orderData);
-                // Обновляем статус устройства в БД и локально
+                // Обновляем статус устройства в БД
                 const newDeviceStatus = status === 'new' ? 'in_repair' : status;
                 await updateDevice(deviceId, { status: newDeviceStatus });
-                
-                // Локально обновляем статус, чтобы не ждать перезагрузки списка
+                // Локально обновляем статус
                 const idx = devices.findIndex(d => d.id === deviceId);
-                if (idx !== -1) {
-                    devices[idx].status = newDeviceStatus;
-                }
+                if (idx !== -1) devices[idx].status = newDeviceStatus;
                 filteredDevices = [...devices];
                 displayDevices();
                 updateStatistics();
-                
                 bootstrap.Modal.getInstance(document.getElementById('addRepairModal')).hide();
                 showAlert('success', 'Ремонт добавлен');
             } catch (e) {
@@ -947,26 +1010,16 @@
             if (!device) return;
             try {
                 const allOrders = await fetchOrders(0, 10000);
-                const deviceOrders = allOrders.filter(o => o.device_id === deviceId).sort(
-                    (a,b) => new Date(b.created_at) - new Date(a.created_at)
-                );
-                
+                const deviceOrders = allOrders.filter(o => o.device_id === deviceId).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
                 let html = `<h6>История ремонтов для ${device.brand} ${device.model}</h6>`;
                 if (deviceOrders.length === 0) {
                     html += '<p class="text-muted">Ремонтов пока не было</p>';
                 } else {
-                    html += `<div class="table-responsive"><table class="table table-sm">
-                        <thead><tr><th>Дата</th><th>Мастер</th><th>Описание</th><th>Стоимость</th><th>Статус</th></tr></thead><tbody>`;
+                    html += `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Дата</th><th>Мастер</th><th>Описание</th><th>Стоимость</th><th>Статус</th></tr></thead><tbody>`;
                     deviceOrders.forEach(o => {
                         const masterName = o.master_id ? (mastersMap.get(o.master_id) || '—') : 'Не назначен';
                         const date = o.created_at ? new Date(o.created_at).toLocaleString('ru-RU') : '—';
-                        html += `<tr>
-                            <td>${date}</td>
-                            <td>${masterName}</td>
-                            <td>${o.description || ''}</td>
-                            <td>${o.price || 0} ₽</td>
-                            <td>${getStatusName(o.status) || o.status}</td>
-                        </tr>`;
+                        html += `<tr><td>${date}</td><td>${masterName}</td><td>${o.description || ''}</td><td>${o.price || 0} ₽</td><td>${getStatusName(o.status) || o.status}</td></tr>`;
                     });
                     html += '</tbody></table></div>';
                 }
@@ -977,40 +1030,185 @@
             }
         };
 
-        window.viewDeviceDetails = (id) => {
-            const d = devices.find(d => d.id === id);
-            if (d) alert(`${d.brand} ${d.model}\nКлиент: ${d.clientName}`);
+        // ========== ПРОСМОТР ДЕТАЛЕЙ УСТРОЙСТВА (МОДАЛЬНОЕ ОКНО) ==========
+        window.viewDeviceDetails = async function(deviceId) {
+            const device = devices.find(d => d.id === deviceId);
+            if (!device) {
+                showAlert('danger', 'Устройство не найдено');
+                return;
+            }
+
+            // Получаем клиента
+            const client = clients.find(c => c.id === device.clientId);
+            const clientName = client ? client.full_name : 'Клиент не найден';
+            const clientPhone = client ? client.phone : '—';
+            const clientId = client ? client.id : null;
+
+            // Загружаем историю ремонтов для этого устройства (заказы)
+            let lastRepairDate = '—', lastRepairPrice = '—', lastRepairStatus = '—';
+            let repairCount = device.repairCount || 0;
+            let totalCost = device.totalRepairCost || 0;
+            try {
+                const allOrders = await fetchOrders(0, 10000);
+                const deviceOrders = allOrders.filter(o => o.device_id === deviceId).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+                if (deviceOrders.length > 0) {
+                    const last = deviceOrders[0];
+                    lastRepairDate = last.created_at ? new Date(last.created_at).toLocaleDateString('ru-RU') : '—';
+                    lastRepairPrice = last.price ? last.price.toLocaleString() + ' ₽' : '—';
+                    lastRepairStatus = getStatusName(last.status) || last.status;
+                }
+            } catch(e) { console.warn(e); }
+
+            // Функция для получения названия статуса устройства
+            function getDeviceStatusName(status) {
+                const map = {
+                    'new': 'Новое',
+                    'in_repair': 'В ремонте',
+                    'ready': 'Готово',
+                    'returned': 'Возвращено',
+                    'scrap': 'Списано'
+                };
+                return map[status] || status;
+            }
+
+            function getDeviceStatusBadgeClass(status) {
+                switch(status) {
+                    case 'new': return 'bg-primary';
+                    case 'in_repair': return 'bg-warning';
+                    case 'ready': return 'bg-success';
+                    case 'returned': return 'bg-secondary';
+                    case 'scrap': return 'bg-danger';
+                    default: return 'bg-secondary';
+                }
+            }
+
+            // Формируем HTML
+            const html = `
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="avatar-lg mx-auto" style="width: 100px; height: 100px; line-height: 100px; font-size: 3rem; border-radius: 50%; background-color: ${deviceColors[device.deviceType] || '#3498db'}; color: #fff;">
+                            <i class="fas ${deviceIcons[device.deviceType] || 'fa-microchip'}"></i>
+                        </div>
+                        <span class="badge ${getDeviceStatusBadgeClass(device.status)} mt-2 fs-6">
+                            ${getDeviceStatusName(device.status)}
+                        </span>
+                    </div>
+                    <div class="col-md-8">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Тип:</strong>
+                                <span>${getDeviceTypeName(device.deviceType)}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Бренд:</strong>
+                                <span>${device.brand}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Модель:</strong>
+                                <span>${device.model}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Серийный номер:</strong>
+                                <span><code>${device.serialNumber || '—'}</code></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Клиент:</strong>
+                                <span>
+                                    ${clientName}
+                                    ${clientId ? `<button class="btn btn-sm btn-link p-0 ms-2" onclick="viewClientDetails(${clientId})" title="Перейти к клиенту"><i class="fas fa-external-link-alt"></i></button>` : ''}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Телефон клиента:</strong>
+                                <span>${clientPhone}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Год выпуска:</strong>
+                                <span>${device.purchaseYear || '—'}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Дата поступления:</strong>
+                                <span>${device.createdAt || '—'}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Гарантия до:</strong>
+                                <span>${device.warrantyUntil ? new Date(device.warrantyUntil).toLocaleDateString('ru-RU') : '—'}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h6 class="border-bottom pb-2"><i class="fas fa-chart-line me-2"></i>Статистика ремонтов</h6>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="small text-muted">Кол-во ремонтов</div>
+                            <div class="h5">${repairCount}</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">Общая стоимость</div>
+                            <div class="h5 text-primary">${totalCost.toLocaleString()} ₽</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">Последний ремонт</div>
+                            <div class="small">${lastRepairDate}<br>${lastRepairPrice}<br><span class="badge bg-secondary">${lastRepairStatus}</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                ${device.specifications ? `
+                <div class="mt-3">
+                    <h6 class="border-bottom pb-2"><i class="fas fa-microchip me-2"></i>Характеристики</h6>
+                    <div class="p-2 bg-light rounded small">${device.specifications.replace(/\n/g, '<br>')}</div>
+                </div>
+                ` : ''}
+
+                ${device.notes ? `
+                <div class="mt-3">
+                    <h6 class="border-bottom pb-2"><i class="fas fa-sticky-note me-2"></i>Примечания</h6>
+                    <div class="p-2 bg-light rounded small">${device.notes.replace(/\n/g, '<br>')}</div>
+                </div>
+                ` : ''}
+            `;
+
+            const modalBody = document.getElementById('deviceDetailsBody');
+            if (!modalBody) return;
+            modalBody.innerHTML = html;
+
+            // Навешиваем обработчик на кнопку "Добавить ремонт" внутри модалки
+            const addRepairBtn = document.getElementById('deviceDetailsAddRepairBtn');
+            if (addRepairBtn) {
+                // Убираем старые обработчики, чтобы не дублировались
+                const newBtn = addRepairBtn.cloneNode(true);
+                addRepairBtn.parentNode.replaceChild(newBtn, addRepairBtn);
+                newBtn.addEventListener('click', () => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('deviceDetailsModal'));
+                    if (modal) modal.hide();
+                    // Небольшая задержка, чтобы модалка закрылась плавно
+                    setTimeout(() => {
+                        window.addRepairToDevice(deviceId);
+                    }, 200);
+                });
+            }
+
+            // Показываем модальное окно
+            const modalElement = document.getElementById('deviceDetailsModal');
+            if (modalElement && typeof bootstrap !== 'undefined') {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
         };
 
-        // Поиск и фильтры
-        window.searchDevices = function() {
-            const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
-            const type = document.getElementById('deviceTypeFilter')?.value || '';
-            const status = document.getElementById('statusFilter')?.value || '';
-            filteredDevices = devices.filter(d => {
-                if (search && !(d.brand.toLowerCase().includes(search) || d.model.toLowerCase().includes(search) || (d.serialNumber||'').toLowerCase().includes(search) || d.clientName.toLowerCase().includes(search))) return false;
-                if (type && d.deviceType !== type) return false;
-                if (status && d.status !== status) return false;
-                return true;
-            });
-            displayDevices();
-            updateNoDevicesMessage(filteredDevices.length === 0);
+        // Вспомогательная функция для перехода к просмотру клиента (если нужна)
+        // Переход на страницу клиентов с автоматическим открытием карточки
+        window.viewClientDetails = function(clientId) {
+            // Закрываем модалку устройства
+            const deviceModal = bootstrap.Modal.getInstance(document.getElementById('deviceDetailsModal'));
+            if (deviceModal) deviceModal.hide();
+            // Переходим на страницу клиентов, передавая ID в параметре URL
+            window.location.href = `clients.html?viewClient=${clientId}`;
         };
-        window.filterDevices = () => window.searchDevices();
-        window.clearSearch = () => {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('deviceTypeFilter').value = '';
-            document.getElementById('statusFilter').value = '';
-            filteredDevices = [...devices];
-            displayDevices();
-            updateNoDevicesMessage(false);
-        };
-        window.setViewMode = (mode) => {
-            currentViewMode = mode;
-            document.getElementById('tableView').style.display = mode==='table'?'block':'none';
-            document.getElementById('cardsView').style.display = mode==='cards'?'block':'none';
-            displayDevices();
-        };
+        // ======================== 12. ЭКСПОРТ УСТРОЙСТВ В JSON ========================
         window.exportDevices = () => {
             const dataStr = JSON.stringify(devices, null, 2);
             const blob = new Blob([dataStr], {type: 'application/json'});
@@ -1020,11 +1218,28 @@
             a.download = `devices_export_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             URL.revokeObjectURL(url);
+            showAlert('info', `Экспортировано ${devices.length} устройств`);
         };
 
+        // ======================== 13. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ========================
         function updateNoDevicesMessage(show = filteredDevices.length === 0) {
-            document.getElementById('noDevicesMessage').style.display = show ? 'block' : 'none';
+            const noMsg = document.getElementById('noDevicesMessage');
+            const tableView = document.getElementById('tableView');
+            const cardsView = document.getElementById('cardsView');
+            if (show) {
+                noMsg.style.display = 'block';
+                tableView.style.display = 'none';
+                cardsView.style.display = 'none';
+            } else {
+                noMsg.style.display = 'none';
+                document.getElementById(currentViewMode === 'table' ? 'tableView' : 'cardsView').style.display = 'block';
+            }
         }
+
+        // Функция обновления иконки при выборе типа устройства (может быть доработана)
+        window.updateDeviceIcon = function() {
+            // заглушка – при желании можно менять иконку в форме
+        };
     </script>
 </body>
 </html>

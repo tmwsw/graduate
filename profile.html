@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <!-- ========== ЗАГОЛОВОК СТРАНИЦЫ ==========
+         Страница профиля пользователя. Доступна только администратору.
+         Содержит вкладки: основная информация, безопасность, уведомления, активность, настройки.
+         Используются библиотеки jsPDF и jspdf-autotable для экспорта PDF.
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>РемонтТех - Профиль</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Подключаем библиотеки для PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="css/profile.css">
@@ -16,7 +20,9 @@
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
+            <!-- ======================== БОКОВОЕ МЕНЮ (SIDEBAR) ========================
+                 Навигация по разделам. Для администратора – выпадающий список профиля.
+            -->
             <div class="col-md-3 col-lg-2 sidebar d-md-block">
                 <div class="position-sticky pt-3">
                     <div class="text-center mb-4">
@@ -62,7 +68,6 @@
                     </ul>
                     
                     <hr class="text-white-50">
-                    
                     <div class="dropdown" id="profileAdminDropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
@@ -78,9 +83,9 @@
                 </div>
             </div>
 
-            <!-- Main Content -->
+            <!-- ======================== ОСНОВНОЕ СОДЕРЖИМОЕ ======================== -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
-                <!-- Profile Header -->
+                <!-- Шапка профиля -->
                 <div class="profile-header">
                     <div class="row align-items-center">
                         <div class="col-md-3 text-center">
@@ -100,7 +105,7 @@
                     </div>
                 </div>
 
-                <!-- Tabs -->
+                <!-- Вкладки -->
                 <ul class="nav nav-tabs" id="profileTabs" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
@@ -130,9 +135,8 @@
                     </li>
                 </ul>
 
-                <!-- Tab Content -->
                 <div class="tab-content" id="profileTabsContent">
-                    <!-- Основная информация -->
+                    <!-- Вкладка: Основная информация -->
                     <div class="tab-pane fade show active" id="info" role="tabpanel">
                         <div class="row">
                             <div class="col-md-8">
@@ -253,7 +257,7 @@
                         </div>
                     </div>
 
-                    <!-- Безопасность -->
+                    <!-- Вкладка: Безопасность -->
                     <div class="tab-pane fade" id="security" role="tabpanel">
                         <div class="row">
                             <div class="col-lg-7 col-md-12 mb-4">
@@ -338,7 +342,8 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Уведомления -->
+
+                    <!-- Вкладка: Уведомления -->
                     <div class="tab-pane fade" id="notifications" role="tabpanel">
                         <div class="row">
                             <div class="col-md-8">
@@ -430,7 +435,7 @@
                         </div>
                     </div>
 
-                    <!-- Активность -->
+                    <!-- Вкладка: Активность -->
                     <div class="tab-pane fade" id="activity" role="tabpanel">
                         <div class="row">
                             <div class="col-md-8">
@@ -518,7 +523,7 @@
                         </div>
                     </div>
 
-                    <!-- Настройки -->
+                    <!-- Вкладка: Настройки -->
                     <div class="tab-pane fade" id="settings" role="tabpanel">
                         <div class="row">
                             <div class="col-md-6">
@@ -617,8 +622,8 @@
         </div>
     </div>
 
-    <!-- Модальные окна -->
-    <!-- Модальное окно очистки данных -->
+    <!-- ======================== МОДАЛЬНЫЕ ОКНА ======================== -->
+    <!-- Модальное окно очистки данных (не используется в демо, но оставлено) -->
     <div class="modal fade" id="clearDataModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -681,18 +686,17 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
+    <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/api.js" type="module"></script>
     <script>
+        // ========== 1. ПРОВЕРКА АВТОРИЗАЦИИ И ПРАВ ==========
         if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
-
         if (!checkPageAccess(['admin'])) throw new Error('Доступ запрещён');
 
-        // Данные пользователя
+        // Глобальные данные
         let currentUser = null;   
             
             // Уведомления
@@ -796,7 +800,7 @@
                 }
             ];
             
-            // Инициализация страницы
+            // ========== 2. ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ ==========
             document.addEventListener('DOMContentLoaded', async () => {
                 await loadUserData();   // дождёмся загрузки пользователя
                 loadNotifications();
@@ -805,8 +809,9 @@
                 initActivityChart();
             });
             
-            // Загрузка данных пользователя
+            // Загрузка данных пользователя из localStorage и API
             async function loadUserData() {
+                // Пытаемся получить из localStorage или возвращаем тестового пользователя
                 const stored = localStorage.getItem('currentUser');
                 if (!stored) return;
                 const loginData = JSON.parse(stored);
@@ -821,7 +826,7 @@
                     }
                     currentUser = user;   // теперь у нас объект пользователя из БД
 
-                    // Шапка профиля
+                    // Заполняем шапку
                     document.getElementById('userFullName').textContent = user.full_name || '';
                     document.getElementById('userPosition').textContent = getRoleDisplay(user.role);
                     document.getElementById('userEmail').textContent = user.email || '—';
@@ -833,7 +838,7 @@
                         avatarImg.src = getUserAvatar(user);
                     }
 
-                    // Заполняем ФИО в форме
+                    // Форма личных данных
                     const parts = (user.full_name || '').split(' ');
                     document.getElementById('lastName').value = parts[0] || '';
                     document.getElementById('firstName').value = parts[1] || '';
@@ -890,7 +895,7 @@
                 document.getElementById('statDays').textContent = daysDiff > 0 ? daysDiff : 1;
             }
             
-            // Загрузка уведомлений
+            // Загрузка уведомлений в DOM
             function loadNotifications() {
                 const notificationsList = document.getElementById('notificationsList');
                 const unreadCount = notifications.filter(n => !n.read).length;
@@ -959,7 +964,7 @@
                 localStorage.setItem('activityHistory', JSON.stringify(activityHistory));
             }
             
-            // Настройка обработчиков событий
+            // Назначение обработчиков событий
             function setupEventListeners() {
                 // Форма личных данных
                 document.getElementById('personalInfoForm').addEventListener('submit', function(e) {
@@ -1002,7 +1007,7 @@
                 });
             }
             
-            // Инициализация графика активности
+            // Инициализация графика (простая заглушка)
             function initActivityChart() {
                 const canvas = document.getElementById('activityChart');
                 if (!canvas) return;   // если элемента нет, просто выходим
@@ -1040,7 +1045,7 @@
             // ============= ФУНКЦИИ ПРОФИЛЯ =============
             
                 
-            // Сохранение личных данных
+            // ========== 3. ОСНОВНЫЕ ФУНКЦИИ ПРОФИЛЯ ==========
             function savePersonalInfo() {
                 currentUser.firstName = document.getElementById('firstName').value;
                 currentUser.lastName = document.getElementById('lastName').value;
@@ -1180,7 +1185,7 @@
                 }
             }
             
-            // Переключение статуса прочтения уведомления
+            // Уведомления
             function toggleNotificationRead(id) {
                 const notification = notifications.find(n => n.id === id);
                 if (notification) {
@@ -1245,7 +1250,7 @@
                 showAlert('success', 'Настройки уведомлений сохранены!');
             }
             
-            // Фильтрация активности
+            // Активность
             function filterActivity(type) {
                 const buttons = document.querySelectorAll('#activity .btn-group .btn');
                 buttons.forEach(btn => btn.classList.remove('active'));
@@ -1277,7 +1282,7 @@
                 });
             }
             
-                    // Экспорт активности
+            // Экспорт активности
             function exportActivity() {
                 const period = document.getElementById('exportPeriod').value;
                 const format = document.getElementById('exportFormat').value;
@@ -1839,12 +1844,6 @@
                     }
                 });
             });
-
-            // Проверка авторизации – если гость, перенаправим
-            if (!checkAuthAndRedirect()) {
-                // код дальше не выполнится, но для надёжности остановим выполнение
-                throw new Error('Не авторизован');
-            }
     </script>
 </body>
 </html>

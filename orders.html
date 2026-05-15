@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <!-- ========== ЗАГОЛОВОК СТРАНИЦЫ ==========
+         Bootstrap 5, Font Awesome, собственный CSS-файл orders.css, фавикон.
+         Страница управления заявками на ремонт (список, фильтры, создание/редактирование).
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>РемонтТех - Заявки на ремонт</title>
@@ -12,7 +16,10 @@
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar (одинаковый для всех страниц) -->
+            <!-- ======================== БОКОВОЕ МЕНЮ (SIDEBAR) ========================
+                 Навигация по разделам. Для администратора – выпадающий список профиля,
+                 для менеджера/мастера – offcanvas.
+            -->
             <div class="col-md-3 col-lg-2 sidebar d-md-block">
                 <div class="position-sticky pt-3">
                     <div class="text-center mb-4">
@@ -52,7 +59,7 @@
                     </ul>
                     
                     <hr class="text-white-50">
-                    
+                    <!-- Блок профиля для администратора -->
                     <div class="dropdown" id="profileAdminDropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
@@ -65,7 +72,7 @@
                             <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
                         </ul>
                     </div>
-                    <!-- Видно только не-админам -->
+                    <!-- Блок профиля для менеджера/мастера (offcanvas) -->
                     <div id="profileOffcanvasTrigger" style="display: none;">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="offcanvas" data-bs-target="#profileOffcanvas" onclick="updateProfileOffcanvas()">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
@@ -75,9 +82,10 @@
                     </div>
                 </div>
             </div>
-            <!-- Main Content -->
+
+            <!-- ======================== ОСНОВНОЕ СОДЕРЖИМОЕ ======================== -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <!-- Header -->
+                <!-- Заголовок и кнопки управления -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">
                         <i class="fas fa-clipboard-list text-primary me-2"></i>
@@ -93,7 +101,7 @@
                     </div>
                 </div>
 
-                <!-- Filters -->
+                <!-- Панель фильтрации -->
                 <div class="filter-box mb-4">
                     <div class="row g-3">
                         <div class="col-md-3">
@@ -135,7 +143,7 @@
                     </div>
                 </div>
 
-                <!-- Statistics -->
+                <!-- Карточки статистики -->
                 <div class="row mb-4">
                     <div class="col-md col-6">
                         <div class="card border-primary">
@@ -179,7 +187,7 @@
                     </div>
                 </div>
 
-                <!-- Orders Table -->
+                <!-- Таблица заявок -->
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
@@ -221,7 +229,9 @@
         </div>
     </div>
 
-    <!-- Modal: New Order -->
+    <!-- ======================== МОДАЛЬНЫЕ ОКНА ======================== -->
+
+    <!-- Модальное окно: создание новой заявки -->
     <div class="modal fade" id="newOrderModal" tabindex="-1" aria-labelledby="newOrderModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -294,7 +304,8 @@
             </div>
         </div>
     </div>
-    <!-- Modal: Edit Order -->
+
+    <!-- Модальное окно: редактирование заявки -->
     <div class="modal fade" id="editOrderModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -324,21 +335,24 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
+    <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/api.js" type="module"></script>
-    <!-- Orders JS -->
     <script type="module">
-    if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
-    if (!checkPageAccess(['admin', 'manager', 'master'])) throw new Error('Доступ запрещён');
+        // ========== 1. ПРОВЕРКА ДОСТУПА ==========
+        if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+        if (!checkPageAccess(['admin', 'manager', 'master'])) throw new Error('Доступ запрещён');
+
+        // Импорты API-функций и утилит
         import { 
             fetchClients, fetchDevices, fetchMasters, fetchOrders, 
             createOrder, updateOrder, deleteOrder 
         } from './js/api.js';
         import { showAlert } from './js/utils.js';
 
+        // ========== 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
         let orders = [];
         let clients = [];
         let devices = [];
@@ -348,15 +362,23 @@
         let mastersMap = new Map();
         let filteredOrders = [];
 
+        // ========== 3. ИНИЦИАЛИЗАЦИЯ ==========
         document.addEventListener('DOMContentLoaded', async () => {
             await loadAllData();
             populateMasterFilter();
             updateOrdersTable();
             updateStatistics();
-            setDefaultDates();
-            updateSidebar();
+            setDefaultDates();      // устанавливаем текущую дату в поля фильтра
+            updateSidebar();        // настраиваем сайдбар под роль пользователя
         });
 
+        // Автоматическое открытие модалки создания заявки, если в URL есть параметр openNewOrder=true
+        if (new URLSearchParams(window.location.search).get('openNewOrder') === 'true') {
+            const newOrderModal = new bootstrap.Modal(document.getElementById('newOrderModal'));
+            newOrderModal.show();
+        }
+
+        // Загрузка всех справочников и заказов с сервера
         async function loadAllData() {
             try {
                 [clients, devices, masters, orders] = await Promise.all([
@@ -377,6 +399,7 @@
             }
         }
 
+        // Заполнение выпадающего списка мастеров в фильтре
         function populateMasterFilter() {
             const masterFilter = document.getElementById('filterMaster');
             masterFilter.innerHTML = '<option value="">Все мастера</option>';
@@ -386,12 +409,14 @@
             });
         }
 
+        // Установка дат фильтра по умолчанию (сегодня)
         function setDefaultDates() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('filterDateFrom').value = today;
             document.getElementById('filterDateTo').value = today;
         }
 
+        // ========== 4. ОТОБРАЖЕНИЕ ТАБЛИЦЫ ЗАЯВОК ==========
         function updateOrdersTable() {
             const tbody = document.getElementById('ordersTableBody');
             const ordersToShow = filteredOrders.length ? filteredOrders : orders;
@@ -401,6 +426,7 @@
                 return;
             }
 
+            // Сортировка по дате создания (новые сверху)
             const sorted = [...ordersToShow].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             
             tbody.innerHTML = '';
@@ -457,6 +483,7 @@
             });
         }
 
+        // Обновление карточек статистики
         function updateStatistics() {
         const total = orders.length;
         const newOrders = orders.filter(o => o.status === 'new').length;
@@ -464,14 +491,13 @@
         const ready = orders.filter(o => o.status === 'ready').length;
         const urgent = orders.filter(o => o.status === 'returned').length;
 
-        // Убедись, что в HTML есть элементы с такими id
         document.getElementById('totalOrders').textContent = total;
         document.getElementById('newOrders').textContent = newOrders;
         document.getElementById('inProgressOrders').textContent = inProgress;
         document.getElementById('readyOrders').textContent = ready;
         document.getElementById('urgentOrders').textContent = urgent;
     }
-
+        // ========== 5. ФИЛЬТРАЦИЯ И ПОИСК ==========
         window.searchOrders = function() {
             applyFilters();
         };
@@ -519,6 +545,7 @@
             updateOrdersTable();
         };
 
+        // ========== 6. СОЗДАНИЕ НОВОЙ ЗАЯВКИ ==========
         document.getElementById('newOrderModal').addEventListener('show.bs.modal', async () => {
             if (clients.length === 0) await loadAllData();
             
@@ -568,7 +595,8 @@
                     </div>
                 </form>
             `;
-
+            
+            // Обработчик изменения клиента – подгружаем его устройства
             document.getElementById('clientSelect').addEventListener('change', function() {
                 const clientId = parseInt(this.value);
                 const deviceSelect = document.getElementById('deviceSelect');
@@ -620,6 +648,8 @@
         window.viewOrder = (id) => {
             window.location.href = `order-detail.html?id=${id}`;
         };
+
+        // ========== 7. РЕДАКТИРОВАНИЕ ЗАЯВКИ ==========
         window.editOrder = function(id) {
             const order = orders.find(o => o.id === id);
             if (!order) return;
@@ -728,6 +758,7 @@
             }
         };
 
+        // ========== 8. ДОПОЛНИТЕЛЬНЫЕ ДЕЙСТВИЯ НАД ЗАЯВКОЙ ==========
         window.completeOrder = async function(id) {
             if (!confirm('Отметить заявку как готовую?')) return;
             try {
@@ -783,17 +814,6 @@
                 showAlert('danger', 'Ошибка: ' + e.message);
             }
         };
-
-        // Автоматически открываем форму создания заявки, если пришли по ссылке с параметром
-        if (new URLSearchParams(window.location.search).get('openNewOrder') === 'true') {
-            const newOrderModal = new bootstrap.Modal(document.getElementById('newOrderModal'));
-            newOrderModal.show();
-        }
-
-        if (!checkAuthAndRedirect()) {
-            // код дальше не выполнится, но для надёжности остановим выполнение
-            throw new Error('Не авторизован');
-        }
     </script>
 </body>
 </html>

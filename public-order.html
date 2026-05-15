@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <!-- ========== ЗАГОЛОВОК СТРАНИЦЫ ==========
+         Публичная страница для отслеживания статуса заявки клиентом.
+         Не требует авторизации. Получает ID заявки из параметра URL ?id=...
+         Загружает данные с сервера и отображает информацию о заявке,
+         клиенте, устройстве, мастере, статусе и стоимости.
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Статус заявки</title>
@@ -11,11 +17,13 @@
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-8">
+                <!-- Карточка с информацией о заявке -->
                 <div class="card">
                     <div class="card-header bg-primary text-white">
                         <h4 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Статус заявки <span id="orderIdDisplay"></span></h4>
                     </div>
                     <div class="card-body" id="orderInfo">
+                        <!-- Индикатор загрузки -->
                         <div class="text-center py-4">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Загрузка...</span>
@@ -23,30 +31,36 @@
                         </div>
                     </div>
                 </div>
+                <!-- Контактная информация техподдержки -->
                 <div class="text-center mt-3">
                     <small class="text-muted">Служба поддержки: support@remonttech.ru</small>
                 </div>
             </div>
         </div>
     </div>
-
+    <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
     <script src="js/api.js" type="module"></script>
     <script type="module">
+        // ========== 1. ПОЛУЧЕНИЕ ID ЗАЯВКИ ИЗ URL ==========
         import { fetchOrders, fetchClients, fetchDevices, fetchMasters } from './js/api.js';
 
         const urlParams = new URLSearchParams(window.location.search);
         const orderId = urlParams.get('id');
 
+        // Основная функция загрузки и отображения
         async function loadOrder() {
+            // Проверка наличия ID
             if (!orderId) {
                 document.getElementById('orderInfo').innerHTML = `
                     <div class="alert alert-danger">Номер заявки не указан</div>
                 `;
                 return;
             }
+            // Отображаем номер в заголовке
             document.getElementById('orderIdDisplay').textContent = `#${orderId}`;
 
             try {
+                // Параллельная загрузка всех необходимых данных
                 const [orders, clients, devices, masters] = await Promise.all([
                     fetchOrders(0, 1000),
                     fetchClients(0, 1000),
@@ -54,15 +68,18 @@
                     fetchMasters(0, 1000)
                 ]);
 
+                // Находим нужную заявку
                 const order = orders.find(o => o.id === parseInt(orderId));
                 if (!order) {
                     throw new Error('Заявка не найдена');
                 }
 
+                // Получаем связанные объекты
                 const client = clients.find(c => c.id === order.client_id);
                 const device = devices.find(d => d.id === order.device_id);
                 const master = masters.find(m => m.id === order.master_id);
 
+                // Маппинг статусов: текст и цвет бейджа
                 const statusMap = {
                     'new': { text: 'Новая', class: 'bg-secondary' },
                     'in_repair': { text: 'В ремонте', class: 'bg-warning' },
@@ -71,6 +88,7 @@
                 };
                 const status = statusMap[order.status] || { text: order.status, class: 'bg-light' };
 
+                // Формируем HTML с информацией
                 document.getElementById('orderInfo').innerHTML = `
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -116,6 +134,19 @@
                     <div class="alert alert-danger">Ошибка загрузки: ${error.message}</div>
                 `;
             }
+        }
+
+        // Простая защита от XSS (экранирование HTML-символов)
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+                return c; // сохраняем эмодзи
+            });
         }
 
         loadOrder();

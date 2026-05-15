@@ -1,14 +1,13 @@
-// Глобальные функции для управления доступом
+// ========== auth.js — МОДУЛЬ АУТЕНТИФИКАЦИИ И РАЗГРАНИЧЕНИЯ ДОСТУПА ==========
+// Содержит функции для проверки авторизации, получения роли, скрытия/показа элементов
+// в зависимости от роли, генерации аватаров, работы с localStorage и API пользователей.
 
 const API_BASE = 'http://127.0.0.1:8000';
 
-// Получить роль текущего пользователя
-function getCurrentUserRole() {
-    const user = getCurrentUser();
-    return user ? user.role : 'guest';
-}
+// ==================== ОСНОВНЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С ПОЛЬЗОВАТЕЛЕМ ====================
 
-// Получить объект текущего пользователя
+// Получить объект текущего пользователя из localStorage
+// Возвращает объект или null, если не авторизован
 function getCurrentUser() {
     try {
         const userStr = localStorage.getItem('currentUser');
@@ -19,12 +18,20 @@ function getCurrentUser() {
     }
 }
 
+// Получить роль текущего пользователя (admin, manager, master, guest)
+// Если пользователь не авторизован, возвращается 'guest'
+function getCurrentUserRole() {
+    const user = getCurrentUser();
+    return user ? user.role : 'guest';
+}
+
 // Проверка, авторизован ли пользователь (не гость)
 function isAuthenticated() {
     return getCurrentUserRole() !== 'guest';
 }
 
-// Проверка и перенаправление гостя на страницу логина
+// Проверка авторизации и перенаправление на login.html, если не авторизован
+// Используется на защищённых страницах (вызывается в начале скрипта)
 function checkAuthAndRedirect() {
     if (!isAuthenticated()) {
         window.location.href = 'login.html';
@@ -33,6 +40,8 @@ function checkAuthAndRedirect() {
     return true;
 }
 
+// Проверка, входит ли роль текущего пользователя в список разрешённых
+// Используется для страниц, доступных только определённым ролям
 function checkRole(allowedRoles) {
     const userData = localStorage.getItem('currentUser');
     if (!userData) return false;
@@ -41,10 +50,14 @@ function checkRole(allowedRoles) {
     return allowedRoles.includes(user.role);
 }
 
-// Скрытие элементов навигации в зависимости от роли
+// ==================== РОЛЕВАЯ ВИДИМОСТЬ ЭЛЕМЕНТОВ ИНТЕРФЕЙСА ====================
+
+// Скрывает/показывает пункты меню и блоки профиля в зависимости от роли
+// Вызывается при загрузке любой страницы (например, в DOMContentLoaded)
 function applyRoleBasedVisibility() {
     const role = getCurrentUserRole();
 
+    // Блоки профиля: для админа – dropdown, для остальных – offcanvas
     const adminBlock = document.getElementById('profileAdminDropdown');
     const userBlock = document.getElementById('profileOffcanvasTrigger');
 
@@ -57,7 +70,7 @@ function applyRoleBasedVisibility() {
         if (userBlock) userBlock.style.display = 'block';
     }
 
-    // Скрываем пункты меню
+    // Скрываем недоступные разделы в боковом меню
     if (role === 'master') {
         const allowed = ['orders.html', 'devices.html', 'index.html', 'profile.html'];
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -75,6 +88,7 @@ function applyRoleBasedVisibility() {
             }
         });
     } else if (role === 'client') {
+        // Для клиента скрываем кнопку "Новая заявка"
         const newOrderBtn = document.querySelector('.btn-primary[data-bs-target="#newOrderModal"]');
         if (newOrderBtn) newOrderBtn.style.display = 'none';
         ['reports.html', 'masters.html', 'devices.html'].forEach(link => {
@@ -83,7 +97,7 @@ function applyRoleBasedVisibility() {
         });
     }
 
-    // Скрываем пункт "Профиль" в меню для всех, кроме админа
+    // Скрываем пункт "Профиль" в меню для всех, кроме администратора
     if (role !== 'admin') {
         const profileLink = document.querySelector('a[href="profile.html"]');
         if (profileLink && profileLink.parentElement) {
@@ -92,6 +106,8 @@ function applyRoleBasedVisibility() {
     }
 }
 
+// Проверка доступа к странице: если роль не входит в разрешённый список,
+// перенаправляет на index.html. Используется в начале скрипта страницы.
 function checkPageAccess(allowedRoles) {
     const role = getCurrentUserRole();
     if (!role) {
@@ -105,57 +121,16 @@ function checkPageAccess(allowedRoles) {
     return true;
 }
 
-// Обновление аватара и имени пользователя в сайдбаре
-function updateUserAvatar() {
-    const user = getCurrentUser();
-    if (!user) return;
+// ==================== АВАТАРЫ И ОТОБРАЖЕНИЕ ПРОФИЛЯ ====================
 
-    // Аватар (пока заглушка)
-    if (user.avatar) {
-        document.querySelectorAll('.sidebar-avatar').forEach(img => {
-            img.src = user.avatar;
-        });
-    }
-
-    // Имя пользователя – используем username (или fullName, если появится)
-    const nameSpan = document.querySelector('.dropdown strong');
-    if (nameSpan) {
-        nameSpan.textContent = user.fullName || user.username || 'Пользователь';
-    }
-
-    // Роль в бейдже
-    const roleBadge = document.querySelector('.dropdown .badge');
-    if (roleBadge) {
-        let roleText = '';
-        switch (user.role) {
-            case 'admin': roleText = 'Админ'; break;
-            case 'manager': roleText = 'Менеджер'; break;
-            case 'master': roleText = 'Мастер'; break;
-            default: roleText = user.role;
-        }
-        roleBadge.textContent = roleText;
-        roleBadge.className = 'badge ms-2';
-        if (user.role === 'admin') roleBadge.classList.add('bg-danger');
-        else if (user.role === 'manager') roleBadge.classList.add('bg-warning');
-        else if (user.role === 'master') roleBadge.classList.add('bg-info');
-        else roleBadge.classList.add('bg-success');
-    }
-}
-
-// Функция выхода
-function logout() {
-    localStorage.removeItem('currentUser');
-    window.location.href = 'login.html';
-}
-
-// Генерирует data URL с кругом и двумя буквами (Фамилия Имя)
+// Генерирует data URL с круглым аватаром, содержащим инициалы (Фамилия + Имя)
+// Цвет зависит от роли: admin – красный, manager – оранжевый, master – голубой, остальные – тёмно-синий
 function generateLetterAvatar(fullName, role) {
     const canvas = document.createElement('canvas');
     canvas.width = 128;
     canvas.height = 128;
     const ctx = canvas.getContext('2d');
 
-    // Цвет по роли
     let color;
     switch (role) {
         case 'admin':    color = 'rgb(220, 53, 69)'; break;   // красный
@@ -188,11 +163,14 @@ function generateLetterAvatar(fullName, role) {
     return canvas.toDataURL('image/png');
 }
 
+// Возвращает отображаемое имя роли (для интерфейса)
 function getRoleDisplay(role) {
     const map = { admin: 'Администратор системы', manager: 'Менеджер', master: 'Мастер' };
     return map[role] || role;
 }
 
+// Возвращает URL аватара пользователя (либо сохранённый, либо сгенерированный)
+// Используется в сайдбаре и offcanvas
 function getUserAvatar(user) {
     if (!user) return 'https://via.placeholder.com/200';
     if (user.avatar && user.avatar.startsWith('data:image/')) {
@@ -201,7 +179,41 @@ function getUserAvatar(user) {
     return generateLetterAvatar(user.full_name || user.username || '', user.role);
 }
 
-// Заполняет offcanvas данными пользователя
+// Обновляет аватар и имя пользователя в сайдбаре (для администратора в dropdown)
+function updateUserAvatar() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    if (user.avatar) {
+        document.querySelectorAll('.sidebar-avatar').forEach(img => {
+            img.src = user.avatar;
+        });
+    }
+
+    const nameSpan = document.querySelector('.dropdown strong');
+    if (nameSpan) {
+        nameSpan.textContent = user.fullName || user.username || 'Пользователь';
+    }
+
+    const roleBadge = document.querySelector('.dropdown .badge');
+    if (roleBadge) {
+        let roleText = '';
+        switch (user.role) {
+            case 'admin': roleText = 'Админ'; break;
+            case 'manager': roleText = 'Менеджер'; break;
+            case 'master': roleText = 'Мастер'; break;
+            default: roleText = user.role;
+        }
+        roleBadge.textContent = roleText;
+        roleBadge.className = 'badge ms-2';
+        if (user.role === 'admin') roleBadge.classList.add('bg-danger');
+        else if (user.role === 'manager') roleBadge.classList.add('bg-warning');
+        else if (user.role === 'master') roleBadge.classList.add('bg-info');
+        else roleBadge.classList.add('bg-success');
+    }
+}
+
+// Заполняет выдвижную панель (offcanvas) данными пользователя (для менеджера/мастера)
 function updateProfileOffcanvas() {
     const userData = localStorage.getItem('currentUser');
     if (!userData) return;
@@ -210,7 +222,6 @@ function updateProfileOffcanvas() {
 
     const fullName = user.full_name || user.username || 'Пользователь';
 
-    // Аватар
     const avatarElement = document.getElementById('offcanvasAvatar');
     if (avatarElement) {
         if (user.avatar && user.avatar.startsWith('data:image/')) {
@@ -220,11 +231,9 @@ function updateProfileOffcanvas() {
         }
     }
 
-    // Имя
     const nameElement = document.getElementById('offcanvasName');
     if (nameElement) nameElement.textContent = fullName;
 
-    // Роль (ИСКАТЬ ЭЛЕМЕНТ С id="offcanvasRoleBadge")
     const roleBadge = document.getElementById('offcanvasRoleBadge');
     if (roleBadge) {
         const roleMap = { admin: 'Админ', manager: 'Менеджер', master: 'Мастер', client: 'Клиент' };
@@ -238,17 +247,17 @@ function updateProfileOffcanvas() {
     }
 }
 
+// Обновляет сайдбар (оба варианта – и для админа, и для offcanvas)
 function updateSidebar() {
     const userData = localStorage.getItem('currentUser');
     if (!userData) return;
     let user;
     try { user = JSON.parse(userData); } catch (e) { return; }
 
-    // Короткая форма для сайдбара
     let displayName = user.full_name || user.username || 'Пользователь';
     const parts = displayName.trim().split(/\s+/);
     if (parts.length >= 2) {
-        displayName = `${parts[0]} ${parts[1]}`;   // только Фамилия Имя
+        displayName = `${parts[0]} ${parts[1]}`;
     }
 
     const roleMap = { admin: 'Админ', manager: 'Менеджер', master: 'Мастер'};
@@ -259,7 +268,7 @@ function updateSidebar() {
         user.role === 'master' ? 'bg-info' : 'bg-success';
     const avatarSrc = getUserAvatar(user);
 
-    // admin dropdown
+    // Администраторский dropdown
     const adminName = document.querySelector('#profileAdminDropdown strong');
     if (adminName) adminName.textContent = displayName;
     const adminBadge = document.querySelector('#profileAdminDropdown .badge');
@@ -270,7 +279,7 @@ function updateSidebar() {
     const adminAvatar = document.querySelector('#profileAdminDropdown .sidebar-avatar');
     if (adminAvatar) adminAvatar.src = avatarSrc;
 
-    // offcanvas trigger (мастер/менеджер)
+    // Offcanvas для менеджера/мастера
     const userName = document.querySelector('#profileOffcanvasTrigger strong');
     if (userName) userName.textContent = displayName;
     const userBadge = document.querySelector('#profileOffcanvasTrigger .badge');
@@ -282,17 +291,29 @@ function updateSidebar() {
     if (userAvatar) userAvatar.src = avatarSrc;
 }
 
-// Получить список пользователей (или одного, отфильтровав)
+// ==================== API-ФУНКЦИИ ДЛЯ ПОЛЬЗОВАТЕЛЕЙ ====================
+
+// Получить список пользователей с сервера (с пагинацией)
+// Используется на странице профиля для получения данных текущего пользователя
 async function fetchUsers(skip = 0, limit = 100) {
     const response = await fetch(`http://127.0.0.1:8000/users/?skip=${skip}&limit=${limit}`);
     if (!response.ok) throw new Error('Ошибка загрузки пользователей');
     return await response.json();
 }
 
+// ==================== ВЫХОД ИЗ СИСТЕМЫ ====================
+function logout() {
+    localStorage.removeItem('currentUser');
+    window.location.href = 'login.html';
+}
+
+// ==================== ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ====================
 document.addEventListener('DOMContentLoaded', () => {
     updateSidebar();
     applyRoleBasedVisibility();
 });
+
+// Следим за изменениями в localStorage (если в другой вкладке изменился пользователь)
 window.addEventListener('storage', (e) => {
     if (e.key === 'currentUser') {
         updateSidebar();
@@ -300,7 +321,8 @@ window.addEventListener('storage', (e) => {
     }
 });
 
+// Дополнительная инициализация (для совместимости)
 document.addEventListener('DOMContentLoaded', applyRoleBasedVisibility);
 document.addEventListener('DOMContentLoaded', () => {
-    updateProfileOffcanvas(); // можно вызвать сразу при загрузке, чтобы данные подгрузились
+    updateProfileOffcanvas();
 });

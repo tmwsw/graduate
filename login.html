@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <!-- ========== ЗАГОЛОВОК СТРАНИЦЫ ==========
+         Bootstrap 5, Font Awesome, собственный CSS-файл login.css и фавикон.
+         Страница входа в систему (логин/пароль).
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>РемонтТех - Вход в систему</title>
@@ -16,7 +20,9 @@
             <div class="col-lg-10">
                 <div class="login-container">
                     <div class="row g-0">
-                        <!-- Левая часть с информацией -->
+                        <!-- ========== ЛЕВАЯ ЧАСТЬ (ДЛЯ ДЕСКТОПА) ==========
+                             Информационный блок с описанием системы.
+                        -->
                         <div class="col-lg-6 d-none d-lg-block">
                             <div class="login-left">
                                 <div class="mb-5">
@@ -50,14 +56,14 @@
                             </div>
                         </div>
                         
-                        <!-- Правая часть с формой -->
+                        <!-- ========== ПРАВАЯ ЧАСТЬ: ФОРМА ВХОДА ========== -->
                         <div class="col-lg-6">
                             <div class="login-right">
                                 <div class="logo">
                                     <h1><i class="text-center mt-3 mb-4"></i>РемонтТех</h1>
                                 </div>
                                 
-                                <!-- Сообщения об ошибках/успехе -->
+                                <!-- Блоки уведомлений (ошибка / успех) -->
                                 <div class="alert alert-danger d-none" id="errorAlert">
                                     <i class="fas fa-exclamation-circle me-2"></i>
                                     <span id="errorMessage"></span>
@@ -68,7 +74,7 @@
                                     <span id="successMessage"></span>
                                 </div>
                                 
-                                <!-- Форма входа -->
+                                <!-- Форма логина -->
                                 <form id="loginForm">
                                     <div class="form-group">
                                         <label for="username" class="form-label">
@@ -125,7 +131,9 @@
         </div>
     </div>
     
-    <!-- Модальное окно восстановления пароля -->
+    <!-- ======================== МОДАЛЬНЫЕ ОКНА ======================== -->
+    
+    <!-- Модальное окно: восстановление пароля -->
     <div class="modal fade" id="forgotPasswordModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -160,7 +168,7 @@
         </div>
     </div>
     
-    <!-- Модальное окно регистрации -->
+    <!-- Модальное окно: регистрация нового пользователя -->
     <div class="modal fade" id="registerModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -237,15 +245,14 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
+    <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script src="js/api.js" type="module"></script>
     <script src="js/api.js" type="module"></script>
     <script type="module">
+        // ========== ИМПОРТЫ И ГЛОБАЛЬНЫЕ ФУНКЦИИ ==========
         import { registerUser, loginUser } from './js/api.js';
 
-        // Простая система уведомлений (можно заменить на showAlert из utils, если он есть)
+        // Простая функция показа уведомлений (если utils.showAlert недоступна)
         function showMessage(type, text) {
             const errorDiv = document.getElementById('errorAlert');
             const successDiv = document.getElementById('successAlert');
@@ -265,12 +272,13 @@
             }
         }
 
-        // Инициализация
+        // ========== ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ==========
         document.addEventListener('DOMContentLoaded', () => {
             setupEventHandlers();
             checkRememberedUser();
         });
 
+        // Назначение обработчиков событий
         function setupEventHandlers() {
             document.getElementById('loginForm').addEventListener('submit', handleLogin);
             document.getElementById('registerForm').addEventListener('submit', handleRegistration);
@@ -278,6 +286,7 @@
             document.getElementById('forgotPasswordForm').addEventListener('submit', handlePasswordRecovery);
         }
 
+        // Проверка "Запомнить меня": подставляем сохранённый логин
         function checkRememberedUser() {
             const rememberMe = localStorage.getItem('rememberMe') === 'true';
             if (rememberMe) {
@@ -289,6 +298,7 @@
             }
         }
 
+        // Показать/скрыть пароль (глазик)
         function togglePasswordVisibility() {
             const pwd = document.getElementById('password');
             const icon = document.querySelector('#togglePassword i');
@@ -303,6 +313,7 @@
             }
         }
 
+        // ========== ОБРАБОТЧИК ВХОДА ==========
         async function handleLogin(e) {
             e.preventDefault();
             const username = document.getElementById('username').value.trim();
@@ -332,6 +343,7 @@
             }
         }
 
+        // ========== ОБРАБОТЧИК РЕГИСТРАЦИИ ==========
        async function handleRegistration(e) {
             e.preventDefault();
             const firstName = document.getElementById('regFirstName').value.trim();
@@ -388,6 +400,7 @@
             }
         }
 
+        // ========== ОБРАБОТЧИК ВОССТАНОВЛЕНИЯ ПАРОЛЯ (демо-режим) ==========
         async function handlePasswordRecovery(e) {
             e.preventDefault();
             const email = document.getElementById('recoveryEmail').value.trim();
@@ -395,7 +408,7 @@
                 showMessage('error', 'Введите email');
                 return;
             }
-            // Заглушка – в реальном приложении отправляем запрос на бэкенд
+            // В реальном приложении здесь должен быть запрос на бэкенд
             showMessage('success', 'Ссылка для восстановления отправлена (демо)');
             bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal')).hide();
             document.getElementById('forgotPasswordForm').reset();

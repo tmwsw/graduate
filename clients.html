@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <!-- ========== ЗАГОЛОВОК СТРАНИЦЫ ==========
+         Подключаем Bootstrap 5 для стилизации, Font Awesome для иконок,
+         собственный CSS-файл clients.css и фавикон.
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>РемонтТех - Клиенты</title>
@@ -12,7 +16,11 @@
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
+            <!-- ======================== БОКОВОЕ МЕНЮ (SIDEBAR) ======================== 
+                 Всегда видно слева, содержит навигацию по разделам системы.
+                 Для администратора – выпадающий список профиля (dropdown),
+                 для менеджера/мастера – выдвижная панель (offcanvas).
+            -->
             <div class="col-md-3 col-lg-2 sidebar d-md-block">
                 <div class="position-sticky pt-3">
                     <div class="text-center mb-4">
@@ -40,6 +48,7 @@
                         </li>
                     </ul>
                     <hr class="text-white-50">
+                    <!-- Блок профиля для администратора -->
                     <div class="dropdown" id="profileAdminDropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
@@ -52,7 +61,7 @@
                             <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
                         </ul>
                     </div>
-                    <!-- Видно только не-админам -->
+                    <!-- Блок профиля для менеджера/мастера (выдвижная панель) -->
                     <div id="profileOffcanvasTrigger" style="display: none;">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="offcanvas" data-bs-target="#profileOffcanvas" onclick="updateProfileOffcanvas()">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
@@ -63,7 +72,7 @@
                 </div>
             </div>
 
-            <!-- Main Content -->
+            <!-- ======================== ОСНОВНОЕ СОДЕРЖИМОЕ СТРАНИЦЫ ======================== -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2"><i class="fas fa-users text-primary me-2"></i>Клиенты</h1>
@@ -77,7 +86,7 @@
                     </div>
                 </div>
 
-                <!-- Statistics -->
+                <!-- Карточки статистики (быстрые метрики) -->
                 <div class="row mb-4">
                     <div class="col-md-3 col-6"><div class="card border-primary"><div class="card-body text-center py-2"><h6 class="card-subtitle mb-1 text-muted">Всего клиентов</h6><h4 class="card-title text-primary" id="totalClients">0</h4></div></div></div>
                     <div class="col-md-3 col-6"><div class="card border-success"><div class="card-body text-center py-2"><h6 class="card-subtitle mb-1 text-muted">Активные</h6><h4 class="card-title text-success" id="activeClients">0</h4></div></div></div>
@@ -85,7 +94,7 @@
                     <div class="col-md-3 col-6"><div class="card border-info"><div class="card-body text-center py-2"><h6 class="card-subtitle mb-1 text-muted">Среднее в чеке</h6><h4 class="card-title text-info" id="avgOrderValue">0 ₽</h4></div></div></div>
                 </div>
 
-                <!-- Search and Filters -->
+                <!-- Поиск и фильтрация -->
                 <div class="card mb-4">
                     <div class="card-body">
                         <div class="row g-3">
@@ -109,7 +118,7 @@
                     </div>
                 </div>
 
-                <!-- View Toggle -->
+                <!-- Переключатель режима отображения: таблица или карточки -->
                 <div class="btn-group mb-4" role="group" aria-label="View toggle">
                     <input type="radio" class="btn-check" name="viewMode" id="viewTable" autocomplete="off" checked onclick="setViewMode('table')">
                     <label class="btn btn-outline-primary" for="viewTable"><i class="fas fa-table me-1"></i> Таблица</label>
@@ -117,7 +126,7 @@
                     <label class="btn btn-outline-primary" for="viewCards"><i class="fas fa-th-large me-1"></i> Карточки</label>
                 </div>
 
-                <!-- Table View -->
+                <!-- Табличное представление списка клиентов -->
                 <div id="tableView" class="view-section">
                     <div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-hover"><thead><tr>
                         <th width="50">#</th>
@@ -131,12 +140,12 @@
                     </tr></thead><tbody id="clientsTableBody"></tbody></table></div></div></div>
                 </div>
 
-                <!-- Cards View -->
+                <!-- Карточное представление списка клиентов -->
                 <div id="cardsView" class="view-section" style="display: none;">
                     <div class="row" id="clientsCardsContainer"></div>
                 </div>
 
-                <!-- No Clients Message -->
+                 <!-- Сообщение, если клиентов нет -->
                 <div class="text-center py-5" id="noClientsMessage" style="display: none;">
                     <i class="fas fa-users fa-3x text-muted mb-3"></i>
                     <h4 class="text-muted">Нет клиентов</h4>
@@ -147,7 +156,9 @@
         </div>
     </div>
 
-    <!-- Modal: New Client -->
+    <!-- ======================== МОДАЛЬНЫЕ ОКНА ======================== -->
+
+    <!-- Модальное окно: создание нового клиента -->
     <div class="modal fade" id="newClientModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -221,7 +232,7 @@
         </div>
     </div>
 
-    <!-- Modal: Edit Client -->
+    <!-- Модальное окно: редактирование клиента -->
     <div class="modal fade" id="editClientModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -233,7 +244,8 @@
             </div>
         </div>
     </div>
-    <!-- Выдвижная панель профиля для менеджера и мастера -->
+
+    <!-- Выдвижная панель профиля для ролей менеджер и мастер -->
     <div class="offcanvas offcanvas-end" tabindex="-1" id="profileOffcanvas">
         <div class="offcanvas-header">
             <h5 class="offcanvas-title">Профиль</h5>
@@ -249,509 +261,694 @@
             </button>
         </div>
     </div>
+
+    <!-- Модальное окно для просмотра детальной информации о клиенте -->
+    <div class="modal fade" id="viewClientModal" tabindex="-1" aria-labelledby="viewClientModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header" style="background-color: #2c3e50; color: white;">
+                    <h5 class="modal-title" id="viewClientModalLabel">
+                        <i class="fas fa-user-circle me-2"></i>Информация о клиенте
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body p-4" id="viewClientModalBody">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Закрыть
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     
+    <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ========================
+         Bootstrap JS, модуль auth.js (аутентификация), api.js (REST-запросы),
+         и основной скрипт с типом module (для импортов).
+    -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/api.js" type="module"></script>
     <script type="module">
-    if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+        // ======================== 1. ПРОВЕРКА ДОСТУПА ========================
+        // Проверяем авторизацию: если не пройдена – редирект на страницу входа.
+        if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+        // Проверяем, что у пользователя роль admin или manager (доступ к клиентам).
+        if (!checkPageAccess(['admin', 'manager'])) throw new Error('Доступ запрещён');
 
-    if (!checkPageAccess(['admin', 'manager'])) throw new Error('Доступ запрещён');
+        // Импортируем функции для работы с API и утилиты
+        import { 
+            fetchClients, createClient, updateClient, deleteClient,
+            createDevice, createOrder, fetchDevices, fetchOrders
+        } from './js/api.js';
+        import { showAlert, getClientTypeName, formatPhone } from './js/utils.js';
 
-    import { 
-        fetchClients, createClient, updateClient, deleteClient,
-        createDevice, createOrder, fetchDevices, fetchOrders
-    } from './js/api.js';
-    import { showAlert, getClientTypeName, formatPhone } from './js/utils.js';
+        // ======================== 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ========================
+        let clients = [];               // массив всех клиентов из БД
+        let currentViewMode = 'table';  // текущий режим: 'table' или 'cards'
+        let filteredClients = [];       // массив после фильтрации/поиска
 
-    let clients = [];
-    let currentViewMode = 'table';
-    let filteredClients = [];
+        // ======================== 3. ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ========================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadClients();    // загружаем клиентов с сервера
+            // ========== АВТОМАТИЧЕСКОЕ ОТКРЫТИЕ КАРТОЧКИ КЛИЕНТА ИЗ ПАРАМЕТРА URL ==========
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewClientId = urlParams.get('viewClient');
+            if (viewClientId) {
+                const clientId = parseInt(viewClientId);
+                // Небольшая задержка, чтобы DOM и данные гарантированно загрузились
+                setTimeout(() => {
+                    if (typeof window.viewClient === 'function') {
+                        window.viewClient(clientId);
+                    } else {
+                        console.warn('viewClient не найден');
+                    }
+                    // Убираем параметр из URL, чтобы при обновлении страницы не открывалось снова
+                    const cleanUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }, 500);
+            }
+            updateStatistics();     // обновляем карточки статистики
+            updateSidebar();        // настраиваем боковое меню под роль
+        });
 
-    document.addEventListener('DOMContentLoaded', async () => {
-        await loadClients();
-        updateStatistics();
-        updateSidebar();
-    });
+        // ======================== 4. ЗАГРУЗКА КЛИЕНТОВ С СЕРВЕРА ========================
+        async function loadClients() {
+            try {
+                // Параллельно загружаем клиентов, устройства и заказы (все нужны для статистики)
+                const [apiClients, apiDevices, apiOrders] = await Promise.all([
+                    fetchClients(),
+                    fetchDevices(0, 10000),
+                    fetchOrders(0, 10000)
+                ]);
 
-    async function loadClients() {
-        try {
-            const [apiClients, apiDevices, apiOrders] = await Promise.all([
-                fetchClients(),
-                fetchDevices(0, 10000),
-                fetchOrders(0, 10000)
-            ]);
+                // Преобразуем полученные данные в удобный внутренний формат
+                clients = apiClients.map(c => {
+                    const clientId = c.id;
+                    const deviceCount = apiDevices.filter(d => d.client_id === clientId).length;
+                    const clientOrders = apiOrders.filter(o => o.client_id === clientId);
+                    const orderCount = clientOrders.length;
+                    const totalSpent = clientOrders.reduce((sum, o) => sum + (o.price || 0), 0);
 
-            clients = apiClients.map(c => {
-                const clientId = c.id;
-                const deviceCount = apiDevices.filter(d => d.client_id === clientId).length;
-                const clientOrders = apiOrders.filter(o => o.client_id === clientId);
-                const orderCount = clientOrders.length;
-                const totalSpent = clientOrders.reduce((sum, o) => sum + (o.price || 0), 0);
+                    return {
+                        id: clientId,
+                        fullName: c.full_name,
+                        phone: c.phone,
+                        email: c.email,
+                        address: c.address,
+                        clientType: c.client_type,
+                        notes: c.notes,
+                        createdAt: new Date(c.created_at).toLocaleDateString('ru-RU'),
+                        devicesCount: deviceCount,
+                        ordersCount: orderCount,
+                        totalSpent: totalSpent,
+                        isActive: true
+                    };
+                });
 
-                return {
-                    id: clientId,
-                    fullName: c.full_name,
-                    phone: c.phone,
-                    email: c.email,
-                    address: c.address,
-                    clientType: c.client_type,
-                    notes: c.notes,
-                    createdAt: new Date(c.created_at).toLocaleDateString('ru-RU'),
-                    devicesCount: deviceCount,
-                    ordersCount: orderCount,
-                    totalSpent: totalSpent,
-                    isActive: true
-                };
+                filteredClients = [...clients];
+                displayClients();           // отображаем клиентов
+                updateNoClientsMessage();   // показать/скрыть заглушку
+                updateStatistics();         // обновить статистику
+            } catch (error) {
+                console.error('Ошибка загрузки клиентов:', error);
+                showAlert('danger', 'Не удалось загрузить клиентов с сервера: ' + error.message);
+            }
+        }
+
+        // ======================== 5. ОТОБРАЖЕНИЕ КЛИЕНТОВ (таблица или карточки) ========================
+        function displayClients() {
+            if (currentViewMode === 'table') {
+                displayClientsTable(filteredClients);
+            } else {
+                displayClientsCards(filteredClients);
+            }
+        }
+
+        // ---- Табличное представление ----
+        function displayClientsTable(clientsList) {
+            const tableBody = document.getElementById('clientsTableBody');
+            tableBody.innerHTML = '';
+            clientsList.forEach(client => {
+                // Генерируем инициалы для аватара
+                const nameParts = client.fullName.trim().split(/\s+/);
+                let initials = '?';
+                if (nameParts.length >= 2) {
+                    initials = nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase();
+                } else {
+                    initials = nameParts[0].charAt(0).toUpperCase();
+                }
+                // Определяем бейдж статуса клиента
+                const row = document.createElement('tr');
+                let statusBadge = '';
+                switch(client.clientType) {
+                    case 'regular': statusBadge = '<span class="badge bg-primary">Постоянный</span>'; break;
+                    case 'new': statusBadge = '<span class="badge bg-success">Новый</span>'; break;
+                    case 'corporate': statusBadge = '<span class="badge bg-warning">Корпоративный</span>'; break;
+                    case 'vip': statusBadge = '<span class="badge bg-danger">VIP</span>'; break;
+                    default: statusBadge = '<span class="badge bg-secondary">Обычный</span>';
+                }
+                row.innerHTML = `
+                    <td>${client.id}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar me-3">${initials}</div>
+                            <div>
+                                <strong>${client.fullName}</strong><br>
+                                <small class="text-muted">Добавлен: ${client.createdAt}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div><small>📱 ${formatPhone(client.phone)}</small></div>
+                        <div><small>📧 ${client.email || 'Не указан'}</small></div>
+                    </td>
+                    <td><span class="badge bg-info">${client.devicesCount || 0}</span></td>
+                    <td><span class="badge bg-secondary">${client.ordersCount || 0}</span></td>
+                    <td><strong>${(client.totalSpent || 0).toLocaleString()} ₽</strong></td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary action-btn" onclick="viewClient(${client.id})"><i class="fas fa-eye"></i></button>
+                        <button class="btn btn-sm btn-warning action-btn" onclick="editClient(${client.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-success action-btn" onclick="addDeviceToClient(${client.id})"><i class="fas fa-laptop"></i></button>
+                        <button class="btn btn-sm btn-info action-btn" onclick="addOrderToClient(${client.id})"><i class="fas fa-plus-circle"></i></button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
             });
+        }
 
-            filteredClients = [...clients];
+        // ---- Карточное представление ----
+        function displayClientsCards(clientsList) {
+            const container = document.getElementById('clientsCardsContainer');
+            container.innerHTML = '';
+            clientsList.forEach(client => {
+                const nameParts = client.fullName.trim().split(/\s+/);
+                let initials = '?';
+                if (nameParts.length >= 2) {
+                    initials = nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase();
+                } else {
+                    initials = nameParts[0].charAt(0).toUpperCase();
+                }
+                let cardColorClass = '';
+                switch(client.clientType) {
+                    case 'regular': cardColorClass = 'border-primary'; break;
+                    case 'new': cardColorClass = 'border-success'; break;
+                    case 'corporate': cardColorClass = 'border-warning'; break;
+                    case 'vip': cardColorClass = 'border-danger'; break;
+                    default: cardColorClass = 'border-secondary';
+                }
+                const card = document.createElement('div');
+                card.className = 'col-md-6 col-lg-4 mb-4';
+                card.innerHTML = `
+                    <div class="card client-card h-100 ${cardColorClass}">
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <div class="avatar mx-auto" style="width:80px; height:80px; line-height:80px; font-size:2rem; border-radius:50%; background-color:#3498db; color:#fff;">
+                                    ${initials}
+                                </div>
+                                ${client.clientType === 'vip' ? '<br><span class="badge bg-danger stats-badge mt-1">VIP</span>' : ''}
+                                ${client.clientType === 'corporate' ? '<br><span class="badge bg-warning stats-badge mt-1">Корп.</span>' : ''}
+                            </div>
+                            <h5 class="card-title">${client.fullName}</h5>
+                            <div class="mb-3">
+                                <div class="text-muted small mb-1"><i class="fas fa-phone me-1"></i> ${formatPhone(client.phone)}</div>
+                                <div class="text-muted small"><i class="fas fa-envelope me-1"></i> ${client.email || 'Email не указан'}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6 text-center"><div class="text-muted small">Устройств</div><div class="h5 mb-0">${client.devicesCount || 0}</div></div>
+                                <div class="col-6 text-center"><div class="text-muted small">Заявок</div><div class="h5 mb-0">${client.ordersCount || 0}</div></div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="text-muted small">Всего потрачено</div>
+                                <div class="h4 text-primary">${(client.totalSpent || 0).toLocaleString()} ₽</div>
+                            </div>
+                            <div class="small text-muted mb-3"><i class="fas fa-calendar me-1"></i> Добавлен: ${client.createdAt}</div>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-sm btn-primary" onclick="viewClient(${client.id})"><i class="fas fa-eye me-1"></i> Просмотр</button>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-outline-warning" onclick="editClient(${client.id})"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="addDeviceToClient(${client.id})"><i class="fas fa-laptop"></i></button>
+                                    <button class="btn btn-sm btn-outline-info" onclick="addOrderToClient(${client.id})"><i class="fas fa-plus-circle"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteClient(${client.id})"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ======================== 6. ОБНОВЛЕНИЕ СТАТИСТИКИ ========================
+        function updateStatistics() {
+            const totalClients = clients.length;
+            const activeClients = clients.filter(c => c.isActive).length;
+            const totalDevices = clients.reduce((sum, c) => sum + (c.devicesCount || 0), 0);
+            const totalSpent = clients.reduce((sum, c) => sum + (c.totalSpent || 0), 0);
+            const avgOrderValue = totalClients > 0 ? Math.round(totalSpent / totalClients) : 0;
+            
+            document.getElementById('totalClients').textContent = totalClients;
+            document.getElementById('activeClients').textContent = activeClients;
+            document.getElementById('totalDevices').textContent = totalDevices;
+            document.getElementById('avgOrderValue').textContent = avgOrderValue.toLocaleString() + ' ₽';
+        }
+
+        // ======================== 7. ПОИСК И ФИЛЬТРАЦИЯ (на стороне клиента) ========================
+        window.searchClients = function() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const clientTypeFilter = document.getElementById('clientTypeFilter').value;
+            filteredClients = clients.filter(client => {
+                const matchesSearch = !searchText || 
+                    client.fullName.toLowerCase().includes(searchText) ||
+                    client.phone.includes(searchText) ||
+                    (client.email && client.email.toLowerCase().includes(searchText)) ||
+                    (client.address && client.address.toLowerCase().includes(searchText));
+                const matchesType = !clientTypeFilter || client.clientType === clientTypeFilter;
+                return matchesSearch && matchesType;
+            });
             displayClients();
-            updateNoClientsMessage();
-            updateStatistics();
-        } catch (error) {
-            console.error('Ошибка загрузки клиентов:', error);
-            showAlert('danger', 'Не удалось загрузить клиентов с сервера: ' + error.message);
-        }
-    }
-
-    function displayClients() {
-        if (currentViewMode === 'table') {
-            displayClientsTable(filteredClients);
-        } else {
-            displayClientsCards(filteredClients);
-        }
-    }
-
-    function displayClientsTable(clientsList) {
-        const tableBody = document.getElementById('clientsTableBody');
-        tableBody.innerHTML = '';
-        clientsList.forEach(client => {
-            const nameParts = client.fullName.trim().split(/\s+/);
-            let initials = '?';
-            if (nameParts.length >= 2) {
-                initials = nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase();
-            } else {
-                initials = nameParts[0].charAt(0).toUpperCase();
-            }
-            const row = document.createElement('tr');
-            let statusBadge = '';
-            switch(client.clientType) {
-                case 'regular': statusBadge = '<span class="badge bg-primary">Постоянный</span>'; break;
-                case 'new': statusBadge = '<span class="badge bg-success">Новый</span>'; break;
-                case 'corporate': statusBadge = '<span class="badge bg-warning">Корпоративный</span>'; break;
-                case 'vip': statusBadge = '<span class="badge bg-danger">VIP</span>'; break;
-                default: statusBadge = '<span class="badge bg-secondary">Обычный</span>';
-            }
-            row.innerHTML = `
-                <td>${client.id}</td>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <div class="avatar me-3">${initials}</div>
-                        <div>
-                            <strong>${client.fullName}</strong><br>
-                            <small class="text-muted">Добавлен: ${client.createdAt}</small>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div><small>📱 ${formatPhone(client.phone)}</small></div>
-                    <div><small>📧 ${client.email || 'Не указан'}</small></div>
-                </td>
-                <td><span class="badge bg-info">${client.devicesCount || 0}</span></td>
-                <td><span class="badge bg-secondary">${client.ordersCount || 0}</span></td>
-                <td><strong>${(client.totalSpent || 0).toLocaleString()} ₽</strong></td>
-                <td>${statusBadge}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary action-btn" onclick="viewClient(${client.id})"><i class="fas fa-eye"></i></button>
-                    <button class="btn btn-sm btn-warning action-btn" onclick="editClient(${client.id})"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-success action-btn" onclick="addDeviceToClient(${client.id})"><i class="fas fa-laptop"></i></button>
-                    <button class="btn btn-sm btn-info action-btn" onclick="addOrderToClient(${client.id})"><i class="fas fa-plus-circle"></i></button>
-                </td>
-            `;
-            tableBody.appendChild(row);
-        });
-    }
-
-    function displayClientsCards(clientsList) {
-        const container = document.getElementById('clientsCardsContainer');
-        container.innerHTML = '';
-        clientsList.forEach(client => {
-            const nameParts = client.fullName.trim().split(/\s+/);
-            let initials = '?';
-            if (nameParts.length >= 2) {
-                initials = nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase();
-            } else {
-                initials = nameParts[0].charAt(0).toUpperCase();
-            }
-            let cardColorClass = '';
-            switch(client.clientType) {
-                case 'regular': cardColorClass = 'border-primary'; break;
-                case 'new': cardColorClass = 'border-success'; break;
-                case 'corporate': cardColorClass = 'border-warning'; break;
-                case 'vip': cardColorClass = 'border-danger'; break;
-                default: cardColorClass = 'border-secondary';
-            }
-            const card = document.createElement('div');
-            card.className = 'col-md-6 col-lg-4 mb-4';
-            card.innerHTML = `
-                <div class="card client-card h-100 ${cardColorClass}">
-                    <div class="card-body">
-                        <div class="text-center mb-3">
-                            <div class="avatar mx-auto" style="width:80px; height:80px; line-height:80px; font-size:2rem; border-radius:50%; background-color:#3498db; color:#fff;">
-                                ${initials}
-                            </div>
-                            ${client.clientType === 'vip' ? '<br><span class="badge bg-danger stats-badge mt-1">VIP</span>' : ''}
-                            ${client.clientType === 'corporate' ? '<br><span class="badge bg-warning stats-badge mt-1">Корп.</span>' : ''}
-                        </div>
-                        <h5 class="card-title">${client.fullName}</h5>
-                        <div class="mb-3">
-                            <div class="text-muted small mb-1"><i class="fas fa-phone me-1"></i> ${formatPhone(client.phone)}</div>
-                            <div class="text-muted small"><i class="fas fa-envelope me-1"></i> ${client.email || 'Email не указан'}</div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-6 text-center"><div class="text-muted small">Устройств</div><div class="h5 mb-0">${client.devicesCount || 0}</div></div>
-                            <div class="col-6 text-center"><div class="text-muted small">Заявок</div><div class="h5 mb-0">${client.ordersCount || 0}</div></div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="text-muted small">Всего потрачено</div>
-                            <div class="h4 text-primary">${(client.totalSpent || 0).toLocaleString()} ₽</div>
-                        </div>
-                        <div class="small text-muted mb-3"><i class="fas fa-calendar me-1"></i> Добавлен: ${client.createdAt}</div>
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-sm btn-primary" onclick="viewClient(${client.id})"><i class="fas fa-eye me-1"></i> Просмотр</button>
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-sm btn-outline-warning" onclick="editClient(${client.id})"><i class="fas fa-edit"></i></button>
-                                <button class="btn btn-sm btn-outline-success" onclick="addDeviceToClient(${client.id})"><i class="fas fa-laptop"></i></button>
-                                <button class="btn btn-sm btn-outline-info" onclick="addOrderToClient(${client.id})"><i class="fas fa-plus-circle"></i></button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteClient(${client.id})"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    function updateStatistics() {
-        const totalClients = clients.length;
-        const activeClients = clients.filter(c => c.isActive).length;
-        const totalDevices = clients.reduce((sum, c) => sum + (c.devicesCount || 0), 0);
-        const totalSpent = clients.reduce((sum, c) => sum + (c.totalSpent || 0), 0);
-        const avgOrderValue = totalClients > 0 ? Math.round(totalSpent / totalClients) : 0;
-        
-        document.getElementById('totalClients').textContent = totalClients;
-        document.getElementById('activeClients').textContent = activeClients;
-        document.getElementById('totalDevices').textContent = totalDevices;
-        document.getElementById('avgOrderValue').textContent = avgOrderValue.toLocaleString() + ' ₽';
-    }
-
-    window.searchClients = function() {
-        const searchText = document.getElementById('searchInput').value.toLowerCase();
-        const clientTypeFilter = document.getElementById('clientTypeFilter').value;
-        filteredClients = clients.filter(client => {
-            const matchesSearch = !searchText || 
-                client.fullName.toLowerCase().includes(searchText) ||
-                client.phone.includes(searchText) ||
-                (client.email && client.email.toLowerCase().includes(searchText)) ||
-                (client.address && client.address.toLowerCase().includes(searchText));
-            const matchesType = !clientTypeFilter || client.clientType === clientTypeFilter;
-            return matchesSearch && matchesType;
-        });
-        displayClients();
-        updateNoClientsMessage(filteredClients.length === 0);
-    };
-
-    window.clearSearch = function() {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('clientTypeFilter').value = '';
-        filteredClients = [...clients];
-        displayClients();
-        updateNoClientsMessage(false);
-    };
-
-    window.filterClients = function() {
-        window.searchClients();
-    };
-
-    window.setViewMode = function(mode) {
-        currentViewMode = mode;
-        document.getElementById('tableView').style.display = mode === 'table' ? 'block' : 'none';
-        document.getElementById('cardsView').style.display = mode === 'cards' ? 'block' : 'none';
-        displayClients();
-    };
-
-    window.saveNewClient = async function() {
-        const fullName = document.getElementById('clientFullName').value.trim();
-        const phone = document.getElementById('clientPhone').value.trim();
-        const email = document.getElementById('clientEmail').value.trim();
-        const address = document.getElementById('clientAddressSearch').value.trim();
-        const clientTypeUI = document.getElementById('clientType').value;
-        const notes = document.getElementById('clientNotes').value.trim();
-
-        if (!fullName || !phone) {
-            showAlert('danger', 'Пожалуйста, заполните обязательные поля (ФИО и телефон)');
-            return;
-        }
-
-        const newClientData = {
-            fullName,
-            phone,
-            email: email || null,
-            address: address || null,
-            clientType: clientTypeUI,
-            notes: notes || null
+            updateNoClientsMessage(filteredClients.length === 0);
         };
 
-        try {
-            const created = await createClient(newClientData);
-            clients.push({
-                id: created.id,
-                fullName: created.full_name,
-                phone: created.phone,
-                email: created.email,
-                address: created.address,
-                clientType: created.client_type,
-                notes: created.notes,
-                createdAt: new Date(created.created_at).toLocaleDateString('ru-RU'),
-                devicesCount: 0,
-                ordersCount: 0,
-                totalSpent: 0,
-                isActive: true
-            });
+        window.clearSearch = function() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clientTypeFilter').value = '';
             filteredClients = [...clients];
-            
-            bootstrap.Modal.getInstance(document.getElementById('newClientModal')).hide();
-            document.getElementById('newClientForm').reset();
-            
             displayClients();
-            updateStatistics();
-            updateNoClientsMessage();
-            showAlert('success', `Клиент "${fullName}" успешно добавлен!`);
-        } catch (error) {
-            console.error('Ошибка при добавлении:', error);
-            showAlert('danger', 'Ошибка при добавлении клиента: ' + error.message);
-        }
-    };
+            updateNoClientsMessage(false);
+        };
 
-    window.viewClient = function(clientId) {
-        const client = clients.find(c => c.id === clientId);
-        if (!client) return;
-        showAlert('info', `
-            Клиент #${client.id}\n
-            ФИО: ${client.fullName}\n
-            Телефон: ${client.phone}\n
-            Email: ${client.email || 'Не указан'}\n
-            Адрес: ${client.address || 'Не указан'}\n
-            Тип: ${getClientTypeName(client.clientType)}\n
-            Устройств: ${client.devicesCount || 0}\n
-            Заявок: ${client.ordersCount || 0}\n
-            Всего потрачено: ${(client.totalSpent || 0).toLocaleString()} ₽\n
-            Дата регистрации: ${client.createdAt}\n
-            Примечания: ${client.notes || 'Нет'}
-        `);
-    };
+        window.filterClients = function() {
+            window.searchClients(); // просто вызываем поиск, т.к. там уже учтён фильтр
+        };
 
-    window.editClient = function(clientId) {
-        const client = clients.find(c => c.id === clientId);
-        if (!client) return;
-        
-        const editForm = `
-            <form id="editClientForm">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="editFullName" class="form-label">ФИО *</label>
-                        <input type="text" class="form-control" id="editFullName" value="${client.fullName}" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="editPhone" class="form-label">Телефон *</label>
-                        <input type="tel" class="form-control" id="editPhone" value="${client.phone}" required>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="editEmail" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="editEmail" value="${client.email || ''}">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="editClientType" class="form-label">Тип клиента</label>
-                        <select class="form-select" id="editClientType">
-                            <option value="regular" ${client.clientType === 'regular' ? 'selected' : ''}>Постоянный</option>
-                            <option value="new" ${client.clientType === 'new' ? 'selected' : ''}>Новый</option>
-                            <option value="corporate" ${client.clientType === 'corporate' ? 'selected' : ''}>Корпоративный</option>
-                            <option value="vip" ${client.clientType === 'vip' ? 'selected' : ''}>VIP</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="editAddress" class="form-label">Адрес</label>
-                    <textarea class="form-control" id="editAddress" rows="2">${client.address || ''}</textarea>
-                </div>
-                <div class="mb-3">
-                    <label for="editNotes" class="form-label">Примечания</label>
-                    <textarea class="form-control" id="editNotes" rows="3">${client.notes || ''}</textarea>
-                </div>
-                <input type="hidden" id="editClientId" value="${client.id}">
-            </form>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-danger" onclick="deleteClient(${client.id})"><i class="fas fa-trash me-1"></i> Удалить</button>
-                <button type="button" class="btn btn-primary" onclick="saveEditedClient()"><i class="fas fa-save me-1"></i> Сохранить изменения</button>
-            </div>
-        `;
-        
-        document.getElementById('editClientModalBody').innerHTML = editForm;
-        new bootstrap.Modal(document.getElementById('editClientModal')).show();
-    };
+        // ======================== 8. ПЕРЕКЛЮЧЕНИЕ РЕЖИМА ОТОБРАЖЕНИЯ ========================
+        window.setViewMode = function(mode) {
+            currentViewMode = mode;
+            document.getElementById('tableView').style.display = mode === 'table' ? 'block' : 'none';
+            document.getElementById('cardsView').style.display = mode === 'cards' ? 'block' : 'none';
+            displayClients();
+        };
 
-    window.saveEditedClient = async function() {
-        const clientId = parseInt(document.getElementById('editClientId').value);
-        const fullName = document.getElementById('editFullName').value.trim();
-        const phone = document.getElementById('editPhone').value.trim();
-        const email = document.getElementById('editEmail').value.trim();
-        const address = document.getElementById('editAddress').value.trim();
-        const clientTypeUI = document.getElementById('editClientType').value;
-        const notes = document.getElementById('editNotes').value.trim();
-
-        if (!fullName || !phone) {
-            showAlert('danger', 'Заполните обязательные поля (ФИО и телефон)');
-            return;
+        // ======================== 9. ОТОБРАЖЕНИЕ СООБЩЕНИЯ "НЕТ КЛИЕНТОВ" ========================
+        function updateNoClientsMessage(show = filteredClients.length === 0) {
+            const noClientsMessage = document.getElementById('noClientsMessage');
+            const tableView = document.getElementById('tableView');
+            const cardsView = document.getElementById('cardsView');
+            
+            if (show) {
+                noClientsMessage.style.display = 'block';
+                tableView.style.display = 'none';
+                cardsView.style.display = 'none';
+            } else {
+                noClientsMessage.style.display = 'none';
+                document.getElementById(currentViewMode === 'table' ? 'tableView' : 'cardsView').style.display = 'block';
+            }
         }
 
-        try {
-            const updated = await updateClient(clientId, {
+        // ======================== 10. CRUD ОПЕРАЦИИ ========================
+        // --- СОЗДАНИЕ НОВОГО КЛИЕНТА ---
+        window.saveNewClient = async function() {
+            const fullName = document.getElementById('clientFullName').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+            const email = document.getElementById('clientEmail').value.trim();
+            const address = document.getElementById('clientAddressSearch').value.trim();
+            const clientTypeUI = document.getElementById('clientType').value;
+            const notes = document.getElementById('clientNotes').value.trim();
+
+            if (!fullName || !phone) {
+                showAlert('danger', 'Пожалуйста, заполните обязательные поля (ФИО и телефон)');
+                return;
+            }
+
+            const newClientData = {
                 fullName,
                 phone,
                 email: email || null,
                 address: address || null,
                 clientType: clientTypeUI,
                 notes: notes || null
-            });
-            const index = clients.findIndex(c => c.id === clientId);
-            if (index !== -1) {
-                clients[index] = {
-                    ...clients[index],
-                    fullName: updated.full_name,
-                    phone: updated.phone,
-                    email: updated.email,
-                    address: updated.address,
-                    clientType: updated.client_type,
-                    notes: updated.notes
-                };
+            };
+
+            try {
+                const created = await createClient(newClientData);
+                // Добавляем нового клиента в локальный массив
+                clients.push({
+                    id: created.id,
+                    fullName: created.full_name,
+                    phone: created.phone,
+                    email: created.email,
+                    address: created.address,
+                    clientType: created.client_type,
+                    notes: created.notes,
+                    createdAt: new Date(created.created_at).toLocaleDateString('ru-RU'),
+                    devicesCount: 0,
+                    ordersCount: 0,
+                    totalSpent: 0,
+                    isActive: true
+                });
+                filteredClients = [...clients];
+                
+                bootstrap.Modal.getInstance(document.getElementById('newClientModal')).hide();
+                document.getElementById('newClientForm').reset();
+                
+                displayClients();
+                updateStatistics();
+                updateNoClientsMessage();
+                showAlert('success', `Клиент "${fullName}" успешно добавлен!`);
+            } catch (error) {
+                console.error('Ошибка при добавлении:', error);
+                showAlert('danger', 'Ошибка при добавлении клиента: ' + error.message);
             }
-            filteredClients = [...clients];
+        };
+
+        // --- ПРОСМОТР КЛИЕНТА (модальное окно) ---
+        window.viewClient = function(clientId) {
+            console.log('viewClient вызван для ID:', clientId);
             
-            bootstrap.Modal.getInstance(document.getElementById('editClientModal')).hide();
-            displayClients();
-            updateStatistics();
-            showAlert('success', 'Данные клиента обновлены!');
-        } catch (error) {
-            console.error('Ошибка обновления:', error);
-            showAlert('danger', 'Ошибка при обновлении клиента: ' + error.message);
-        }
-    };
+            const client = clients.find(c => c.id === clientId);
+            if (!client) {
+                alert('Клиент не найден');
+                return;
+            }
 
-    window.deleteClient = async function(clientId) {
-        if (!confirm('Вы уверены, что хотите удалить этого клиента?')) return;
-        
-        const client = clients.find(c => c.id === clientId);
-        if (client && (client.ordersCount > 0 || client.devicesCount > 0)) {
-            if (!confirm(`У клиента есть ${client.ordersCount} заявок и ${client.devicesCount} устройств. Удалить вместе с ними?`)) return;
-        }
-        
-        try {
-            await deleteClient(clientId);
-            clients = clients.filter(c => c.id !== clientId);
-            filteredClients = filteredClients.filter(c => c.id !== clientId);
+            // Безопасное экранирование HTML (защита от XSS)
+            const safeEscapeHtml = (typeof escapeHtml === 'function') ? escapeHtml : function(str) {
+                if (!str) return '';
+                return str.replace(/[&<>]/g, function(m) {
+                    if (m === '&') return '&amp;';
+                    if (m === '<') return '&lt;';
+                    if (m === '>') return '&gt;';
+                    return m;
+                });
+            };
             
-            const editModal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
-            if (editModal) editModal.hide();
+            const safeFormatPhone = (typeof formatPhone === 'function') ? formatPhone : function(phone) {
+                return phone || '—';
+            };
             
-            displayClients();
-            updateStatistics();
-            updateNoClientsMessage();
-            showAlert('success', 'Клиент удалён');
-        } catch (error) {
-            console.error('Ошибка удаления:', error);
-            showAlert('danger', 'Ошибка при удалении клиента: ' + error.message);
-        }
-    };
+            const safeGetInitials = (typeof getInitials === 'function') ? getInitials : function(name) {
+                const parts = name.trim().split(/\s+/);
+                if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+                return parts[0][0].toUpperCase();
+            };
 
-    window.addDeviceToClient = async function(clientId) {
-        const deviceType = prompt('Введите тип устройства (например, "Ноутбук"):');
-        if (!deviceType) return;
-        const brand = prompt('Введите бренд (например, "Apple"):');
-        if (!brand) return;
-        const model = prompt('Введите модель (например, "MacBook Pro"):');
-        const serialNumber = prompt('Введите серийный номер (опционально):');
-        const notes = prompt('Примечания (опционально):');
+            // Преобразование типа клиента
+            function getRussianClientType(type) {
+                switch(type) {
+                    case 'regular':   return 'Постоянный';
+                    case 'new':       return 'Новый';
+                    case 'corporate': return 'Корпоративный';
+                    case 'vip':       return 'VIP';
+                    default:          return 'Не указан';
+                }
+            }
 
-        try {
-            const { createDevice } = await import('./js/api.js');
-            await createDevice({
-                client_id: clientId,
-                device_type: deviceType,
-                brand,
-                model: model || null,
-                serial_number: serialNumber || null,
-                notes: notes || null
-            });
-            showAlert('success', `Устройство "${deviceType} ${brand}" добавлено`);
-            await loadClients();
-        } catch (error) {
-            console.error('Ошибка добавления устройства:', error);
-            showAlert('danger', 'Не удалось добавить устройство: ' + error.message);
-        }
-    };
+            function getBadgeClass(type) {
+                switch(type) {
+                    case 'regular':   return 'bg-primary';
+                    case 'new':       return 'bg-success';
+                    case 'corporate': return 'bg-warning';
+                    case 'vip':       return 'bg-danger';
+                    default:          return 'bg-secondary';
+                }
+            }
 
-    window.addOrderToClient = async function(clientId) {
-        const deviceId = prompt('Введите ID устройства:');
-        if (!deviceId) return;
-        const description = prompt('Опишите неисправность:');
-        const price = prompt('Введите стоимость ремонта (₽):', '0');
+            // Формируем HTML для модального окна
+            const html = `
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="avatar-lg mx-auto" style="width: 100px; height: 100px; line-height: 100px; font-size: 3rem; border-radius: 50%; background-color: #3498db; color: #fff;">
+                            ${safeGetInitials(client.fullName)}
+                        </div>
+                        <span class="badge ${getBadgeClass(client.clientType)} mt-2 fs-6">
+                            ${getRussianClientType(client.clientType)}
+                        </span>
+                    </div>
+                    <div class="col-md-8">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>ФИО:</strong>
+                                <span>${safeEscapeHtml(client.fullName)}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Телефон:</strong>
+                                <span>${safeFormatPhone(client.phone)}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Email:</strong>
+                                <span>${safeEscapeHtml(client.email) || '<em class="text-muted">не указан</em>'}</span>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Адрес:</strong>
+                                <div class="mt-1 text-break">${client.address ? safeEscapeHtml(client.address.replace(/\s+/g, ' ').trim()) : '<em class="text-muted">не указан</em>'}</div>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Дата регистрации:</strong>
+                                <span>${client.createdAt || '—'}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Устройств:</strong>
+                                <span class="badge bg-info rounded-pill">${client.devicesCount || 0}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Заявок:</strong>
+                                <span class="badge bg-secondary rounded-pill">${client.ordersCount || 0}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Всего потрачено:</strong>
+                                <span class="fw-bold text-primary">${(client.totalSpent || 0).toLocaleString()} ₽</span>
+                            </li>
+                        </ul>
+                        ${client.notes ? `
+                        <div class="mt-3 p-2 bg-light rounded">
+                            <small><strong>Примечания:</strong></small>
+                            <p class="mb-0 small">${safeEscapeHtml(client.notes)}</p>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
 
-        try {
-            const { createOrder } = await import('./js/api.js');
-            await createOrder({
-                client_id: clientId,
-                device_id: parseInt(deviceId),
-                description: description || 'Без описания',
-                price: parseFloat(price) || 0,
-                status: 'Новый'
-            });
-            showAlert('success', `Заказ создан на сумму ${price} ₽`);
-            await loadClients();
-        } catch (error) {
-            console.error('Ошибка создания заказа:', error);
-            showAlert('danger', 'Не удалось создать заказ: ' + error.message);
-        }
-    };
+            const modalBody = document.getElementById('viewClientModalBody');
+            if (!modalBody) {
+                console.error('Не найден элемент viewClientModalBody');
+                alert('Ошибка: не найдено модальное окно.');
+                return;
+            }
+            modalBody.innerHTML = html;
 
-    window.exportClients = function() {
-        const dataStr = JSON.stringify(clients, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-        const link = document.createElement('a');
-        link.setAttribute('href', dataUri);
-        link.setAttribute('download', `clients_export_${new Date().toISOString().split('T')[0]}.json`);
-        link.click();
-        showAlert('info', `Экспортировано ${clients.length} клиентов`);
-    };
+            const modalElement = document.getElementById('viewClientModal');
+            if (!modalElement) {
+                console.error('Не найден элемент viewClientModal');
+                alert('Ошибка: модальное окно отсутствует.');
+                return;
+            }
+            
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            } else {
+                alert('Bootstrap Modal не загружен.');
+            }
+        };
 
-    function updateNoClientsMessage(show = filteredClients.length === 0) {
-        const noClientsMessage = document.getElementById('noClientsMessage');
-        const tableView = document.getElementById('tableView');
-        const cardsView = document.getElementById('cardsView');
-        
-        if (show) {
-            noClientsMessage.style.display = 'block';
-            tableView.style.display = 'none';
-            cardsView.style.display = 'none';
-        } else {
-            noClientsMessage.style.display = 'none';
-            document.getElementById(currentViewMode === 'table' ? 'tableView' : 'cardsView').style.display = 'block';
-        }
-    }
+        // --- РЕДАКТИРОВАНИЕ КЛИЕНТА (открытие формы) ---
+        window.editClient = function(clientId) {
+            const client = clients.find(c => c.id === clientId);
+            if (!client) return;
+            
+            const editForm = `
+                <form id="editClientForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editFullName" class="form-label">ФИО *</label>
+                            <input type="text" class="form-control" id="editFullName" value="${client.fullName}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editPhone" class="form-label">Телефон *</label>
+                            <input type="tel" class="form-control" id="editPhone" value="${client.phone}" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" value="${client.email || ''}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editClientType" class="form-label">Тип клиента</label>
+                            <select class="form-select" id="editClientType">
+                                <option value="regular" ${client.clientType === 'regular' ? 'selected' : ''}>Постоянный</option>
+                                <option value="new" ${client.clientType === 'new' ? 'selected' : ''}>Новый</option>
+                                <option value="corporate" ${client.clientType === 'corporate' ? 'selected' : ''}>Корпоративный</option>
+                                <option value="vip" ${client.clientType === 'vip' ? 'selected' : ''}>VIP</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAddress" class="form-label">Адрес</label>
+                        <textarea class="form-control" id="editAddress" rows="2">${client.address || ''}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editNotes" class="form-label">Примечания</label>
+                        <textarea class="form-control" id="editNotes" rows="3">${client.notes || ''}</textarea>
+                    </div>
+                    <input type="hidden" id="editClientId" value="${client.id}">
+                </form>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteClient(${client.id})"><i class="fas fa-trash me-1"></i> Удалить</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEditedClient()"><i class="fas fa-save me-1"></i> Сохранить изменения</button>
+                </div>
+            `;
+            
+            document.getElementById('editClientModalBody').innerHTML = editForm;
+            new bootstrap.Modal(document.getElementById('editClientModal')).show();
+        };
+
+        // --- СОХРАНЕНИЕ ИЗМЕНЕНИЙ КЛИЕНТА ---
+        window.saveEditedClient = async function() {
+            const clientId = parseInt(document.getElementById('editClientId').value);
+            const fullName = document.getElementById('editFullName').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const address = document.getElementById('editAddress').value.trim();
+            const clientTypeUI = document.getElementById('editClientType').value;
+            const notes = document.getElementById('editNotes').value.trim();
+
+            if (!fullName || !phone) {
+                showAlert('danger', 'Заполните обязательные поля (ФИО и телефон)');
+                return;
+            }
+
+            try {
+                const updated = await updateClient(clientId, {
+                    fullName,
+                    phone,
+                    email: email || null,
+                    address: address || null,
+                    clientType: clientTypeUI,
+                    notes: notes || null
+                });
+                const index = clients.findIndex(c => c.id === clientId);
+                if (index !== -1) {
+                    clients[index] = {
+                        ...clients[index],
+                        fullName: updated.full_name,
+                        phone: updated.phone,
+                        email: updated.email,
+                        address: updated.address,
+                        clientType: updated.client_type,
+                        notes: updated.notes
+                    };
+                }
+                filteredClients = [...clients];
+                
+                bootstrap.Modal.getInstance(document.getElementById('editClientModal')).hide();
+                displayClients();
+                updateStatistics();
+                showAlert('success', 'Данные клиента обновлены!');
+            } catch (error) {
+                console.error('Ошибка обновления:', error);
+                showAlert('danger', 'Ошибка при обновлении клиента: ' + error.message);
+            }
+        };
+
+        // --- УДАЛЕНИЕ КЛИЕНТА ---
+        window.deleteClient = async function(clientId) {
+            if (!confirm('Вы уверены, что хотите удалить этого клиента?')) return;
+            
+            const client = clients.find(c => c.id === clientId);
+            if (client && (client.ordersCount > 0 || client.devicesCount > 0)) {
+                if (!confirm(`У клиента есть ${client.ordersCount} заявок и ${client.devicesCount} устройств. Удалить вместе с ними?`)) return;
+            }
+            
+            try {
+                await deleteClient(clientId);
+                clients = clients.filter(c => c.id !== clientId);
+                filteredClients = filteredClients.filter(c => c.id !== clientId);
+                
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
+                if (editModal) editModal.hide();
+                
+                displayClients();
+                updateStatistics();
+                updateNoClientsMessage();
+                showAlert('success', 'Клиент удалён');
+            } catch (error) {
+                console.error('Ошибка удаления:', error);
+                showAlert('danger', 'Ошибка при удалении клиента: ' + error.message);
+            }
+        };
+
+        // ======================== 11. БЫСТРОЕ ДОБАВЛЕНИЕ УСТРОЙСТВА ИЛИ ЗАКАЗА ДЛЯ КЛИЕНТА ========================
+        window.addDeviceToClient = async function(clientId) {
+            const deviceType = prompt('Введите тип устройства (например, "Ноутбук"):');
+            if (!deviceType) return;
+            const brand = prompt('Введите бренд (например, "Apple"):');
+            if (!brand) return;
+            const model = prompt('Введите модель (например, "MacBook Pro"):');
+            const serialNumber = prompt('Введите серийный номер (опционально):');
+            const notes = prompt('Примечания (опционально):');
+
+            try {
+                const { createDevice } = await import('./js/api.js');
+                await createDevice({
+                    client_id: clientId,
+                    device_type: deviceType,
+                    brand,
+                    model: model || null,
+                    serial_number: serialNumber || null,
+                    notes: notes || null
+                });
+                showAlert('success', `Устройство "${deviceType} ${brand}" добавлено`);
+                await loadClients();
+            } catch (error) {
+                console.error('Ошибка добавления устройства:', error);
+                showAlert('danger', 'Не удалось добавить устройство: ' + error.message);
+            }
+        };
+
+        window.addOrderToClient = async function(clientId) {
+            const deviceId = prompt('Введите ID устройства:');
+            if (!deviceId) return;
+            const description = prompt('Опишите неисправность:');
+            const price = prompt('Введите стоимость ремонта (₽):', '0');
+
+            try {
+                const { createOrder } = await import('./js/api.js');
+                await createOrder({
+                    client_id: clientId,
+                    device_id: parseInt(deviceId),
+                    description: description || 'Без описания',
+                    price: parseFloat(price) || 0,
+                    status: 'Новый'
+                });
+                showAlert('success', `Заказ создан на сумму ${price} ₽`);
+                await loadClients();
+            } catch (error) {
+                console.error('Ошибка создания заказа:', error);
+                showAlert('danger', 'Не удалось создать заказ: ' + error.message);
+            }
+        };
+
+        // ======================== 12. ЭКСПОРТ КЛИЕНТОВ В JSON ========================
+        window.exportClients = function() {
+            const dataStr = JSON.stringify(clients, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            const link = document.createElement('a');
+            link.setAttribute('href', dataUri);
+            link.setAttribute('download', `clients_export_${new Date().toISOString().split('T')[0]}.json`);
+            link.click();
+            showAlert('info', `Экспортировано ${clients.length} клиентов`);
+        };
     </script>
 </body>
 </html>

@@ -83,17 +83,90 @@ body {
         .export-btn {
             min-width: 120px;
         }
-        
-        /* Стили для PDF экспорта */
+        /* ========== СТИЛИ ДЛЯ ПЕЧАТИ (PDF) ========== */
         @media print {
-            .sidebar, .btn-toolbar, .date-filter, .nav-tabs {
+            /* Скрыть сайдбар, кнопки, фильтры и вкладки */
+            .sidebar,
+            .dropdown,
+            .btn-toolbar,
+            .date-filter,
+            .nav-tabs,
+            .offcanvas,
+            #profileAdminDropdown,
+            #profileOffcanvasTrigger,
+            .btn,
+            .btn-group,
+            .card-header .btn,
+            hr {
                 display: none !important;
             }
-            .tab-content {
-                padding: 0;
+
+            /* Основное содержимое на всю ширину */
+            main,
+            .col-md-9,
+            .col-lg-10,
+            .container-fluid,
+            .row,
+            .col-md-8,
+            .col-md-6,
+            .col-md-4 {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                float: none !important;
+                display: block !important;
             }
+
+            body {
+                margin: 0;
+                padding: 10px;
+                background: white;
+                font-size: 12pt;
+            }
+
+            /* Карточки без теней */
             .card {
-                border: 1px solid #ddd;
+                border: 1px solid #ccc !important;
+                box-shadow: none !important;
+                margin-bottom: 20px;
+                page-break-inside: avoid;
                 break-inside: avoid;
+            }
+
+            /* Графики – адаптивная ширина */
+            .chart-container canvas {
+                max-width: 100% !important;
+                height: auto !important;
+                width: 100% !important;
+            }
+
+            /* Таблицы – читаемые и с границами */
+            .table {
+                width: 100% !important;
+                font-size: 10pt;
+                border-collapse: collapse;
+            }
+            .table th,
+            .table td {
+                border: 1px solid #999;
+                padding: 6px;
+            }
+            .table-responsive {
+                overflow: visible !important;
+            }
+
+            /* Убираем цветные фоны */
+            .card,
+            .bg-light,
+            .bg-white,
+            .kpi-card {
+                background: white !important;
+                color: black !important;
+            }
+
+            /* Заголовки чёрные */
+            h1, h2, h3, h4, h5, h6 {
+                color: black !important;
             }
         }

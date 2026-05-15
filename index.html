@@ -1,14 +1,23 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <!-- ========== ПРОВЕРКА АВТОРИЗАЦИИ ==========
+         Если в localStorage нет данных о текущем пользователе,
+         перенаправляем на страницу входа.
+    -->
+    <script>
+    if (!localStorage.getItem('currentUser')) {
+        window.location.replace('login.html');
+    }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>РемонтТех - Главная</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Chart.js -->
+    <!-- Chart.js для графиков -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Font Awesome для иконок -->
+    <!-- Font Awesome иконки -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/index.css">
     <link rel="icon" type="image/png" href="img/icon_32x32.png">
@@ -16,7 +25,10 @@
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
+             <!-- ======================== БОКОВОЕ МЕНЮ (SIDEBAR) ========================
+                 Навигация по разделам. Для администратора – выпадающий список профиля,
+                 для менеджера/мастера – выдвижная панель (offcanvas).
+            -->
             <div class="col-md-3 col-lg-2 sidebar d-md-block">
                 <div class="position-sticky pt-3">
                     <div class="text-center mb-4">
@@ -54,7 +66,7 @@
                             </a>
                         </li>
                         <hr class="text-white-50">
-                    
+                    <!-- Блок профиля для администратора -->
                     <div class="dropdown" id="profileAdminDropdown">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
@@ -67,7 +79,7 @@
                             <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
                         </ul>
                     </div>
-                    <!-- Видно только не-админам -->
+                    <!-- Блок профиля для менеджера/мастера (offcanvas) -->
                     <div id="profileOffcanvasTrigger" style="display: none;">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="offcanvas" data-bs-target="#profileOffcanvas" onclick="updateProfileOffcanvas()">
                             <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
@@ -78,7 +90,7 @@
                 </div>
             </div>
 
-            <!-- Main content -->
+            <!-- ======================== ОСНОВНОЕ СОДЕРЖИМОЕ ======================== -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <!-- Header -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -93,7 +105,7 @@
                     </div>
                 </div>
 
-                <!-- Cards -->
+                <!-- Карточки статистики (дашборд) -->
                 <div class="row">
                     <div class="col-md-4 mb-4">
                         <div class="card dashboard-card text-white bg-primary">
@@ -145,7 +157,7 @@
                     </div>
                 </div>
 
-                <!-- Charts -->
+                <!-- Графики -->
                 <div class="row">
                     <div class="col-md-6 mb-4">
                         <div class="card">
@@ -169,7 +181,7 @@
                     </div>
                 </div>
 
-                <!-- Recent Orders Table -->
+                <!-- Таблица последних заявок -->
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
@@ -201,7 +213,9 @@
         </div>
     </div>
 
-    <!-- Modal for New Order -->
+    <!-- ======================== МОДАЛЬНЫЕ ОКНА ======================== -->
+
+    <!-- Модальное окно: создание новой заявки на ремонт -->
     <div class="modal fade" id="newOrderModal" tabindex="-1" aria-labelledby="newOrderModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -245,6 +259,7 @@
             </div>
         </div>
     </div>
+    
     <!-- Выдвижная панель профиля для менеджера и мастера -->
     <div class="offcanvas offcanvas-end" tabindex="-1" id="profileOffcanvas">
         <div class="offcanvas-header">
@@ -261,26 +276,28 @@
             </button>
         </div>
     </div>
-    <!-- Bootstrap JS Bundle with Popper -->
+    
+    <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
     <script src="js/api.js" type="module"></script>
     <script src="js/auth.js"></script>
     <script type="module">
-    if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+        // ======================== 1. ПРОВЕРКА ДОСТУПА ========================
+        if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
 
+        // Импорт API-функций и утилит
         import { 
             fetchClients, fetchDevices, fetchMasters, fetchOrders, createOrder 
         } from './js/api.js';
         import { showAlert } from './js/utils.js';
 
-        // Состояние данных
+        // ======================== 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ========================
         let clients = [];
         let devices = [];
         let masters = [];
         let orders = [];
 
-        // Инициализация
+        // ======================== 3. ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ========================
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 document.getElementById('currentDate').textContent = new Date().toLocaleDateString('ru-RU');
@@ -295,7 +312,7 @@
             }
         });
 
-        // Загрузка всех необходимых данных
+        // ======================== 4. ЗАГРУЗКА ВСЕХ ДАННЫХ С СЕРВЕРА ========================
         async function loadAllData() {
             try {
                 [clients, devices, masters, orders] = await Promise.all([
@@ -310,7 +327,7 @@
             }
         }
 
-        // Заполнение выпадающих списков в модальном окне новой заявки
+        // ======================== 5. ЗАПОЛНЕНИЕ ВЫПАДАЮЩИХ СПИСКОВ В МОДАЛКЕ НОВОЙ ЗАЯВКИ ========================
         function fillSelects() {
             const clientSelect = document.getElementById('clientSelect');
             const masterSelect = document.getElementById('masterSelect');
@@ -346,7 +363,7 @@
             });
         }
 
-        // Создание новой заявки
+        // ======================== 6. СОЗДАНИЕ НОВОЙ ЗАЯВКИ ========================
         window.createNewOrder = async function() {
             const clientId = parseInt(document.getElementById('clientSelect').value);
             const deviceId = parseInt(document.getElementById('deviceSelect').value);
@@ -413,7 +430,7 @@
             }
         };
 
-        // Обновление карточек статистики
+        // ======================== 7. ОБНОВЛЕНИЕ КАРТОЧЕК СТАТИСТИКИ ========================
         function updateStatisticsCards() {
             const today = new Date().toISOString().split('T')[0];
             const newToday = orders.filter(o => o.created_at && o.created_at.startsWith(today) && o.status === 'new').length;
@@ -441,7 +458,7 @@
             document.querySelector('.bg-info .card-text') && (document.querySelector('.bg-info .card-text').textContent = avgDays + ' д');
         }
 
-        // Обновление графиков
+        // ======================== 8. ОБНОВЛЕНИЕ ГРАФИКОВ ========================
         function updateCharts() {
             // Круговая диаграмма (без изменений)
             const statusCounts = { 'new': 0, 'in_repair': 0, 'ready': 0, 'returned': 0 };
@@ -480,7 +497,7 @@
             monthChart.update();
         }
 
-        // Таблица последних заявок (последние 3)
+        // ======================== 9. ТАБЛИЦА ПОСЛЕДНИХ ЗАЯВОК (3 шт.) ========================
         function updateRecentOrdersTable() {
             const tbody = document.getElementById('recentOrdersBody');
             if (!tbody) return;
@@ -526,7 +543,7 @@
             });
         }
 
-        // Просмотр заказа (заглушка)
+        // ======================== 10. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ========================
         window.viewOrder = (id) => {
             window.location.href = `order-detail.html?id=${id}`;
         };
@@ -542,7 +559,7 @@
             fillSelects();
         });
 
-        // Графики (определены глобально, чтобы функции updateCharts могли их обновлять)
+        // ======================== 11. ИНИЦИАЛИЗАЦИЯ ГРАФИКОВ (CHART.JS) ========================
         const statusChart = new Chart(document.getElementById('statusChart').getContext('2d'), {
             type: 'pie',
             data: {

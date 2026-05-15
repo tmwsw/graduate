@@ -1,4 +1,16 @@
+// ========== utils.js — УТИЛИТЫ ДЛЯ ВСЕГО ПРОЕКТА ==========
+// Содержит вспомогательные функции: уведомления, форматирование, преобразование типов,
+// генерация звёзд рейтинга, работа с ролями и т.д.
+
 // ==================== УВЕДОМЛЕНИЯ (ALERT) ====================
+/**
+ * Показывает всплывающее уведомление в правом верхнем углу экрана.
+ * Уведомление автоматически исчезает через указанное время.
+ * 
+ * @param {string} type - тип уведомления: 'success', 'danger', 'warning', 'info'
+ * @param {string} message - текст сообщения (может содержать HTML)
+ * @param {number} timeout - время показа в миллисекундах (по умолчанию 5000)
+ */
 export function showAlert(type, message, timeout = 5000) {
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
@@ -14,6 +26,13 @@ export function showAlert(type, message, timeout = 5000) {
 }
 
 // ==================== НАЗВАНИЯ СПЕЦИАЛИЗАЦИЙ МАСТЕРОВ ====================
+/**
+ * Возвращает русское название специализации мастера по её коду.
+ * Используется в таблицах и карточках мастеров.
+ * 
+ * @param {string} spec - код специализации (например, 'notebooks', 'smartphones')
+ * @returns {string} русское название
+ */
 export function getSpecializationName(spec) {
     const specNames = {
         'notebooks': 'Ноутбуки',
@@ -30,6 +49,12 @@ export function getSpecializationName(spec) {
 }
 
 // ==================== НАЗВАНИЯ СТАТУСОВ МАСТЕРОВ ====================
+/**
+ * Возвращает русское название статуса мастера.
+ * 
+ * @param {string} status - код статуса ('active', 'inactive', 'vacation', 'sick')
+ * @returns {string} русское название
+ */
 export function getMasterStatusName(status) {
     const statuses = {
         'active': 'Активный',
@@ -41,6 +66,13 @@ export function getMasterStatusName(status) {
 }
 
 // ==================== ГЕНЕРАЦИЯ ЗВЁЗД РЕЙТИНГА ====================
+/**
+ * Генерирует HTML-строку с иконками звёзд для рейтинга (полные, половинные, пустые).
+ * Используется для отображения рейтинга мастеров или клиентов.
+ * 
+ * @param {number} rating - рейтинг от 0 до 5 (дробное число, 0.5 – половина звезды)
+ * @returns {string} HTML с иконками Font Awesome
+ */
 export function generateRatingStars(rating) {
     let stars = '';
     const fullStars = Math.floor(rating);
@@ -58,7 +90,14 @@ export function generateRatingStars(rating) {
     return stars;
 }
 
-// ==================== (ДОПОЛНИТЕЛЬНО) ФОРМАТИРОВАНИЕ ТЕЛЕФОНА ====================
+// ==================== ФОРМАТИРОВАНИЕ ТЕЛЕФОНА ====================
+/**
+ * Форматирует строку с номером телефона в единый формат +X (XXX) XXX-XX-XX.
+ * Если номер не соответствует ожидаемой маске, возвращает исходную строку.
+ * 
+ * @param {string} phone - сырая строка с телефоном (может содержать любые символы)
+ * @returns {string} отформатированный номер телефона
+ */
 export function formatPhone(phone) {
     const cleaned = phone.replace(/\D/g, '');
     const match = cleaned.match(/^(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})$/);
@@ -69,6 +108,13 @@ export function formatPhone(phone) {
 }
 
 // ==================== НАЗВАНИЯ ТИПОВ УСТРОЙСТВ ====================
+/**
+ * Возвращает русское название типа устройства по его коду.
+ * Используется в таблицах устройств, заявок, карточках.
+ * 
+ * @param {string} type - код типа ('notebook', 'pc', 'smartphone', 'tablet', 'monitor', 'printer', 'other')
+ * @returns {string} русское название
+ */
 export function getDeviceTypeName(type) {
     const types = {
         'notebook': 'Ноутбук',
@@ -83,6 +129,12 @@ export function getDeviceTypeName(type) {
 }
 
 // ==================== НАЗВАНИЯ СТАТУСОВ ЗАЯВОК ====================
+/**
+ * Возвращает русское название статуса заявки.
+ * 
+ * @param {string} status - код статуса ('new', 'in_progress', 'in_repair', 'ready', 'completed', 'cancelled', 'returned', 'scrap')
+ * @returns {string} русское название
+ */
 export function getStatusName(status) {
     const statuses = {
         'new': 'Новый',
@@ -98,6 +150,12 @@ export function getStatusName(status) {
 }
 
 // ==================== НАЗВАНИЯ ТИПОВ КЛИЕНТОВ ====================
+/**
+ * Возвращает русское название типа клиента.
+ * 
+ * @param {string} type - код типа ('regular', 'new', 'corporate', 'vip')
+ * @returns {string} русское название
+ */
 export function getClientTypeName(type) {
     const types = {
         'regular': 'Постоянный',
@@ -107,12 +165,25 @@ export function getClientTypeName(type) {
     };
     return types[type] || 'Обычный';
 }
-// ==================== вспомогательную функцию для проверки роли ====================
+
+// ==================== ПРОВЕРКА РОЛИ ПОЛЬЗОВАТЕЛЯ ====================
+/**
+ * Проверяет, входит ли роль текущего пользователя в список разрешённых.
+ * Используется для условного отображения элементов интерфейса.
+ * 
+ * @param {string[]} allowedRoles - массив разрешённых ролей (например, ['admin', 'manager'])
+ * @returns {boolean} true, если роль пользователя есть в списке, иначе false
+ */
 export function checkRole(allowedRoles) {
     const user = JSON.parse(localStorage.getItem('currentUser')) || { role: 'guest' };
     return allowedRoles.includes(user.role);
 }
 
+/**
+ * Возвращает роль текущего пользователя (admin, manager, master, guest).
+ * 
+ * @returns {string} роль пользователя
+ */
 export function getCurrentUserRole() {
     const user = JSON.parse(localStorage.getItem('currentUser')) || { role: 'guest' };
     return user.role;
