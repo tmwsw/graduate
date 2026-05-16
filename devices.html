@@ -630,12 +630,11 @@
                     status: d.status || 'new',
                     notes: d.notes,
                     createdAt: d.created_at ? new Date(d.created_at).toLocaleDateString('ru-RU') : '',
-                    lastRepairDate: d.last_repair_date ? new Date(d.last_repair_date).toLocaleDateString('ru-RU') : '—',
+                    lastRepairDate: '—',
                     repairCount: 0,
                     totalRepairCost: 0
                 }));
-                // Загрузим статистику ремонтов отдельно
-                await loadRepairStats(); // подтягиваем статистику по заказам
+                await loadRepairStats(); // здесь статус переопределится по последнему заказу
                 filteredDevices = [...devices];
                 displayDevices();
                 updateNoDevicesMessage();
@@ -650,14 +649,27 @@
         async function loadRepairStats() {
             try {
                 const allOrders = await fetchOrders(0, 10000);
+                // Маппинг статуса заказа -> статус устройства
+                const orderToDeviceStatus = {
+                    'new': 'in_repair',
+                    'in_repair': 'in_repair',
+                    'ready': 'ready',
+                    'returned': 'returned'
+                };
                 devices.forEach(dev => {
                     const deviceOrders = allOrders.filter(o => o.device_id === dev.id);
                     dev.repairCount = deviceOrders.length;
                     dev.totalRepairCost = deviceOrders.reduce((sum, o) => sum + (o.price || 0), 0);
                     if (deviceOrders.length > 0) {
-                        const last = deviceOrders.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
-                        dev.lastRepairDate = last.created_at ? new Date(last.created_at).toLocaleDateString('ru-RU') : '—';
+                        // Сортируем по дате создания (от новых к старым)
+                        const sorted = deviceOrders.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+                        const lastOrder = sorted[0];
+                        dev.lastRepairDate = lastOrder.created_at ? new Date(lastOrder.created_at).toLocaleDateString('ru-RU') : '—';
+                        // Устанавливаем статус устройства равным статусу последнего заказа (с маппингом)
+                        const newStatus = orderToDeviceStatus[lastOrder.status];
+                        if (newStatus) dev.status = newStatus;
                     }
+                    // Если заказов нет — статус остаётся из БД (обычно 'new')
                 });
             } catch (e) {
                 console.warn('Не удалось загрузить заказы для статистики', e);

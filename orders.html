@@ -51,7 +51,9 @@
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2"><i class="fas fa-clipboard-list text-primary me-2"></i>Заявки на ремонт</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
-                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#newOrderModal"><i class="fas fa-plus me-1"></i> Новая заявка</button>
+                        <button type="button" class="btn btn-success me-2" id="newOrderBtn">
+                            <i class="fas fa-plus me-1"></i> Новая заявка
+                        </button>
                         <button type="button" class="btn btn-outline-secondary" onclick="printOrders()"><i class="fas fa-print me-1"></i> Печать</button>
                     </div>
                 </div>
@@ -451,6 +453,82 @@
         // Сделаем функции глобальными на случай, если нужны из других мест
         window.performFilter = performFilter;
         window.resetFilters = resetFilters;
+
+        // Функция загрузки формы в модалку
+        async function loadNewOrderForm() {
+            // Ждём, пока подгрузятся все данные (клиенты, устройства, мастера)
+            if (clients.length === 0) await loadAllData();
+            const modalBody = document.querySelector('#newOrderModal .modal-body');
+            modalBody.innerHTML = `
+                <form id="newOrderForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Клиент *</label>
+                            <select class="form-select" id="clientSelect" required>
+                                <option value="">Выберите клиента...</option>
+                                ${clients.map(c => `<option value="${c.id}">${c.full_name} (${c.phone})</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Устройство *</label>
+                            <select class="form-select" id="deviceSelect" required disabled>
+                                <option value="">Сначала выберите клиента</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание проблемы *</label>
+                        <textarea class="form-control" id="problemDescription" rows="3" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Мастер</label>
+                            <select class="form-select" id="masterSelect">
+                                <option value="">Не назначать</option>
+                                ${masters.map(m => `<option value="${m.id}">${m.full_name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Стоимость (₽)</label>
+                            <input type="number" class="form-control" id="orderPrice" min="0" step="100" value="0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Статус</label>
+                        <select class="form-select" id="orderStatus">
+                            <option value="new">Новый</option>
+                            <option value="in_repair">В работе</option>
+                            <option value="ready">Готов</option>
+                            <option value="returned">Выдан</option>
+                        </select>
+                    </div>
+                </form>
+            `;
+            // Привязываем событие смены клиента для подгрузки устройств
+            document.getElementById('clientSelect').addEventListener('change', function() {
+                const clientId = parseInt(this.value);
+                const deviceSelect = document.getElementById('deviceSelect');
+                deviceSelect.innerHTML = '<option value="">Выберите устройство...</option>';
+                deviceSelect.disabled = !clientId;
+                if (clientId) {
+                    devices.filter(d => d.client_id === clientId).forEach(d => {
+                        deviceSelect.add(new Option(`${d.brand} ${d.model}`, d.id));
+                    });
+                }
+            });
+            // Убираем старый футер, если там осталась кнопка, и добавляем новую
+            const modalFooter = document.querySelector('#newOrderModal .modal-footer');
+            modalFooter.innerHTML = `
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveNewOrder()"><i class="fas fa-save me-1"></i> Создать заявку</button>
+            `;
+        }
+
+        // Привязываем к кнопке "Новая заявка"
+        document.getElementById('newOrderBtn').addEventListener('click', async () => {
+            await loadNewOrderForm();
+            new bootstrap.Modal(document.getElementById('newOrderModal')).show();
+        });
     </script>
 </body>
 </html>

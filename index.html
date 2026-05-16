@@ -433,7 +433,7 @@
         // ======================== 7. ОБНОВЛЕНИЕ КАРТОЧЕК СТАТИСТИКИ ========================
         function updateStatisticsCards() {
             const today = new Date().toISOString().split('T')[0];
-            const newToday = orders.filter(o => o.created_at && o.created_at.startsWith(today) && o.status === 'new').length;
+            const createdToday = orders.filter(o => o.created_at && o.created_at.startsWith(today)).length;
             const inRepair = orders.filter(o => o.status === 'in_repair').length;
             const ready = orders.filter(o => o.status === 'ready').length;
             
@@ -451,11 +451,19 @@
                 avgDays = Math.round(totalDays / completed.length);
             }
 
-            // Прямые селекторы на h2 внутри карточек
-            document.querySelector('.bg-primary .card-text') && (document.querySelector('.bg-primary .card-text').textContent = newToday);
-            document.querySelector('.bg-warning .card-text') && (document.querySelector('.bg-warning .card-text').textContent = inRepair);
-            document.querySelector('.bg-success .card-text') && (document.querySelector('.bg-success .card-text').textContent = ready);
-            document.querySelector('.bg-info .card-text') && (document.querySelector('.bg-info .card-text').textContent = avgDays + ' д');
+            // Обновляем карточки
+            const primaryCard = document.querySelector('.bg-primary .card-text');
+            if (primaryCard) primaryCard.textContent = createdToday;  // теперь общее количество за сегодня
+
+            const warningCard = document.querySelector('.bg-warning .card-text');
+            if (warningCard) warningCard.textContent = inRepair;
+
+            const successCard = document.querySelector('.bg-success .card-text');
+            if (successCard) successCard.textContent = ready;
+
+            // Если есть карточка со средним временем (bg-info) – обновляем
+            const infoCard = document.querySelector('.bg-info .card-text');
+            if (infoCard) infoCard.textContent = avgDays + ' д';
         }
 
         // ======================== 8. ОБНОВЛЕНИЕ ГРАФИКОВ ========================
