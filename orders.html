@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <!-- ========== ЗАГОЛОВОК СТРАНИЦЫ ==========
-         Bootstrap 5, Font Awesome, собственный CSS-файл orders.css, фавикон.
-         Страница управления заявками на ремонт (список, фильтры, создание/редактирование).
-    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>РемонтТех - Заявки на ремонт</title>
@@ -16,66 +12,34 @@
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- ======================== БОКОВОЕ МЕНЮ (SIDEBAR) ========================
-                 Навигация по разделам. Для администратора – выпадающий список профиля,
-                 для менеджера/мастера – offcanvas.
-            -->
+            <!-- SIDEBAR (ваш стандартный) -->
             <div class="col-md-3 col-lg-2 sidebar d-md-block">
                 <div class="position-sticky pt-3">
-                    <div class="text-center mb-4">
-                        <h4 class="mb-0"><i class="text-center mt-3 mb-4"></i>РемонтТех</h5>
-                    </div>           
+                    <div class="text-center mb-4"><h4 class="mb-0">РемонтТех</h4></div>
                     <ul class="nav flex-column mb-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="index.html">
-                                <i class="fas fa-tachometer-alt me-2"></i>Главная
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="orders.html">
-                                <i class="fas fa-tools me-2"></i>Заявки на ремонт
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="clients.html">
-                                <i class="fas fa-users me-2"></i>Клиенты
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="devices.html">
-                                <i class="fas fa-laptop me-2"></i>Устройства
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="masters.html">
-                                <i class="fas fa-user-cog me-2"></i>Мастера
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="reports.html">
-                                <i class="fas fa-chart-bar me-2"></i>Отчеты
-                            </a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link" href="index.html"><i class="fas fa-tachometer-alt me-2"></i>Главная</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="orders.html"><i class="fas fa-tools me-2"></i>Заявки на ремонт</a></li>
+                        <li class="nav-item"><a class="nav-link" href="clients.html"><i class="fas fa-users me-2"></i>Клиенты</a></li>
+                        <li class="nav-item"><a class="nav-link" href="devices.html"><i class="fas fa-laptop me-2"></i>Устройства</a></li>
+                        <li class="nav-item"><a class="nav-link" href="masters.html"><i class="fas fa-user-cog me-2"></i>Мастера</a></li>
+                        <li class="nav-item"><a class="nav-link" href="reports.html"><i class="fas fa-chart-bar me-2"></i>Отчеты</a></li>
                     </ul>
-                    
                     <hr class="text-white-50">
-                    <!-- Блок профиля для администратора -->
                     <div class="dropdown" id="profileAdminDropdown">
-                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar">
                             <strong>Администратор</strong>
                             <span class="badge bg-success ms-2">Online</span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
                             <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>Профиль</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
                         </ul>
                     </div>
-                    <!-- Блок профиля для менеджера/мастера (offcanvas) -->
                     <div id="profileOffcanvasTrigger" style="display: none;">
                         <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="offcanvas" data-bs-target="#profileOffcanvas" onclick="updateProfileOffcanvas()">
-                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                            <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar">
                             <strong id="sidebarUserName">Администратор</strong>
                             <span class="badge bg-success ms-2">Online</span>
                         </a>
@@ -83,25 +47,16 @@
                 </div>
             </div>
 
-            <!-- ======================== ОСНОВНОЕ СОДЕРЖИМОЕ ======================== -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <!-- Заголовок и кнопки управления -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">
-                        <i class="fas fa-clipboard-list text-primary me-2"></i>
-                        Заявки на ремонт
-                    </h1>
+                    <h1 class="h2"><i class="fas fa-clipboard-list text-primary me-2"></i>Заявки на ремонт</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
-                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#newOrderModal">
-                            <i class="fas fa-plus me-1"></i> Новая заявка
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="printOrders()">
-                            <i class="fas fa-print me-1"></i> Печать
-                        </button>
+                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#newOrderModal"><i class="fas fa-plus me-1"></i> Новая заявка</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="printOrders()"><i class="fas fa-print me-1"></i> Печать</button>
                     </div>
                 </div>
 
-                <!-- Панель фильтрации -->
+                <!-- Фильтры (без onclick, добавим обработчики в JS) -->
                 <div class="filter-box mb-4">
                     <div class="row g-3">
                         <div class="col-md-3">
@@ -109,17 +64,14 @@
                             <select class="form-select" id="filterStatus">
                                 <option value="">Все статусы</option>
                                 <option value="new">Новая</option>
-                                <option value="in_progress">В работе</option>
+                                <option value="in_repair">В работе</option>
                                 <option value="ready">Готов</option>
-                                <option value="completed">Выдано</option>
-                                <option value="cancelled">Отменено</option>
+                                <option value="returned">Выдано</option>
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Мастер</label>
-                            <select class="form-select" id="filterMaster">
-                                <option value="">Все мастера</option>
-                            </select>
+                            <select class="form-select" id="filterMaster"><option value="">Все мастера</option></select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Дата с</label>
@@ -132,12 +84,8 @@
                         <div class="col-md-12">
                             <div class="input-group">
                                 <input type="text" class="form-control" placeholder="Поиск по номеру, клиенту или устройству..." id="searchInput">
-                                <button class="btn btn-primary" type="button" onclick="searchOrders()">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                                <button class="btn btn-outline-secondary" type="button" onclick="clearFilters()">
-                                    <i class="fas fa-times"></i> Сбросить
-                                </button>
+                                <button class="btn btn-primary" type="button" id="searchBtn"><i class="fas fa-search"></i></button>
+                                <button class="btn btn-outline-secondary" type="button" id="clearFiltersBtn"><i class="fas fa-times"></i> Сбросить</button>
                             </div>
                         </div>
                     </div>
@@ -145,46 +93,11 @@
 
                 <!-- Карточки статистики -->
                 <div class="row mb-4">
-                    <div class="col-md col-6">
-                        <div class="card border-primary">
-                            <div class="card-body text-center py-2">
-                                <h6 class="card-subtitle mb-1 text-muted">Всего</h6>
-                                <h4 class="card-title text-primary" id="totalOrders">0</h4>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md col-6">
-                        <div class="card border-warning">
-                            <div class="card-body text-center py-2">
-                                <h6 class="card-subtitle mb-1 text-muted">Новые</h6>
-                                <h4 class="card-title text-warning" id="newOrders">0</h4>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md col-6">
-                        <div class="card border-info">
-                            <div class="card-body text-center py-2">
-                                <h6 class="card-subtitle mb-1 text-muted">В работе</h6>
-                                <h4 class="card-title text-info" id="inProgressOrders">0</h4>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md col-6">
-                        <div class="card border-success">
-                            <div class="card-body text-center py-2">
-                                <h6 class="card-subtitle mb-1 text-muted">Готово</h6>
-                                <h4 class="card-title text-success" id="readyOrders">0</h4>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md col-6">
-                        <div class="card border-danger">
-                            <div class="card-body text-center py-2">
-                                <h6 class="card-subtitle mb-1 text-muted">Выдано</h6>
-                                <h4 class="card-title text-danger" id="urgentOrders">0</h4>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="col-md col-6"><div class="card border-primary"><div class="card-body text-center py-2"><h6 class="card-subtitle mb-1 text-muted">Всего</h6><h4 class="card-title text-primary" id="totalOrders">0</h4></div></div></div>
+                    <div class="col-md col-6"><div class="card border-warning"><div class="card-body text-center py-2"><h6 class="card-subtitle mb-1 text-muted">Новые</h6><h4 class="card-title text-warning" id="newOrders">0</h4></div></div></div>
+                    <div class="col-md col-6"><div class="card border-info"><div class="card-body text-center py-2"><h6 class="card-subtitle mb-1 text-muted">В работе</h6><h4 class="card-title text-info" id="inProgressOrders">0</h4></div></div></div>
+                    <div class="col-md col-6"><div class="card border-success"><div class="card-body text-center py-2"><h6 class="card-subtitle mb-1 text-muted">Готово</h6><h4 class="card-title text-success" id="readyOrders">0</h4></div></div></div>
+                    <div class="col-md col-6"><div class="card border-danger"><div class="card-body text-center py-2"><h6 class="card-subtitle mb-1 text-muted">Выдано</h6><h4 class="card-title text-danger" id="urgentOrders">0</h4></div></div></div>
                 </div>
 
                 <!-- Таблица заявок -->
@@ -192,129 +105,48 @@
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th width="80">№</th>
-                                        <th>Клиент / Устройство</th>
-                                        <th width="150">Дата приёма</th>
-                                        <th width="150">Дата готовности</th>
-                                        <th width="120">Статус</th>
-                                        <th width="120">Стоимость</th>
-                                        <th width="200">Действия</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ordersTableBody">
-                                    <!-- Заявки будут загружены через JS -->
-                                </tbody>
+                                <thead><tr><th width="80">№</th><th>Клиент / Устройство</th><th width="150">Дата приёма</th><th width="150">Дата готовности</th><th width="120">Статус</th><th width="120">Стоимость</th><th width="200">Действия</th></tr></thead>
+                                <tbody id="ordersTableBody"></tbody>
                             </table>
                         </div>
-                        
-                        <!-- Pagination -->
-                        <nav aria-label="Page navigation" class="mt-4">
-                            <ul class="pagination justify-content-center">
-                                <li class="page-item disabled">
-                                    <a class="page-link" href="#" tabindex="-1">Предыдущая</a>
-                                </li>
-                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                <li class="page-item">
-                                    <a class="page-link" href="#">Следующая</a>
-                                </li>
-                            </ul>
-                        </nav>
                     </div>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- ======================== МОДАЛЬНЫЕ ОКНА ======================== -->
-
-    <!-- Модальное окно: создание новой заявки -->
-    <!-- Модальное окно: создание новой заявки (динамическое) -->
-    <div class="modal fade" id="newOrderModal" tabindex="-1" aria-labelledby="newOrderModalLabel" aria-hidden="true">
+    <!-- Модальные окна (новой заявки и редактирования) -->
+    <div class="modal fade" id="newOrderModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="newOrderModalLabel">
-                        <i class="fas fa-plus-circle me-2"></i>Новая заявка на ремонт
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <!-- Содержимое загружается динамически через JS -->
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Загрузка...</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="saveNewOrder()">
-                        <i class="fas fa-save me-1"></i> Создать заявку
-                    </button>
-                </div>
+                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Новая заявка на ремонт</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body"><div class="text-center py-4"><div class="spinner-border text-primary"></div></div></div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button><button type="button" class="btn btn-primary" onclick="saveNewOrder()"><i class="fas fa-save me-1"></i> Создать заявку</button></div>
             </div>
         </div>
     </div>
-
-    <!-- Модальное окно: редактирование заявки -->
     <div class="modal fade" id="editOrderModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Редактировать заявку</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="editOrderModalBody"></div>
-            </div>
-        </div>
+        <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-edit me-2"></i>Редактировать заявку</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="editOrderModalBody"></div></div></div>
     </div>
 
-    <!-- Выдвижная панель профиля для менеджера и мастера -->
     <div class="offcanvas offcanvas-end" tabindex="-1" id="profileOffcanvas">
-        <div class="offcanvas-header">
-            <h5 class="offcanvas-title">Профиль</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-        </div>
-        <div class="offcanvas-body text-center">
-            <img id="offcanvasAvatar" src="https://via.placeholder.com/80" class="rounded-circle mb-3" width="80" height="80" alt="Аватар">
-            <h5 id="offcanvasName">Имя пользователя</h5>
-            <p><span id="offcanvasRoleBadge" class="badge">Роль</span></p>
-            <hr>
-            <button class="btn btn-outline-danger btn-sm" onclick="logout()">
-                <i class="fas fa-sign-out-alt me-1"></i> Выйти
-            </button>
-        </div>
+        <div class="offcanvas-header"><h5 class="offcanvas-title">Профиль</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div>
+        <div class="offcanvas-body text-center"><img id="offcanvasAvatar" src="https://via.placeholder.com/80" class="rounded-circle mb-3"><h5 id="offcanvasName">Имя пользователя</h5><p><span id="offcanvasRoleBadge" class="badge">Роль</span></p><hr><button class="btn btn-outline-danger btn-sm" onclick="logout()"><i class="fas fa-sign-out-alt me-1"></i> Выйти</button></div>
     </div>
 
-    <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
-        import { 
-            fetchClients, fetchDevices, fetchMasters, fetchOrders, 
-            createOrder, updateOrder, deleteOrder 
-        } from './js/api.js';
+        import { fetchClients, fetchDevices, fetchMasters, fetchOrders, createOrder, updateOrder, deleteOrder } from './js/api.js';
         import { showAlert } from './js/utils.js';
         import { checkAuthAndRedirect, checkPageAccess, updateSidebar } from './js/auth.js';
 
-        // ========== 1. ПРОВЕРКА ДОСТУПА ==========
         if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
         if (!checkPageAccess(['admin', 'manager', 'master'])) throw new Error('Доступ запрещён');
 
-        // ========== 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
-        let orders = [];
-        let clients = [];
-        let devices = [];
-        let masters = [];
-        let clientsMap = new Map();
-        let devicesMap = new Map();
-        let mastersMap = new Map();
+        let orders = [], clients = [], devices = [], masters = [];
+        let clientsMap = new Map(), devicesMap = new Map(), mastersMap = new Map();
         let filteredOrders = [];
 
-        // ========== 3. ИНИЦИАЛИЗАЦИЯ ==========
         document.addEventListener('DOMContentLoaded', async () => {
             await loadAllData();
             populateMasterFilter();
@@ -322,107 +154,53 @@
             updateStatistics();
             setDefaultDates();
             updateSidebar();
+            attachFilterEvents(); // привязываем обработчики фильтров
         });
 
-        // Автоматическое открытие модалки создания заявки, если в URL есть параметр openNewOrder=true
+        // Открытие модалки создания заявки по параметру URL
         if (new URLSearchParams(window.location.search).get('openNewOrder') === 'true') {
             const waitForData = async () => {
-                if (clients.length === 0 || devices.length === 0 || masters.length === 0) {
-                    await loadAllData();
-                }
-                // Заполняем содержимое модального окна актуальной формой
+                if (clients.length === 0) await loadAllData();
                 const modalBody = document.querySelector('#newOrderModal .modal-body');
                 modalBody.innerHTML = `
                     <form id="newOrderForm">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Клиент *</label>
-                                <select class="form-select" id="clientSelect" required>
-                                    <option value="">Выберите клиента...</option>
-                                    ${clients.map(c => `<option value="${c.id}">${c.full_name} (${c.phone})</option>`).join('')}
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Устройство *</label>
-                                <select class="form-select" id="deviceSelect" required disabled>
-                                    <option value="">Сначала выберите клиента</option>
-                                </select>
-                            </div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Клиент *</label><select class="form-select" id="clientSelect" required><option value="">Выберите клиента...</option>${clients.map(c => `<option value="${c.id}">${c.full_name} (${c.phone})</option>`).join('')}</select></div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Устройство *</label><select class="form-select" id="deviceSelect" required disabled><option value="">Сначала выберите клиента</option></select></div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Описание проблемы *</label>
-                            <textarea class="form-control" id="problemDescription" rows="3" required></textarea>
-                        </div>
+                        <div class="mb-3"><label class="form-label">Описание проблемы *</label><textarea class="form-control" id="problemDescription" rows="3" required></textarea></div>
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Мастер</label>
-                                <select class="form-select" id="masterSelect">
-                                    <option value="">Не назначать</option>
-                                    ${masters.map(m => `<option value="${m.id}">${m.full_name}</option>`).join('')}
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Стоимость (₽)</label>
-                                <input type="number" class="form-control" id="orderPrice" min="0" step="100" value="0">
-                            </div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Мастер</label><select class="form-select" id="masterSelect"><option value="">Не назначать</option>${masters.map(m => `<option value="${m.id}">${m.full_name}</option>`).join('')}</select></div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Стоимость (₽)</label><input type="number" class="form-control" id="orderPrice" min="0" step="100" value="0"></div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Статус</label>
-                            <select class="form-select" id="orderStatus">
-                                <option value="new">Новый</option>
-                                <option value="in_repair">В работе</option>
-                                <option value="ready">Готов</option>
-                                <option value="returned">Выдан</option>
-                            </select>
-                        </div>
+                        <div class="mb-3"><label class="form-label">Статус</label><select class="form-select" id="orderStatus"><option value="new">Новый</option><option value="in_repair">В работе</option><option value="ready">Готов</option><option value="returned">Выдан</option></select></div>
                     </form>
                 `;
-                // Добавляем обработчик смены клиента
-                const clientSelect = document.getElementById('clientSelect');
-                const deviceSelect = document.getElementById('deviceSelect');
-                clientSelect.addEventListener('change', function() {
+                document.getElementById('clientSelect').addEventListener('change', function() {
                     const clientId = parseInt(this.value);
+                    const deviceSelect = document.getElementById('deviceSelect');
                     deviceSelect.innerHTML = '<option value="">Выберите устройство...</option>';
                     deviceSelect.disabled = !clientId;
-                    if (clientId) {
-                        devices.filter(d => d.client_id === clientId).forEach(d => {
-                            const option = new Option(`${d.brand} ${d.model}`, d.id);
-                            deviceSelect.add(option);
-                        });
-                    }
+                    if (clientId) devices.filter(d => d.client_id === clientId).forEach(d => deviceSelect.add(new Option(`${d.model}`, d.id)));
                 });
-                // Показываем модальное окно
-                const newOrderModal = new bootstrap.Modal(document.getElementById('newOrderModal'));
-                newOrderModal.show();
+                new bootstrap.Modal(document.getElementById('newOrderModal')).show();
             };
             waitForData();
         }
 
-        // Загрузка всех справочников и заказов с сервера
         async function loadAllData() {
             try {
-                [clients, devices, masters, orders] = await Promise.all([
-                    fetchClients(0, 1000),
-                    fetchDevices(0, 1000),
-                    fetchMasters(0, 1000),
-                    fetchOrders(0, 1000)
-                ]);
-                clientsMap.clear();
-                clients.forEach(c => clientsMap.set(c.id, c.full_name));
-                devicesMap.clear();
-                devices.forEach(d => devicesMap.set(d.id, `${d.brand} ${d.model}`));
-                mastersMap.clear();
-                masters.forEach(m => mastersMap.set(m.id, m.full_name));
-            } catch (e) {
-                console.error(e);
-                showAlert('danger', 'Не удалось загрузить данные');
-            }
+                [clients, devices, masters, orders] = await Promise.all([fetchClients(0,1000), fetchDevices(0,1000), fetchMasters(0,1000), fetchOrders(0,1000)]);
+                clientsMap.clear(); clients.forEach(c => clientsMap.set(c.id, c.full_name));
+                devicesMap.clear(); devices.forEach(d => devicesMap.set(d.id, `${d.brand} ${d.model}`));
+                mastersMap.clear(); masters.forEach(m => mastersMap.set(m.id, m.full_name));
+            } catch(e) { console.error(e); showAlert('danger', 'Не удалось загрузить данные'); }
         }
 
         function populateMasterFilter() {
-            const masterFilter = document.getElementById('filterMaster');
-            masterFilter.innerHTML = '<option value="">Все мастера</option>';
-            masters.forEach(m => masterFilter.add(new Option(m.full_name, m.id)));
+            const filter = document.getElementById('filterMaster');
+            filter.innerHTML = '<option value="">Все мастера</option>';
+            masters.forEach(m => filter.add(new Option(m.full_name, m.id)));
         }
 
         function setDefaultDates() {
@@ -434,20 +212,15 @@
         function updateOrdersTable() {
             const tbody = document.getElementById('ordersTableBody');
             const ordersToShow = filteredOrders.length ? filteredOrders : orders;
-            if (ordersToShow.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">Нет заявок</td></tr>`;
-                return;
-            }
-            const sorted = [...ordersToShow].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            if (ordersToShow.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Нет заявок</td></tr>'; return; }
+            const sorted = [...ordersToShow].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
             tbody.innerHTML = '';
             sorted.forEach(order => {
                 const clientName = clientsMap.get(order.client_id) || '—';
                 const deviceName = devicesMap.get(order.device_id) || '—';
                 const masterName = order.master_id ? mastersMap.get(order.master_id) || '—' : 'Не назначен';
                 const date = order.created_at ? new Date(order.created_at).toLocaleDateString('ru-RU') : '—';
-                const readyDate = (order.status === 'ready' || order.status === 'returned') 
-                    ? (order.updated_at ? new Date(order.updated_at).toLocaleDateString('ru-RU') : '—') 
-                    : '—';
+                const readyDate = (order.status === 'ready' || order.status === 'returned') ? (order.updated_at ? new Date(order.updated_at).toLocaleDateString('ru-RU') : '—') : '—';
                 let statusBadge = '';
                 switch(order.status) {
                     case 'new': statusBadge = '<span class="badge bg-primary">Новый</span>'; break;
@@ -460,17 +233,12 @@
                 row.innerHTML = `
                     <td><span class="badge bg-secondary">#${order.id}</span></td>
                     <td><strong>${clientName}</strong><br><small class="text-muted">${deviceName}</small></td>
-                    <td>${date}</td>
-                    <td>${readyDate}</td>
-                    <td>${statusBadge}</td>
+                    <td>${date}</td><td>${readyDate}</td><td>${statusBadge}</td>
                     <td>${order.price ? order.price.toLocaleString() + ' ₽' : '—'}</td>
                     <td>
                         <button class="btn btn-sm btn-primary" onclick="viewOrder(${order.id})"><i class="fas fa-eye"></i></button>
                         <button class="btn btn-sm btn-warning" onclick="editOrder(${order.id})"><i class="fas fa-edit"></i></button>
-                        ${order.status === 'ready' ? 
-                            `<button class="btn btn-sm btn-success" onclick="issueOrder(${order.id})"><i class="fas fa-box"></i></button>` : 
-                            `<button class="btn btn-sm btn-success" onclick="completeOrder(${order.id})"><i class="fas fa-check"></i></button>`
-                        }
+                        ${order.status === 'ready' ? `<button class="btn btn-sm btn-success" onclick="issueOrder(${order.id})"><i class="fas fa-box"></i></button>` : `<button class="btn btn-sm btn-success" onclick="completeOrder(${order.id})"><i class="fas fa-check"></i></button>`}
                         <button class="btn btn-sm btn-danger" onclick="deleteOrderHandler(${order.id})"><i class="fas fa-trash"></i></button>
                     </td>
                 `;
@@ -479,118 +247,55 @@
         }
 
         function updateStatistics() {
-            const total = orders.length;
-            const newOrders = orders.filter(o => o.status === 'new').length;
-            const inProgress = orders.filter(o => o.status === 'in_repair').length;
-            const ready = orders.filter(o => o.status === 'ready').length;
-            const urgent = orders.filter(o => o.status === 'returned').length;
-            document.getElementById('totalOrders').textContent = total;
-            document.getElementById('newOrders').textContent = newOrders;
-            document.getElementById('inProgressOrders').textContent = inProgress;
-            document.getElementById('readyOrders').textContent = ready;
-            document.getElementById('urgentOrders').textContent = urgent;
+            document.getElementById('totalOrders').textContent = orders.length;
+            document.getElementById('newOrders').textContent = orders.filter(o => o.status === 'new').length;
+            document.getElementById('inProgressOrders').textContent = orders.filter(o => o.status === 'in_repair').length;
+            document.getElementById('readyOrders').textContent = orders.filter(o => o.status === 'ready').length;
+            document.getElementById('urgentOrders').textContent = orders.filter(o => o.status === 'returned').length;
         }
 
-        window.searchOrders = function() { applyFilters(); };
-        function applyFilters() {
-            const searchText = document.getElementById('searchInput').value.toLowerCase();
-            const status = document.getElementById('filterStatus').value;
-            const masterId = document.getElementById('filterMaster').value;
-            const dateFrom = document.getElementById('filterDateFrom').value;
-            const dateTo = document.getElementById('filterDateTo').value;
-            filteredOrders = orders.filter(order => {
-                if (status && order.status !== status) return false;
-                if (masterId && order.master_id !== parseInt(masterId)) return false;
-                if (dateFrom) {
-                    const orderDate = order.created_at ? order.created_at.split('T')[0] : '';
-                    if (orderDate < dateFrom) return false;
-                }
-                if (dateTo) {
-                    const orderDate = order.created_at ? order.created_at.split('T')[0] : '';
-                    if (orderDate > dateTo) return false;
-                }
-                if (searchText) {
-                    const clientName = clientsMap.get(order.client_id)?.toLowerCase() || '';
-                    const deviceName = devicesMap.get(order.device_id)?.toLowerCase() || '';
-                    const desc = order.description?.toLowerCase() || '';
-                    const idStr = order.id.toString();
-                    if (!clientName.includes(searchText) && !deviceName.includes(searchText) && 
-                        !desc.includes(searchText) && !idStr.includes(searchText)) return false;
-                }
-                return true;
-            });
-            updateOrdersTable();
+        function attachFilterEvents() {
+            const apply = () => {
+                const searchText = document.getElementById('searchInput').value.toLowerCase();
+                const status = document.getElementById('filterStatus').value;
+                const masterId = document.getElementById('filterMaster').value;
+                const dateFrom = document.getElementById('filterDateFrom').value;
+                const dateTo = document.getElementById('filterDateTo').value;
+                filteredOrders = orders.filter(order => {
+                    if (status && order.status !== status) return false;
+                    if (masterId && order.master_id !== parseInt(masterId)) return false;
+                    if (dateFrom) { const d = order.created_at ? order.created_at.split('T')[0] : ''; if (d < dateFrom) return false; }
+                    if (dateTo) { const d = order.created_at ? order.created_at.split('T')[0] : ''; if (d > dateTo) return false; }
+                    if (searchText) {
+                        const clientName = clientsMap.get(order.client_id)?.toLowerCase() || '';
+                        const deviceName = devicesMap.get(order.device_id)?.toLowerCase() || '';
+                        const desc = order.description?.toLowerCase() || '';
+                        const idStr = order.id.toString();
+                        if (!clientName.includes(searchText) && !deviceName.includes(searchText) && !desc.includes(searchText) && !idStr.includes(searchText)) return false;
+                    }
+                    return true;
+                });
+                updateOrdersTable();
+            };
+            const reset = () => {
+                document.getElementById('filterStatus').value = '';
+                document.getElementById('filterMaster').value = '';
+                document.getElementById('filterDateFrom').value = '';
+                document.getElementById('filterDateTo').value = '';
+                document.getElementById('searchInput').value = '';
+                filteredOrders = [];
+                updateOrdersTable();
+            };
+            document.getElementById('searchBtn').addEventListener('click', apply);
+            document.getElementById('clearFiltersBtn').addEventListener('click', reset);
+            document.getElementById('filterStatus').addEventListener('change', apply);
+            document.getElementById('filterMaster').addEventListener('change', apply);
+            document.getElementById('filterDateFrom').addEventListener('change', apply);
+            document.getElementById('filterDateTo').addEventListener('change', apply);
+            document.getElementById('searchInput').addEventListener('input', apply);
         }
 
-        window.clearFilters = function() {
-            document.getElementById('filterStatus').value = '';
-            document.getElementById('filterMaster').value = '';
-            document.getElementById('filterDateFrom').value = '';
-            document.getElementById('filterDateTo').value = '';
-            document.getElementById('searchInput').value = '';
-            filteredOrders = [];
-            updateOrdersTable();
-        };
-
-        document.getElementById('newOrderModal').addEventListener('show.bs.modal', async () => {
-            if (clients.length === 0) await loadAllData();
-            const modalBody = document.querySelector('#newOrderModal .modal-body');
-            modalBody.innerHTML = `
-                <form id="newOrderForm">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Клиент *</label>
-                            <select class="form-select" id="clientSelect" required>
-                                <option value="">Выберите клиента...</option>
-                                ${clients.map(c => `<option value="${c.id}">${c.full_name} (${c.phone})</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Устройство *</label>
-                            <select class="form-select" id="deviceSelect" required disabled>
-                                <option value="">Сначала выберите клиента</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Описание проблемы *</label>
-                        <textarea class="form-control" id="problemDescription" rows="3" required></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Мастер</label>
-                            <select class="form-select" id="masterSelect">
-                                <option value="">Не назначать</option>
-                                ${masters.map(m => `<option value="${m.id}">${m.full_name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Стоимость (₽)</label>
-                            <input type="number" class="form-control" id="orderPrice" min="0" step="100" value="0">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Статус</label>
-                        <select class="form-select" id="orderStatus">
-                            <option value="new">Новый</option>
-                            <option value="in_repair">В работе</option>
-                            <option value="ready">Готов</option>
-                            <option value="returned">Выдан</option>
-                        </select>
-                    </div>
-                </form>
-            `;
-            document.getElementById('clientSelect').addEventListener('change', function() {
-                const clientId = parseInt(this.value);
-                const deviceSelect = document.getElementById('deviceSelect');
-                deviceSelect.innerHTML = '<option value="">Выберите устройство...</option>';
-                deviceSelect.disabled = !clientId;
-                if (clientId) {
-                    devices.filter(d => d.client_id === clientId).forEach(d => deviceSelect.add(new Option(`${d.model}`, d.id)));
-                }
-            });
-        });
-
+        // CRUD операции
         window.saveNewOrder = async function() {
             const clientId = parseInt(document.getElementById('clientSelect').value);
             const deviceId = parseInt(document.getElementById('deviceSelect').value);
@@ -598,103 +303,46 @@
             const description = document.getElementById('problemDescription').value.trim();
             const price = parseFloat(document.getElementById('orderPrice').value) || 0;
             const status = document.getElementById('orderStatus').value;
-            if (!clientId || !deviceId || !description) {
-                showAlert('danger', 'Заполните обязательные поля');
-                return;
-            }
-            const data = {
-                client_id: clientId,
-                device_id: deviceId,
-                master_id: masterVal ? parseInt(masterVal) : null,
-                description,
-                price,
-                status
-            };
+            if (!clientId || !deviceId || !description) { showAlert('danger', 'Заполните обязательные поля'); return; }
             try {
-                await createOrder(data);
+                await createOrder({ client_id: clientId, device_id: deviceId, master_id: masterVal ? parseInt(masterVal) : null, description, price, status });
                 bootstrap.Modal.getInstance(document.getElementById('newOrderModal')).hide();
                 await loadAllData();
                 updateOrdersTable();
                 updateStatistics();
                 showAlert('success', 'Заявка создана');
-            } catch (e) {
-                showAlert('danger', 'Ошибка: ' + e.message);
-            }
+            } catch(e) { showAlert('danger', 'Ошибка: ' + e.message); }
         };
-
-        window.viewOrder = (id) => {
-            window.location.href = `order-detail.html?id=${id}`;
-        };
-
+        window.viewOrder = (id) => window.location.href = `order-detail.html?id=${id}`;
         window.editOrder = function(id) {
             const order = orders.find(o => o.id === id);
             if (!order) return;
             const formHtml = `
                 <form id="editOrderForm">
                     <input type="hidden" id="editOrderId" value="${order.id}">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Клиент *</label>
-                            <select class="form-select" id="editClientId" required>
-                                ${clients.map(c => `<option value="${c.id}" ${c.id === order.client_id ? 'selected' : ''}>${c.full_name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Устройство *</label>
-                            <select class="form-select" id="editDeviceId" required>
-                                ${devices.filter(d => d.client_id === order.client_id).map(d => 
-                                    `<option value="${d.id}" ${d.id === order.device_id ? 'selected' : ''}>${d.brand} ${d.model}</option>`
-                                ).join('')}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Описание неисправности *</label>
-                        <textarea class="form-control" id="editDescription" rows="3" required>${order.description || ''}</textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Мастер</label>
-                            <select class="form-select" id="editMasterId">
-                                <option value="">Не назначать</option>
-                                ${masters.map(m => `<option value="${m.id}" ${m.id === order.master_id ? 'selected' : ''}>${m.full_name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Стоимость (₽)</label>
-                            <input type="number" class="form-control" id="editPrice" min="0" value="${order.price || 0}">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Статус</label>
-                        <select class="form-select" id="editStatus">
-                            <option value="new" ${order.status === 'new' ? 'selected' : ''}>Новый</option>
-                            <option value="in_repair" ${order.status === 'in_repair' ? 'selected' : ''}>В работе</option>
-                            <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Готов</option>
-                            <option value="returned" ${order.status === 'returned' ? 'selected' : ''}>Выдан</option>
-                        </select>
-                    </div>
+                    <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Клиент *</label><select class="form-select" id="editClientId" required>${clients.map(c => `<option value="${c.id}" ${c.id === order.client_id ? 'selected' : ''}>${c.full_name}</option>`).join('')}</select></div>
+                    <div class="col-md-6 mb-3"><label class="form-label">Устройство *</label><select class="form-select" id="editDeviceId" required>${devices.filter(d => d.client_id === order.client_id).map(d => `<option value="${d.id}" ${d.id === order.device_id ? 'selected' : ''}>${d.brand} ${d.model}</option>`).join('')}</select></div></div>
+                    <div class="mb-3"><label class="form-label">Описание неисправности *</label><textarea class="form-control" id="editDescription" rows="3" required>${order.description || ''}</textarea></div>
+                    <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Мастер</label><select class="form-select" id="editMasterId"><option value="">Не назначать</option>${masters.map(m => `<option value="${m.id}" ${m.id === order.master_id ? 'selected' : ''}>${m.full_name}</option>`).join('')}</select></div>
+                    <div class="col-md-6 mb-3"><label class="form-label">Стоимость (₽)</label><input type="number" class="form-control" id="editPrice" min="0" value="${order.price || 0}"></div></div>
+                    <div class="mb-3"><label class="form-label">Статус</label><select class="form-select" id="editStatus">
+                        <option value="new" ${order.status === 'new' ? 'selected' : ''}>Новый</option>
+                        <option value="in_repair" ${order.status === 'in_repair' ? 'selected' : ''}>В работе</option>
+                        <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Готов</option>
+                        <option value="returned" ${order.status === 'returned' ? 'selected' : ''}>Выдан</option>
+                    </select></div>
                 </form>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" onclick="saveEditedOrder()">Сохранить изменения</button>
-                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button><button type="button" class="btn btn-primary" onclick="saveEditedOrder()">Сохранить изменения</button></div>
             `;
             document.getElementById('editOrderModalBody').innerHTML = formHtml;
-            const editClientSelect = document.getElementById('editClientId');
-            if (editClientSelect) {
-                editClientSelect.addEventListener('change', function() {
-                    const newClientId = parseInt(this.value);
-                    const deviceSelect = document.getElementById('editDeviceId');
-                    deviceSelect.innerHTML = '';
-                    devices.filter(d => d.client_id === newClientId).forEach(d => {
-                        deviceSelect.add(new Option(`${d.brand} ${d.model}`, d.id));
-                    });
-                });
-            }
+            document.getElementById('editClientId').addEventListener('change', function() {
+                const newClientId = parseInt(this.value);
+                const deviceSelect = document.getElementById('editDeviceId');
+                deviceSelect.innerHTML = '';
+                devices.filter(d => d.client_id === newClientId).forEach(d => deviceSelect.add(new Option(`${d.brand} ${d.model}`, d.id)));
+            });
             new bootstrap.Modal(document.getElementById('editOrderModal')).show();
         };
-        
         window.saveEditedOrder = async function() {
             const id = parseInt(document.getElementById('editOrderId').value);
             const clientId = parseInt(document.getElementById('editClientId').value);
@@ -703,85 +351,106 @@
             const description = document.getElementById('editDescription').value.trim();
             const price = parseFloat(document.getElementById('editPrice').value);
             const status = document.getElementById('editStatus').value;
-            if (!clientId || !deviceId || !description) {
-                showAlert('danger', 'Заполните обязательные поля');
-                return;
-            }
-            const data = {
-                client_id: clientId,
-                device_id: deviceId,
-                master_id: masterVal ? parseInt(masterVal) : null,
-                description,
-                price,
-                status
-            };
+            if (!clientId || !deviceId || !description) { showAlert('danger', 'Заполните обязательные поля'); return; }
             try {
-                await updateOrder(id, data);
+                await updateOrder(id, { client_id: clientId, device_id: deviceId, master_id: masterVal ? parseInt(masterVal) : null, description, price, status });
                 bootstrap.Modal.getInstance(document.getElementById('editOrderModal')).hide();
                 await loadAllData();
                 updateOrdersTable();
                 updateStatistics();
                 showAlert('success', 'Заявка обновлена');
-            } catch (e) {
-                showAlert('danger', 'Ошибка: ' + e.message);
-            }
+            } catch(e) { showAlert('danger', 'Ошибка: ' + e.message); }
         };
-
-        window.completeOrder = async function(id) {
+        window.completeOrder = async id => {
             if (!confirm('Отметить заявку как готовую?')) return;
-            try {
-                await updateOrder(id, { status: 'ready' });
-                await loadAllData();
-                updateOrdersTable();
-                updateStatistics();
-                showAlert('success', 'Статус обновлён');
-            } catch (e) {
-                showAlert('danger', 'Ошибка: ' + e.message);
-            }
+            try { await updateOrder(id, { status: 'ready' }); await loadAllData(); updateOrdersTable(); updateStatistics(); showAlert('success', 'Статус обновлён'); } 
+            catch(e) { showAlert('danger', 'Ошибка: ' + e.message); }
         };
-
-        window.issueOrder = async function(id) {
+        window.issueOrder = async id => {
             if (!confirm('Выдать устройство клиенту?')) return;
-            try {
-                await updateOrder(id, { status: 'returned' });
-                await loadAllData();
-                updateOrdersTable();
-                updateStatistics();
-                showAlert('success', 'Устройство выдано');
-            } catch (e) {
-                showAlert('danger', 'Ошибка: ' + e.message);
-            }
+            try { await updateOrder(id, { status: 'returned' }); await loadAllData(); updateOrdersTable(); updateStatistics(); showAlert('success', 'Устройство выдано'); } 
+            catch(e) { showAlert('danger', 'Ошибка: ' + e.message); }
         };
-
-        window.deleteOrderHandler = async function(id) {
+        window.deleteOrderHandler = async id => {
             if (!confirm('Удалить заявку? Все связанные данные будут потеряны.')) return;
-            try {
-                await deleteOrder(id);
-                await loadAllData();
-                updateOrdersTable();
-                updateStatistics();
-                showAlert('success', 'Заявка удалена');
-            } catch (e) {
-                showAlert('danger', 'Ошибка удаления: ' + e.message);
-            }
+            try { await deleteOrder(id); await loadAllData(); updateOrdersTable(); updateStatistics(); showAlert('success', 'Заявка удалена'); } 
+            catch(e) { showAlert('danger', 'Ошибка удаления: ' + e.message); }
         };
-
         window.printOrders = () => window.print();
-        window.printReceipt = (id) => alert(`Печать квитанции #${id}`);
-
-        window.assignMaster = async (id) => {
+        window.assignMaster = async id => {
             const masterId = prompt('Введите ID мастера');
             if (!masterId) return;
-            try {
-                await updateOrder(id, { master_id: parseInt(masterId), status: 'in_repair' });
-                await loadAllData();
-                updateOrdersTable();
-                updateStatistics();
-                showAlert('success', 'Мастер назначен');
-            } catch (e) {
-                showAlert('danger', 'Ошибка: ' + e.message);
-            }
+            try { await updateOrder(id, { master_id: parseInt(masterId), status: 'in_repair' }); await loadAllData(); updateOrdersTable(); updateStatistics(); showAlert('success', 'Мастер назначен'); } 
+            catch(e) { showAlert('danger', 'Ошибка: ' + e.message); }
         };
+
+        // ========== СИСТЕМА ПОИСКА И ФИЛЬТРАЦИИ ==========
+        // Находим кнопки и элементы
+        const searchInput = document.getElementById('searchInput');
+        const statusSelect = document.getElementById('filterStatus');
+        const masterSelect = document.getElementById('filterMaster');
+        const dateFrom = document.getElementById('filterDateFrom');
+        const dateTo = document.getElementById('filterDateTo');
+        const searchBtn = document.querySelector('.btn-primary[onclick="searchOrders()"]') || document.querySelector('#searchBtn');
+        const clearBtn = document.querySelector('.btn-outline-secondary[onclick="clearFilters()"]') || document.querySelector('#clearFiltersBtn');
+
+        // Функция фильтрации
+        function performFilter() {
+            const searchText = searchInput?.value.toLowerCase() || '';
+            const status = statusSelect?.value || '';
+            const masterId = masterSelect?.value || '';
+            const fromDate = dateFrom?.value || '';
+            const toDate = dateTo?.value || '';
+            
+            filteredOrders = orders.filter(order => {
+                if (status && order.status !== status) return false;
+                if (masterId && order.master_id !== parseInt(masterId)) return false;
+                if (fromDate) {
+                    const orderDate = order.created_at ? order.created_at.split('T')[0] : '';
+                    if (orderDate < fromDate) return false;
+                }
+                if (toDate) {
+                    const orderDate = order.created_at ? order.created_at.split('T')[0] : '';
+                    if (orderDate > toDate) return false;
+                }
+                if (searchText) {
+                    const clientName = clientsMap.get(order.client_id)?.toLowerCase() || '';
+                    const deviceName = devicesMap.get(order.device_id)?.toLowerCase() || '';
+                    const desc = order.description?.toLowerCase() || '';
+                    const idStr = order.id.toString();
+                    if (!clientName.includes(searchText) && !deviceName.includes(searchText) && 
+                        !desc.includes(searchText) && !idStr.includes(searchText)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            updateOrdersTable();
+        }
+
+        // Функция сброса
+        function resetFilters() {
+            if (statusSelect) statusSelect.value = '';
+            if (masterSelect) masterSelect.value = '';
+            if (dateFrom) dateFrom.value = '';
+            if (dateTo) dateTo.value = '';
+            if (searchInput) searchInput.value = '';
+            filteredOrders = [];
+            updateOrdersTable();
+        }
+
+        // Привязываем обработчики
+        if (searchBtn) searchBtn.onclick = performFilter;
+        if (clearBtn) clearBtn.onclick = resetFilters;
+        if (statusSelect) statusSelect.onchange = performFilter;
+        if (masterSelect) masterSelect.onchange = performFilter;
+        if (dateFrom) dateFrom.onchange = performFilter;
+        if (dateTo) dateTo.onchange = performFilter;
+        if (searchInput) searchInput.oninput = performFilter;
+
+        // Сделаем функции глобальными на случай, если нужны из других мест
+        window.performFilter = performFilter;
+        window.resetFilters = resetFilters;
     </script>
 </body>
 </html>
