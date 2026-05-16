@@ -1,11 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, field_validator
 from datetime import datetime
 from typing import Optional
 from enum import Enum
-import enum
 
-# --- Enums для совместимости с Pydantic и строковыми значениями ---
-class UserRoleEnum(str, enum.Enum):
+# ==================== ENUMS ====================
+class UserRoleEnum(str, Enum):
     ADMIN = "admin"
     MASTER = "master"
     MANAGER = "manager"
@@ -16,7 +15,7 @@ class ClientTypeEnum(str, Enum):
     VIP = "vip"
     CORPORATE = "corporate"
 
-# ========== User ==========
+# ==================== USER ====================
 class UserBase(BaseModel):
     username: str
     role: UserRoleEnum = UserRoleEnum.ADMIN
@@ -37,7 +36,7 @@ class UserUpdate(BaseModel):
     phone: Optional[str] = None
     role: Optional[UserRoleEnum] = None
     master_id: Optional[int] = None
-    password: Optional[str] = None 
+    password: Optional[str] = None
 
 class User(BaseModel):
     id: int
@@ -46,10 +45,8 @@ class User(BaseModel):
     email: Optional[str] = None
     role: UserRoleEnum
     master_id: Optional[int] = None
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
-        
 class UserOut(BaseModel):
     id: int
     username: str
@@ -57,11 +54,9 @@ class UserOut(BaseModel):
     email: Optional[str] = None
     role: str
     avatar: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        orm_mode = True   # ← позволяет работать с объектами SQLAlchemy
-
-# ========== Client ==========
+# ==================== CLIENT ====================
 class ClientBase(BaseModel):
     full_name: str
     phone: Optional[str] = None
@@ -71,7 +66,12 @@ class ClientBase(BaseModel):
     notes: Optional[str] = None
 
 class ClientCreate(ClientBase):
-    pass
+    @field_validator('full_name')
+    @classmethod
+    def not_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError('full_name cannot be empty')
+        return v
 
 class ClientUpdate(BaseModel):
     full_name: Optional[str] = None
@@ -83,12 +83,10 @@ class ClientUpdate(BaseModel):
 
 class Client(ClientBase):
     id: int
-    created_at: datetime
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
-
-# ========== Device ==========
+# ==================== DEVICE ====================
 class DeviceBase(BaseModel):
     client_id: int
     device_type: Optional[str] = None
@@ -120,12 +118,10 @@ class DeviceUpdate(BaseModel):
 
 class Device(DeviceBase):
     id: int
-    created_at: datetime
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
-
-# ========== Master ==========
+# ==================== MASTER ====================
 class MasterBase(BaseModel):
     full_name: str
     phone: Optional[str] = None
@@ -155,12 +151,10 @@ class MasterUpdate(BaseModel):
 
 class Master(MasterBase):
     id: int
-    hire_date: datetime
+    hire_date: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
-
-# ========== Order ==========
+# ==================== ORDER ====================
 class OrderBase(BaseModel):
     client_id: int
     device_id: int
@@ -168,7 +162,6 @@ class OrderBase(BaseModel):
     status: Optional[str] = None
     description: Optional[str] = None
     price: Optional[float] = None
-
 
 class OrderCreate(OrderBase):
     pass
@@ -183,11 +176,10 @@ class OrderUpdate(BaseModel):
 
 class Order(OrderBase):
     id: int
-    created_at: datetime
+    created_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
-        
+# ==================== AUTH ====================
 class UserLogin(BaseModel):
     username: str
     password: str

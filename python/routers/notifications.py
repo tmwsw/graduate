@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -43,7 +43,7 @@ def send_email_smtp(recipient: str, subject: str, body: str):
 
 def send_order_tracking_email(order_id: int, recipient_email: str):
     token = secrets.token_urlsafe(32)
-    expires = datetime.utcnow() + timedelta(days=7)
+    expires = datetime.now(timezone.utc) + timedelta(days=7)
     tracking_tokens[order_id] = {"token": token, "expires": expires}
     tracking_url = f"http://127.0.0.1:8000/track/order/{order_id}?token={token}"
     subject = f"Статус вашей заявки №{order_id} – РемонтТех"
@@ -74,7 +74,7 @@ async def send_order_tracking(
 
     # Генерируем уникальный токен
     token = secrets.token_urlsafe(32)
-    expires = datetime.utcnow() + timedelta(days=7)  # ссылка активна 7 дней
+    expires = datetime.now(timezone.utc) + timedelta(days=7)
     tracking_tokens[order_id] = {"token": token, "expires": expires}
 
     tracking_url = f"http://127.0.0.1:8000/track/order/{order_id}?token={token}"

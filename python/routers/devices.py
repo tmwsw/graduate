@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-
+from python import crud
 from .. import crud, schemas
 from ..database import SessionLocal
 
@@ -16,6 +16,10 @@ def get_db():
 
 @router.post("/", response_model=schemas.Device)
 def create_device(device: schemas.DeviceCreate, db: Session = Depends(get_db)):
+    # Проверяем существование клиента
+    db_client = crud.get_client(db, client_id=device.client_id)
+    if not db_client:
+        raise HTTPException(status_code=404, detail="Client not found")
     return crud.create_device(db=db, device=device)
 
 @router.get("/", response_model=List[schemas.Device])
