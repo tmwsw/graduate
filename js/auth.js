@@ -32,7 +32,7 @@ function isAuthenticated() {
 
 // Проверка авторизации и перенаправление на login.html, если не авторизован
 // Используется на защищённых страницах (вызывается в начале скрипта)
-function checkAuthAndRedirect() {
+export function checkAuthAndRedirect() {
     if (!isAuthenticated()) {
         window.location.href = 'login.html';
         return false;
@@ -108,7 +108,7 @@ function applyRoleBasedVisibility() {
 
 // Проверка доступа к странице: если роль не входит в разрешённый список,
 // перенаправляет на index.html. Используется в начале скрипта страницы.
-function checkPageAccess(allowedRoles) {
+export function checkPageAccess(allowedRoles) {
     const role = getCurrentUserRole();
     if (!role) {
         window.location.href = 'login.html';
@@ -125,7 +125,7 @@ function checkPageAccess(allowedRoles) {
 
 // Генерирует data URL с круглым аватаром, содержащим инициалы (Фамилия + Имя)
 // Цвет зависит от роли: admin – красный, manager – оранжевый, master – голубой, остальные – тёмно-синий
-function generateLetterAvatar(fullName, role) {
+export function generateLetterAvatar(fullName, role) {
     const canvas = document.createElement('canvas');
     canvas.width = 128;
     canvas.height = 128;
@@ -171,7 +171,7 @@ function getRoleDisplay(role) {
 
 // Возвращает URL аватара пользователя (либо сохранённый, либо сгенерированный)
 // Используется в сайдбаре и offcanvas
-function getUserAvatar(user) {
+export function getUserAvatar(user) {
     if (!user) return 'https://via.placeholder.com/200';
     if (user.avatar && user.avatar.startsWith('data:image/')) {
         return user.avatar;
@@ -214,7 +214,7 @@ function updateUserAvatar() {
 }
 
 // Заполняет выдвижную панель (offcanvas) данными пользователя (для менеджера/мастера)
-function updateProfileOffcanvas() {
+export function updateProfileOffcanvas() {
     const userData = localStorage.getItem('currentUser');
     if (!userData) return;
     let user;
@@ -248,7 +248,7 @@ function updateProfileOffcanvas() {
 }
 
 // Обновляет сайдбар (оба варианта – и для админа, и для offcanvas)
-function updateSidebar() {
+export function updateSidebar() {
     const userData = localStorage.getItem('currentUser');
     if (!userData) return;
     let user;
@@ -302,7 +302,7 @@ async function fetchUsers(skip = 0, limit = 100) {
 }
 
 // ==================== ВЫХОД ИЗ СИСТЕМЫ ====================
-function logout() {
+export function logout() {
     localStorage.removeItem('currentUser');
     window.location.href = 'login.html';
 }

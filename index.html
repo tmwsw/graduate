@@ -279,17 +279,17 @@
     
     <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/api.js" type="module"></script>
-    <script src="js/auth.js"></script>
     <script type="module">
-        // ======================== 1. ПРОВЕРКА ДОСТУПА ========================
-        if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
-
-        // Импорт API-функций и утилит
         import { 
             fetchClients, fetchDevices, fetchMasters, fetchOrders, createOrder 
         } from './js/api.js';
         import { showAlert } from './js/utils.js';
+        import { checkAuthAndRedirect, checkPageAccess, updateSidebar, logout } from './js/auth.js';
+
+        // ========== ПРОВЕРКА АВТОРИЗАЦИИ ==========
+        if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+        // index.html доступен всем авторизованным, но можно проверить роль, если нужно
+        // if (!checkPageAccess(['admin', 'manager', 'master'])) throw new Error('Доступ запрещён');
 
         // ======================== 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ========================
         let clients = [];

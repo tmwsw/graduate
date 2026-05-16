@@ -269,31 +269,18 @@
 
     <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/auth.js"></script>
     <script type="module">
-        // ========== 1. ПРОВЕРКА ДОСТУПА ==========
-        if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
-        if (!checkPageAccess(['admin'])) throw new Error('Доступ запрещён'); // только админ
-
-        // Импорт API-функций
         import { 
             fetchMasters, createMaster, updateMaster, deleteMaster,
             fetchOrders, updateOrder, fetchClients, fetchDevices
         } from './js/api.js';
-        
-        // Вспомогательные функции (заглушки, если нет utils.js)
-        const showAlert = (type, msg) => alert(msg);
-        const getSpecializationName = (spec) => {
-            const map = { 'notebooks': 'Ноутбуки', 'smartphones': 'Смартфоны', 'pc': 'ПК',
-                'motherboards': 'Материнские платы', 'displays': 'Дисплеи',
-                'data_recovery': 'Восстановление данных', 'power_supplies': 'Блоки питания',
-                'software': 'ПО/ОС', 'other': 'Другое' };
-            return map[spec] || spec;
-        };
-        const getMasterStatusName = (status) => {
-            const map = { 'active': 'Активный', 'inactive': 'Неактивный', 'vacation': 'В отпуске', 'sick': 'На больничном' };
-            return map[status] || status;
-        };
+        import { showAlert, getSpecializationName, getMasterStatusName } from './js/utils.js';
+        import { checkAuthAndRedirect, checkPageAccess, updateSidebar } from './js/auth.js';
+
+        // ========== 1. ПРОВЕРКА ДОСТУПА ==========
+        if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+        if (!checkPageAccess(['admin'])) throw new Error('Доступ запрещён'); // только админ
+
 
         // ========== 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
         let masters = [];

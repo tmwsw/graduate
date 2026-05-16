@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-
+from pydantic import BaseModel
 from .. import crud, schemas
 from ..database import SessionLocal
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+class PasswordChange(BaseModel):
+    old_password: str
+    new_password: str
 
 def get_db():
     db = SessionLocal()
@@ -47,3 +51,26 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
+
+@router.put("/{user_id}/password")
+def change_password(
+    user_id: int,
+    password_data: PasswordChange,
+    db: Session = Depends(get_db)
+):
+    """
+    Смена пароля пользователя.
+    Проверяет старый пароль, затем обновляет на новый (хеширует).
+    """
+    db_user = crud.get_user(db, user_id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not crud.verify_password(password_data.old_password, db_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect old password")
+    
+    # Хешируем и сохраняем новый пароль
+    db_user.hashed_password = crud.get_password_hash(password_data.new_password)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return {"message": "Password updated successfully"}
