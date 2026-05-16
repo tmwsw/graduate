@@ -29,6 +29,7 @@ class UserCreate(BaseModel):
     phone: Optional[str] = None
     role: UserRoleEnum = UserRoleEnum.MASTER
     master_id: Optional[int] = None
+    bio: Optional[str] = None
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
@@ -38,6 +39,7 @@ class UserUpdate(BaseModel):
     role: Optional[UserRoleEnum] = None
     master_id: Optional[int] = None
     password: Optional[str] = None
+    bio: Optional[str] = None
 
 class User(BaseModel):
     id: int
@@ -48,6 +50,7 @@ class User(BaseModel):
     role: UserRoleEnum
     master_id: Optional[int] = None
     model_config = ConfigDict(from_attributes=True)
+    bio: Optional[str] = None
 
 class UserOut(BaseModel):
     id: int
@@ -58,6 +61,7 @@ class UserOut(BaseModel):
     role: str
     avatar: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
+    bio: Optional[str] = None
 
 # ==================== CLIENT ====================
 class ClientBase(BaseModel):

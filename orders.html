@@ -232,6 +232,7 @@
     <!-- ======================== МОДАЛЬНЫЕ ОКНА ======================== -->
 
     <!-- Модальное окно: создание новой заявки -->
+    <!-- Модальное окно: создание новой заявки (динамическое) -->
     <div class="modal fade" id="newOrderModal" tabindex="-1" aria-labelledby="newOrderModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -239,61 +240,15 @@
                     <h5 class="modal-title" id="newOrderModalLabel">
                         <i class="fas fa-plus-circle me-2"></i>Новая заявка на ремонт
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="newOrderForm">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="clientName" class="form-label">Клиент *</label>
-                                <input type="text" class="form-control" id="clientName" required placeholder="ФИО клиента">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="clientPhone" class="form-label">Телефон *</label>
-                                <input type="tel" class="form-control" id="clientPhone" required placeholder="+7 (XXX) XXX-XX-XX">
-                            </div>
+                    <!-- Содержимое загружается динамически через JS -->
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
                         </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="deviceType" class="form-label">Тип устройства *</label>
-                                <select class="form-select" id="deviceType" required>
-                                    <option value="">Выберите тип...</option>
-                                    <option value="notebook">Ноутбук</option>
-                                    <option value="pc">Стационарный ПК</option>
-                                    <option value="smartphone">Смартфон</option>
-                                    <option value="tablet">Планшет</option>
-                                    <option value="monitor">Монитор</option>
-                                    <option value="printer">Принтер/МФУ</option>
-                                    <option value="other">Другое</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="deviceBrand" class="form-label">Бренд/Модель *</label>
-                                <input type="text" class="form-control" id="deviceBrand" required placeholder="Например: ASUS X543MA">
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="problem" class="form-label">Описание проблемы *</label>
-                            <textarea class="form-control" id="problem" rows="3" required placeholder="Подробно опишите неисправность..."></textarea>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="serialNumber" class="form-label">Серийный номер</label>
-                                <input type="text" class="form-control" id="serialNumber" placeholder="SN123456789">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="urgency" class="form-label">Срочность</label>
-                                <select class="form-select" id="urgency">
-                                    <option value="normal">Обычная</option>
-                                    <option value="urgent">Срочный ремонт (+15%)</option>
-                                    <option value="express">Экспресс (+35%)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </form>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
@@ -371,8 +326,76 @@
 
         // Автоматическое открытие модалки создания заявки, если в URL есть параметр openNewOrder=true
         if (new URLSearchParams(window.location.search).get('openNewOrder') === 'true') {
-            const newOrderModal = new bootstrap.Modal(document.getElementById('newOrderModal'));
-            newOrderModal.show();
+            const waitForData = async () => {
+                if (clients.length === 0 || devices.length === 0 || masters.length === 0) {
+                    await loadAllData();
+                }
+                // Заполняем содержимое модального окна актуальной формой
+                const modalBody = document.querySelector('#newOrderModal .modal-body');
+                modalBody.innerHTML = `
+                    <form id="newOrderForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Клиент *</label>
+                                <select class="form-select" id="clientSelect" required>
+                                    <option value="">Выберите клиента...</option>
+                                    ${clients.map(c => `<option value="${c.id}">${c.full_name} (${c.phone})</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Устройство *</label>
+                                <select class="form-select" id="deviceSelect" required disabled>
+                                    <option value="">Сначала выберите клиента</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Описание проблемы *</label>
+                            <textarea class="form-control" id="problemDescription" rows="3" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Мастер</label>
+                                <select class="form-select" id="masterSelect">
+                                    <option value="">Не назначать</option>
+                                    ${masters.map(m => `<option value="${m.id}">${m.full_name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Стоимость (₽)</label>
+                                <input type="number" class="form-control" id="orderPrice" min="0" step="100" value="0">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Статус</label>
+                            <select class="form-select" id="orderStatus">
+                                <option value="new">Новый</option>
+                                <option value="in_repair">В работе</option>
+                                <option value="ready">Готов</option>
+                                <option value="returned">Выдан</option>
+                            </select>
+                        </div>
+                    </form>
+                `;
+                // Добавляем обработчик смены клиента
+                const clientSelect = document.getElementById('clientSelect');
+                const deviceSelect = document.getElementById('deviceSelect');
+                clientSelect.addEventListener('change', function() {
+                    const clientId = parseInt(this.value);
+                    deviceSelect.innerHTML = '<option value="">Выберите устройство...</option>';
+                    deviceSelect.disabled = !clientId;
+                    if (clientId) {
+                        devices.filter(d => d.client_id === clientId).forEach(d => {
+                            const option = new Option(`${d.brand} ${d.model}`, d.id);
+                            deviceSelect.add(option);
+                        });
+                    }
+                });
+                // Показываем модальное окно
+                const newOrderModal = new bootstrap.Modal(document.getElementById('newOrderModal'));
+                newOrderModal.show();
+            };
+            waitForData();
         }
 
         // Загрузка всех справочников и заказов с сервера

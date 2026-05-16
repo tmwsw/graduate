@@ -49,6 +49,7 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User:
         full_name=user.full_name,
         email=user.email,
         phone=user.phone,                 # ← добавить
+        bio=user.bio, 
         role=user.role,
         master_id=user.master_id,
     )

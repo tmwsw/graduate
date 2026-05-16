@@ -2,154 +2,339 @@
 <html lang="ru">
 <head>
     <!-- ========== ЗАГОЛОВОК СТРАНИЦЫ ==========
-         Публичная страница для отслеживания статуса заявки клиентом.
-         Не требует авторизации. Получает ID заявки из параметра URL ?id=...
-         Загружает данные с сервера и отображает информацию о заявке,
-         клиенте, устройстве, мастере, статусе и стоимости.
+         Страница детального просмотра и редактирования заявки на ремонт.
+         Получает ID заявки из параметра URL, загружает данные с сервера
+         и отображает информацию о клиенте, устройстве, мастере.
     -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Статус заявки</title>
+    <title>РемонтТех - Детали заявки</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/order-detail.css">
     <link rel="icon" type="image/png" href="img/icon_32x32.png">
 </head>
 <body>
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <!-- Карточка с информацией о заявке -->
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Статус заявки <span id="orderIdDisplay"></span></h4>
+<div class="container-fluid">
+    <div class="row">
+        <!-- ======================== БОКОВОЕ МЕНЮ (SIDEBAR) ========================
+                 Навигация по разделам. Для администратора – выпадающий список профиля,
+                 для менеджера/мастера – offcanvas.
+            -->
+        <div class="col-md-3 col-lg-2 sidebar d-md-block">
+            <div class="position-sticky pt-3">
+                <div class="text-center mb-4">
+                    <h4 class="mb-0"><i class="text-center mt-3 mb-4"></i>РемонтТех</h4>
+                </div>
+                <ul class="nav flex-column mb-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html"><i class="fas fa-tachometer-alt me-2"></i>Главная</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="orders.html"><i class="fas fa-tools me-2"></i>Заявки на ремонт</a></li>
+                    <li class="nav-item"><a class="nav-link" href="clients.html"><i class="fas fa-users me-2"></i>Клиенты</a></li>
+                    <li class="nav-item"><a class="nav-link" href="devices.html"><i class="fas fa-laptop me-2"></i>Устройства</a></li>
+                    <li class="nav-item"><a class="nav-link" href="masters.html"><i class="fas fa-user-cog me-2"></i>Мастера</a></li>
+                    <li class="nav-item"><a class="nav-link" href="reports.html"><i class="fas fa-chart-bar me-2"></i>Отчеты</a></li>
+                </ul>
+                <hr class="text-white-50">
+                <!-- Блок профиля для администратора -->
+                <div class="dropdown" id="profileAdminDropdown">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                        <strong>Администратор</strong>
+                        <span class="badge bg-success ms-2">Online</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                        <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>Профиль</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="login.html"><i class="fas fa-sign-out-alt me-2"></i>Выход</a></li>
+                    </ul>
+                </div>
+                <!-- Блок профиля для менеджера/мастера (offcanvas) -->
+                <div id="profileOffcanvasTrigger" style="display: none;">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="offcanvas" data-bs-target="#profileOffcanvas" onclick="updateProfileOffcanvas()">
+                        <img src="https://via.placeholder.com/32" alt="" width="32" height="32" class="rounded-circle me-2 sidebar-avatar" style="object-fit: cover;">
+                        <strong id="sidebarUserName">Администратор</strong>
+                        <span class="badge bg-success ms-2">Online</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================== ОСНОВНОЕ СОДЕРЖИМОЕ ======================== -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <!-- Заголовок и кнопки управления -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+                <div>
+                    <a href="orders.html" class="btn btn-outline-secondary btn-sm mb-2">
+                        <i class="fas fa-arrow-left me-1"></i> Назад к списку
+                    </a>
+                    <h1 class="h2 mb-0">Заявка на ремонт <span id="orderNumber">#—</span></h1>
+                </div>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="printOrder()">
+                        <i class="fas fa-print me-1"></i> Печать
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="openEditModal()">
+                        <i class="fas fa-edit me-1"></i> Редактировать
+                    </button>
+                </div>
+            </div>
+
+            <!-- Карточка с детальной информацией о заявке -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <!-- Блок клиента -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-user me-2"></i>Клиент</h5>
+                            <p class="mb-1"><strong id="clientName">—</strong></p>
+                            <p class="mb-1" id="clientPhone">—</p>
+                            <p class="mb-1" id="clientEmail">—</p>
+                            <p class="mb-1" id="clientNote">—</p>
+                        </div>
+                        <!-- Блок устройства -->
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-laptop me-2"></i>Устройство</h5>
+                            <p class="mb-1"><strong id="deviceType">—</strong></p>
+                            <p class="mb-1" id="deviceModel">—</p>
+                            <p class="mb-1">Серийный номер: <span id="serialNumber">—</span></p>
+                            <p class="mb-1">Год выпуска: <span id="deviceYear">—</span></p>
+                        </div>
                     </div>
-                    <div class="card-body" id="orderInfo">
-                        <!-- Индикатор загрузки -->
-                        <div class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Загрузка...</span>
-                            </div>
+                    <hr>
+                    <!-- Блок проблемы и мастера -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-exclamation-triangle text-warning me-2"></i>Проблема</h5>
+                            <p class="mb-1" id="problemDescription">—</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-user-cog me-2"></i>Мастер</h5>
+                            <p class="mb-1" id="masterName">Не назначен</p>
+                            <p class="mb-1">Статус: <span id="orderStatus" class="badge">—</span></p>
+                            <p class="mb-1">Дата создания: <span id="acceptDate">—</span></p>
+                        </div>
+                    </div>
+                    <hr>
+                    <!-- Стоимость и кнопка завершения -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Стоимость</h5>
+                            <p class="mb-1"><strong id="totalCost">0 ₽</strong></p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-success" onclick="markAsCompleted()">
+                                <i class="fas fa-check me-1"></i> Завершить заявку
+                            </button>
                         </div>
                     </div>
                 </div>
-                <!-- Контактная информация техподдержки -->
-                <div class="text-center mt-3">
-                    <small class="text-muted">Служба поддержки: support@remonttech.ru</small>
+            </div>
+        </main>
+    </div>
+</div>
+
+    <!-- ======================== МОДАЛЬНЫЕ ОКНА ======================== -->
+
+    <!-- Модальное окно: редактирование заявки -->
+    <div class="modal fade" id="editOrderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактировать заявку</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editOrderForm">
+                        <input type="hidden" id="editOrderId">
+                        <div class="mb-3">
+                            <label class="form-label">Мастер</label>
+                            <select class="form-select" id="editMasterId"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Статус</label>
+                            <select class="form-select" id="editStatus">
+                                <option value="new">Новый</option>
+                                <option value="in_repair">В ремонте</option>
+                                <option value="ready">Готов</option>
+                                <option value="returned">Выдан</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Стоимость (₽)</label>
+                            <input type="number" class="form-control" id="editPrice" min="0" step="100">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Описание</label>
+                            <textarea class="form-control" id="editDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEditedOrder()">Сохранить</button>
                 </div>
             </div>
         </div>
     </div>
-    <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
-    <script src="js/api.js" type="module"></script>
-    <script type="module">
-        // ========== 1. ПОЛУЧЕНИЕ ID ЗАЯВКИ ИЗ URL ==========
-        import { fetchOrders, fetchClients, fetchDevices, fetchMasters } from './js/api.js';
 
+    <!-- Выдвижная панель профиля для менеджера и мастера -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="profileOffcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Профиль</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body text-center">
+            <img id="offcanvasAvatar" src="https://via.placeholder.com/80" class="rounded-circle mb-3" width="80" height="80" alt="Аватар">
+            <h5 id="offcanvasName">Имя пользователя</h5>
+            <p><span id="offcanvasRoleBadge" class="badge">Роль</span></p>
+            <hr>
+            <button class="btn btn-outline-danger btn-sm" onclick="logout()">
+                <i class="fas fa-sign-out-alt me-1"></i> Выйти
+            </button>
+        </div>
+    </div>
+
+    <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="auth.js"></script>
+    <script src="js/auth.js"></script>
+    <script type="module">
+        // ========== 1. ИМПОРТЫ И ПРОВЕРКА АВТОРИЗАЦИИ ==========
+        import { fetchOrders, fetchClients, fetchDevices, fetchMasters, updateOrder } from './js/api.js';
+        import { showAlert } from './js/utils.js';
+        
+        if (!checkAuthAndRedirect()) throw new Error('Не авторизован');
+        // Дополнительная проверка прав не требуется – детали заявки могут смотреть все авторизованные
+
+        // ========== 2. ПОЛУЧЕНИЕ ID ЗАЯВКИ ИЗ URL ==========
         const urlParams = new URLSearchParams(window.location.search);
         const orderId = urlParams.get('id');
+        let currentOrder = null;
+        const clientsMap = new Map();
+        const devicesMap = new Map();
+        let mastersList = [];
 
-        // Основная функция загрузки и отображения
-        async function loadOrder() {
-            // Проверка наличия ID
+        // ========== 3. ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ==========
+        document.addEventListener('DOMContentLoaded', async () => {
             if (!orderId) {
-                document.getElementById('orderInfo').innerHTML = `
-                    <div class="alert alert-danger">Номер заявки не указан</div>
-                `;
+                showAlert('danger', 'ID заявки не указан');
                 return;
             }
-            // Отображаем номер в заголовке
-            document.getElementById('orderIdDisplay').textContent = `#${orderId}`;
+            document.getElementById('orderNumber').textContent = `#${orderId}`;
+            await loadData();
+            await loadMastersForEdit();     // загружаем мастеров для модального окна
+            updateSidebar();                // настраиваем боковое меню под роль
+        });
 
+        // Загрузка всех необходимых данных: заказы, клиенты, устройства
+        async function loadData() {
             try {
-                // Параллельная загрузка всех необходимых данных
-                const [orders, clients, devices, masters] = await Promise.all([
+                const [orders, clients, devices] = await Promise.all([
                     fetchOrders(0, 1000),
                     fetchClients(0, 1000),
-                    fetchDevices(0, 1000),
-                    fetchMasters(0, 1000)
+                    fetchDevices(0, 1000)
                 ]);
-
-                // Находим нужную заявку
-                const order = orders.find(o => o.id === parseInt(orderId));
-                if (!order) {
-                    throw new Error('Заявка не найдена');
+                clients.forEach(c => clientsMap.set(c.id, c));
+                devices.forEach(d => devicesMap.set(d.id, d));
+                currentOrder = orders.find(o => o.id === parseInt(orderId));
+                if (!currentOrder) {
+                    showAlert('danger', `Заявка #${orderId} не найдена`);
+                    return;
                 }
+                const client = clientsMap.get(currentOrder.client_id);
+                const device = devicesMap.get(currentOrder.device_id);
+                // Заполняем данные о клиенте
+                document.getElementById('clientName').textContent = client?.full_name || '—';
+                document.getElementById('clientPhone').textContent = client?.phone || '—';
+                document.getElementById('clientEmail').textContent = client?.email || '—';
+                document.getElementById('clientNote').textContent = client?.notes || '—';
+                // Данные об устройстве
+                document.getElementById('deviceType').textContent = device?.device_type || '—';
+                document.getElementById('deviceModel').textContent = device ? `${device.brand} ${device.model}` : '—';
+                document.getElementById('serialNumber').textContent = device?.serial_number || '—';
+                document.getElementById('deviceYear').textContent = device?.purchase_year || '—';
+                // Описание проблемы
+                document.getElementById('problemDescription').textContent = currentOrder.description || '—';
 
-                // Получаем связанные объекты
-                const client = clients.find(c => c.id === order.client_id);
-                const device = devices.find(d => d.id === order.device_id);
-                const master = masters.find(m => m.id === order.master_id);
+                // Мастер (загружаем отдельно, чтобы получить ФИО)
+                const masters = await fetchMasters(0, 1000);
+                const master = masters.find(m => m.id === currentOrder.master_id);
+                document.getElementById('masterName').textContent = master?.full_name || 'Не назначен';
 
-                // Маппинг статусов: текст и цвет бейджа
-                const statusMap = {
-                    'new': { text: 'Новая', class: 'bg-secondary' },
-                    'in_repair': { text: 'В ремонте', class: 'bg-warning' },
-                    'ready': { text: 'Готова', class: 'bg-success' },
-                    'returned': { text: 'Выдана', class: 'bg-info' }
-                };
-                const status = statusMap[order.status] || { text: order.status, class: 'bg-light' };
+                // Статус с цветным бейджем
+                const statusMap = { 'new': 'Новый', 'in_repair': 'В работе', 'ready': 'Готов', 'returned': 'Выдан' };
+                const statusEl = document.getElementById('orderStatus');
+                statusEl.textContent = statusMap[currentOrder.status] || currentOrder.status;
+                statusEl.className = `badge ${currentOrder.status === 'new' ? 'bg-primary' : currentOrder.status === 'in_repair' ? 'bg-warning' : currentOrder.status === 'ready' ? 'bg-success' : 'bg-secondary'}`;
+                
+                // Даты и стоимость
+                document.getElementById('acceptDate').textContent = currentOrder.created_at ? new Date(currentOrder.created_at).toLocaleString('ru-RU') : '—';
+                document.getElementById('totalCost').textContent = (currentOrder.price || 0).toLocaleString() + ' ₽';
 
-                // Формируем HTML с информацией
-                document.getElementById('orderInfo').innerHTML = `
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h5>Клиент</h5>
-                            <p><strong>${client?.full_name || '—'}</strong><br>
-                            ${client?.phone || ''}<br>
-                            ${client?.email || ''}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Устройство</h5>
-                            <p><strong>${device ? device.brand + ' ' + device.model : '—'}</strong><br>
-                            ${device?.device_type || ''}<br>
-                            Серийный номер: ${device?.serial_number || '—'}</p>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h5>Описание проблемы</h5>
-                            <p>${order.description || '—'}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Статус</h5>
-                            <span class="badge ${status.class} fs-6">${status.text}</span>
-                            <p class="mt-2">Создана: ${order.created_at ? new Date(order.created_at).toLocaleString('ru-RU') : '—'}</p>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5>Мастер</h5>
-                            <p>${master?.full_name || 'Не назначен'}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Стоимость</h5>
-                            <p><strong>${order.price ? order.price.toLocaleString() + ' ₽' : 'Не определена'}</strong></p>
-                        </div>
-                    </div>
-                `;
-            } catch (error) {
-                console.error(error);
-                document.getElementById('orderInfo').innerHTML = `
-                    <div class="alert alert-danger">Ошибка загрузки: ${error.message}</div>
-                `;
+                // Заполняем форму редактирования (скрыто, для модального окна)
+                document.getElementById('editOrderId').value = currentOrder.id;
+                document.getElementById('editDescription').value = currentOrder.description || '';
+                document.getElementById('editPrice').value = currentOrder.price || 0;
+                document.getElementById('editStatus').value = currentOrder.status;
+            } catch (e) {
+                console.error(e);
+                showAlert('danger', 'Ошибка загрузки: ' + e.message);
             }
         }
 
-        // Простая защита от XSS (экранирование HTML-символов)
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-                return c; // сохраняем эмодзи
-            });
+        // Загрузка списка мастеров для выбора в модалке
+        async function loadMastersForEdit() {
+            try {
+                mastersList = await fetchMasters(0, 1000);
+                const select = document.getElementById('editMasterId');
+                select.innerHTML = '<option value="">Не назначать</option>';
+                mastersList.forEach(m => select.add(new Option(m.full_name, m.id)));
+                if (currentOrder?.master_id) select.value = currentOrder.master_id;
+            } catch (e) {
+                console.warn('Не удалось загрузить мастеров', e);
+            }
         }
 
-        loadOrder();
+        // ========== 4. ОТКРЫТИЕ МОДАЛЬНОГО ОКНА РЕДАКТИРОВАНИЯ ==========
+        window.openEditModal = function() {
+            if (!currentOrder) return;
+            document.getElementById('editMasterId').value = currentOrder.master_id || '';
+            new bootstrap.Modal(document.getElementById('editOrderModal')).show();
+        };
+
+        // Сохранение изменений из модального окна
+        window.saveEditedOrder = async function() {
+            const id = parseInt(document.getElementById('editOrderId').value);
+            const masterId = document.getElementById('editMasterId').value;
+            const status = document.getElementById('editStatus').value;
+            const price = parseFloat(document.getElementById('editPrice').value) || 0;
+            const description = document.getElementById('editDescription').value.trim();
+            const data = { master_id: masterId ? parseInt(masterId) : null, status, price, description };
+            try {
+                await updateOrder(id, data);
+                bootstrap.Modal.getInstance(document.getElementById('editOrderModal')).hide();
+                showAlert('success', 'Изменения сохранены');
+                await loadData();
+            } catch (e) {
+                showAlert('danger', 'Ошибка сохранения: ' + e.message);
+            }
+        };
+
+        // ========== 5. ЗАВЕРШЕНИЕ ЗАЯВКИ (изменение статуса на "Выдан") ==========
+        window.markAsCompleted = async function() {
+            if (!currentOrder) return;
+            if (!confirm('Отметить заявку как завершённую?')) return;
+            try {
+                await updateOrder(currentOrder.id, { status: 'returned' });
+                showAlert('success', 'Заявка завершена');
+                await loadData();
+            } catch (e) {
+                showAlert('danger', 'Ошибка: ' + e.message);
+            }
+        };
+
+        // ========== 6. ПЕЧАТЬ СТРАНИЦЫ ==========
+        window.printOrder = () => window.print();
     </script>
 </body>
 </html>

@@ -887,21 +887,34 @@
         function exportActivityToPDFSimple() { /* не используется, оставлено для совместимости */ }
 
         // ========== 8. ЛИЧНЫЕ ДАННЫЕ ==========
-        function savePersonalInfo() {
+        async function savePersonalInfo() {
             if (!currentUser) return;
-            currentUser.firstName = document.getElementById('firstName').value;
-            currentUser.lastName = document.getElementById('lastName').value;
-            currentUser.middleName = document.getElementById('middleName').value;
-            currentUser.fullName = `${currentUser.lastName} ${currentUser.firstName} ${currentUser.middleName}`;
-            currentUser.position = document.getElementById('position').value;
-            currentUser.department = document.getElementById('department').value;
-            currentUser.bio = document.getElementById('bio').value;
-            currentUser.birthDate = document.getElementById('birthDate').value;
-            document.getElementById('userFullName').textContent = currentUser.fullName;
-            document.getElementById('userPosition').textContent = currentUser.position;
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            addActivity('Обновление профиля', 'Изменены личные данные', 'system', 'fa-user-edit');
-            showAlert('success', 'Личные данные сохранены!');
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const middleName = document.getElementById('middleName').value;
+            const fullName = `${lastName} ${firstName} ${middleName}`;
+            const role = document.getElementById('position').value;
+            const bio = document.getElementById('bio').value;
+
+            try {
+                const updated = await updateUser(currentUser.id, {
+                    full_name: fullName,
+                    role: role,
+                    bio: bio
+                });
+                // Обновляем локальные данные
+                currentUser.full_name = updated.full_name;
+                currentUser.role = updated.role;
+                currentUser.bio = updated.bio;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                document.getElementById('userFullName').textContent = currentUser.full_name;
+                document.getElementById('userPosition').textContent = getRoleDisplay(currentUser.role);
+                addActivity('Обновление профиля', 'Изменены личные данные', 'system', 'fa-user-edit');
+                showAlert('success', 'Личные данные сохранены!');
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', 'Ошибка сохранения: ' + error.message);
+            }
         }
 
         async function saveContactInfo() {
@@ -910,14 +923,17 @@
             const phone = document.getElementById('phone').value;
             const telegram = '@' + document.getElementById('telegram').value.replace('@', '');
             try {
-                const updated = await updateUser(currentUser.id, { email, phone, telegram });
+                const updated = await updateUser(currentUser.id, {
+                    email: email,
+                    phone: phone,
+                    telegram: telegram
+                });
                 currentUser.email = updated.email;
                 currentUser.phone = updated.phone;
                 currentUser.telegram = updated.telegram;
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 document.getElementById('userEmail').textContent = currentUser.email;
                 document.getElementById('userPhone').textContent = currentUser.phone ? formatPhone(currentUser.phone) : '—';
-                // Обновляем поле ввода
                 document.getElementById('phone').value = (currentUser.phone || '').replace(/[^+\d]/g, '');
                 addActivity('Обновление контактов', 'Изменена контактная информация', 'system', 'fa-address-book');
                 showAlert('success', 'Контактная информация сохранена!');

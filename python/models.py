@@ -25,7 +25,8 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, nullable=True)      # ← новое поле
     email = Column(String, unique=True, nullable=True)  # ← новое поле
-    phone = Column(String, nullable=True) 
+    phone = Column(String, nullable=True)
+    bio = Column(Text, nullable=True) 
     role = Column(Enum(UserRole), default=UserRole.MASTER)
     master_id = Column(Integer, ForeignKey("masters.id"), nullable=True)
 
