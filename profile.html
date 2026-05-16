@@ -903,6 +903,7 @@
             addActivity('Обновление профиля', 'Изменены личные данные', 'system', 'fa-user-edit');
             showAlert('success', 'Личные данные сохранены!');
         }
+
         async function saveContactInfo() {
             if (!currentUser) return;
             const email = document.getElementById('email').value;
@@ -915,10 +916,15 @@
                 currentUser.telegram = updated.telegram;
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 document.getElementById('userEmail').textContent = currentUser.email;
-                document.getElementById('userPhone').textContent = formatPhone(currentUser.phone);
+                document.getElementById('userPhone').textContent = currentUser.phone ? formatPhone(currentUser.phone) : '—';
+                // Обновляем поле ввода
+                document.getElementById('phone').value = (currentUser.phone || '').replace(/[^+\d]/g, '');
                 addActivity('Обновление контактов', 'Изменена контактная информация', 'system', 'fa-address-book');
                 showAlert('success', 'Контактная информация сохранена!');
-            } catch(error) { showAlert('danger', 'Ошибка сохранения: ' + (error.message || '')); }
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', 'Ошибка сохранения: ' + error.message);
+            }
         }
 
         // ========== 9. СМЕНА ПАРОЛЯ ==========

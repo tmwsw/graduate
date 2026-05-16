@@ -43,12 +43,12 @@ def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[models.User]
     return db.query(models.User).offset(skip).limit(limit).all()
 
 def create_user(db: Session, user: schemas.UserCreate) -> models.User:
-    """Создать нового пользователя (пароль хешируется)."""
     db_user = models.User(
         username=user.username,
         hashed_password=get_password_hash(user.password),
         full_name=user.full_name,
         email=user.email,
+        phone=user.phone,                 # ← добавить
         role=user.role,
         master_id=user.master_id,
     )

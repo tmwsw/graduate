@@ -99,6 +99,7 @@ export function generateRatingStars(rating) {
  * @returns {string} отформатированный номер телефона
  */
 export function formatPhone(phone) {
+    if (!phone) return '—';
     const cleaned = phone.replace(/\D/g, '');
     const match = cleaned.match(/^(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})$/);
     if (match) {

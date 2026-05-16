@@ -26,6 +26,7 @@ class UserCreate(BaseModel):
     password: str
     full_name: Optional[str] = None
     email: Optional[str] = None
+    phone: Optional[str] = None
     role: UserRoleEnum = UserRoleEnum.MASTER
     master_id: Optional[int] = None
 
@@ -43,6 +44,7 @@ class User(BaseModel):
     username: str
     full_name: Optional[str] = None
     email: Optional[str] = None
+    phone: Optional[str] = None
     role: UserRoleEnum
     master_id: Optional[int] = None
     model_config = ConfigDict(from_attributes=True)
@@ -52,6 +54,7 @@ class UserOut(BaseModel):
     username: str
     full_name: Optional[str] = None
     email: Optional[str] = None
+    phone: Optional[str] = None   # ← добавить
     role: str
     avatar: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)

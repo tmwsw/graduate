@@ -157,3 +157,7 @@ export async function changeUserPassword(userId, passwordData) {
 export async function fetchUsers(skip = 0, limit = 1000) {
     return await apiRequest(`/users/?skip=${skip}&limit=${limit}`);
 }
+
+export async function updateUser(userId, userData) {
+    return await apiRequest(`/users/${userId}`, 'PUT', userData);
+}

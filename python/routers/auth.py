@@ -28,8 +28,9 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     return {
         "id": user.id,
         "username": user.username,
-        "full_name": user.full_name,   # ← добавляем
-        "email": user.email,           # ← добавляем
+        "full_name": user.full_name,
+        "email": user.email,
+        "phone": user.phone,               # ← добавить
         "role": user.role.value if hasattr(user.role, 'value') else user.role,
         "master_id": user.master_id
     }
