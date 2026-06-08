@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .database import engine
 from .models import Base
-from .routers import items, devices, masters, orders, users, auth, notifications
+from .routers import items, devices, masters, orders, users, auth, notifications, import_data
 
 Base.metadata.create_all(bind=engine)
 
@@ -28,7 +28,8 @@ app.include_router(masters.router)    # /Мастера
 app.include_router(orders.router)     # /Заявки
 app.include_router(users.router)      # /Пользователи
 app.include_router(auth.router)       # /Аутентификация
-app.include_router(notifications.router)    #/Уведомления
+app.include_router(notifications.router)    # /Уведомления
+app.include_router(import_data.router)  # /Импорт данных из вне
 
 @app.get("/")
 def read_root():

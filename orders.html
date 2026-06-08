@@ -51,10 +51,15 @@
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2"><i class="fas fa-clipboard-list text-primary me-2"></i>Заявки на ремонт</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
-                        <button type="button" class="btn btn-success me-2" id="newOrderBtn">
+                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#newOrderModal">
                             <i class="fas fa-plus me-1"></i> Новая заявка
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="printOrders()"><i class="fas fa-print me-1"></i> Печать</button>
+                        <button type="button" class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#importOrdersModal">
+                            <i class="fas fa-upload me-1"></i> Импорт
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="printOrders()">
+                            <i class="fas fa-print me-1"></i> Печать
+                        </button>
                     </div>
                 </div>
 
@@ -136,6 +141,35 @@
         <div class="offcanvas-body text-center"><img id="offcanvasAvatar" src="https://via.placeholder.com/80" class="rounded-circle mb-3"><h5 id="offcanvasName">Имя пользователя</h5><p><span id="offcanvasRoleBadge" class="badge">Роль</span></p><hr><button class="btn btn-outline-danger btn-sm" onclick="logout()"><i class="fas fa-sign-out-alt me-1"></i> Выйти</button></div>
     </div>
 
+    <!-- Модальное окно импорта заказов -->
+    <div class="modal fade" id="importOrdersModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-upload me-2"></i>Импорт заказов</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="importOrdersForm">
+                        <div class="mb-3">
+                            <label for="importFileOrders" class="form-label">Файл (CSV или Excel)</label>
+                            <input type="file" class="form-control" id="importFileOrders" accept=".csv,.xlsx" required>
+                        </div>
+                        <div class="alert alert-info small">
+                            <strong>Требуемые колонки:</strong> client_phone, device_serial, description, master_phone, price, status.<br>
+                            <em>Обязательные: client_phone, device_serial, description.</em><br>
+                            <span class="text-danger">Внимание!</span> Клиент и устройство должны уже существовать в базе. Телефон клиента и серийный номер устройства – ключи для поиска.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="uploadImportFileOrders()">Загрузить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
         import { fetchClients, fetchDevices, fetchMasters, fetchOrders, createOrder, updateOrder, deleteOrder } from './js/api.js';
@@ -148,6 +182,45 @@
         let orders = [], clients = [], devices = [], masters = [];
         let clientsMap = new Map(), devicesMap = new Map(), mastersMap = new Map();
         let filteredOrders = [];
+
+        window.uploadImportFileOrders = async function() {
+            const fileInput = document.getElementById('importFileOrders');
+            const file = fileInput.files[0];
+            if (!file) {
+                showAlert('danger', 'Выберите файл');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const response = await fetch('http://127.0.0.1:8000/import/orders', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                    body: formData
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    if (result.errors && result.errors.length) {
+                        showAlert('warning', `Импортировано: ${result.imported}, ошибок: ${result.errors.length}\nПервая ошибка: ${result.errors[0]}`);
+                        console.error('Ошибки импорта заказов:', result.errors);
+                    } else {
+                        showAlert('success', `Импортировано ${result.imported} заказов`);
+                    }
+                    if (result.imported > 0) {
+                        await loadAllData();   // перезагружаем таблицу заказов
+                        updateOrdersTable();
+                        updateStatistics();
+                    }
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('importOrdersModal'));
+                    if (modal) modal.hide();
+                    fileInput.value = '';
+                } else {
+                    showAlert('danger', result.detail || 'Ошибка импорта');
+                }
+            } catch (err) {
+                showAlert('danger', 'Ошибка сети: ' + err.message);
+            }
+        };
 
         document.addEventListener('DOMContentLoaded', async () => {
             await loadAllData();

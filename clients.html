@@ -80,6 +80,10 @@
                         <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#newClientModal">
                             <i class="fas fa-user-plus me-1"></i> Новый клиент
                         </button>
+                        <!-- Новая кнопка Импорт -->
+                        <button type="button" class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#importClientsModal">
+                            <i class="fas fa-upload me-1"></i> Импорт
+                        </button>
                         <button type="button" class="btn btn-outline-secondary" onclick="exportClients()">
                             <i class="fas fa-download me-1"></i> Экспорт
                         </button>
@@ -287,7 +291,33 @@
             </div>
         </div>
     </div>
-    
+    <!-- Модальное окно импорта клиентов -->
+    <div class="modal fade" id="importClientsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-upload me-2"></i>Импорт клиентов</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="importClientsForm">
+                        <div class="mb-3">
+                            <label for="importFileClients" class="form-label">Файл (CSV или Excel)</label>
+                            <input type="file" class="form-control" id="importFileClients" accept=".csv,.xlsx" required>
+                        </div>
+                        <div class="alert alert-info small">
+                            <strong>Требуемые колонки:</strong> full_name, phone, email, address, client_type, notes.<br>
+                            <em>Обязательные: full_name, phone.</em>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button class="btn btn-primary" onclick="uploadImportFile('http://127.0.0.1:8000/import/clients', 'clients', 'importFileClients')">Загрузить</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ========================
          Bootstrap JS, модуль auth.js (аутентификация), api.js (REST-запросы),
          и основной скрипт с типом module (для импортов).
@@ -309,6 +339,40 @@
         let clients = [];
         let currentViewMode = 'table';
         let filteredClients = [];
+
+        window.uploadImportFile = async function(endpoint, entityType, fileInputId) {
+            const fileInput = document.getElementById(fileInputId);
+            const file = fileInput.files[0];
+            if (!file) {
+                showAlert('danger', 'Выберите файл');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                    body: formData
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showAlert('success', `Импортировано: ${result.imported} записей. Ошибки: ${result.errors.length}`);
+                    if (result.imported > 0) {
+                        if (entityType === 'clients') await loadClients();
+                        else if (entityType === 'masters') await loadMasters();
+                        else if (entityType === 'devices') await loadDevices();
+                    }
+                    const modal = bootstrap.Modal.getInstance(document.getElementById(`import${entityType.charAt(0).toUpperCase() + entityType.slice(1)}Modal`));
+                    if (modal) modal.hide();
+                    fileInput.value = ''; // очистить поле
+                } else {
+                    showAlert('danger', result.detail || 'Ошибка импорта');
+                }
+            } catch (err) {
+                showAlert('danger', 'Ошибка сети: ' + err.message);
+            }
+        };
 
         // Инициализация маски телефона
         window.initPhoneMasks = function() {

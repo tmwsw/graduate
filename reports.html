@@ -409,7 +409,7 @@
                         </div>
                         
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <div class="card">
                                     <div class="card-header d-flex justify-content-between align-items-center">
                                         <h6 class="card-title mb-0">Топ-10 клиентов</h6>
@@ -429,33 +429,6 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody id="topClientsTable">
-                                                    <!-- Данные будут загружены через JS -->
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <h6 class="card-title mb-0">Статистика удержания</h6>
-                                        <button class="btn btn-sm btn-outline-primary" onclick="exportRetentionStatsPDF()">
-                                            <i class="fas fa-file-pdf me-1"></i> PDF
-                                        </button>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="table-responsive">
-                                            <table class="table table-sm report-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Период</th>
-                                                        <th class="text-end">Новых</th>
-                                                        <th class="text-end">Вернувшихся</th>
-                                                        <th class="text-end">Уровень удержания</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="retentionTable">
                                                     <!-- Данные будут загружены через JS -->
                                                 </tbody>
                                             </table>
@@ -484,12 +457,10 @@
                             <div class="col-md-6">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h6 class="card-title mb-0">Рейтинг мастеров</h6>
+                                        <h5 class="card-title mb-0">📅 Динамика заявок по месяцам</h5>
                                     </div>
                                     <div class="card-body">
-                                        <div class="chart-container">
-                                            <canvas id="mastersRatingChart"></canvas>
-                                        </div>
+                                        <canvas id="monthlyOrdersChart" width="400" height="200"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -524,7 +495,7 @@
                     <!-- Вкладка: Устройства -->
                     <div class="tab-pane fade" id="devices" role="tabpanel">
                         <div class="row mb-4">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <div class="card">
                                     <div class="card-header">
                                         <h6 class="card-title mb-0">Распределение по типам</h6>
@@ -532,18 +503,6 @@
                                     <div class="card-body">
                                         <div class="chart-container">
                                             <canvas id="devicesTypeChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="card-title mb-0">Частые неисправности</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="chart-container">
-                                            <canvas id="commonProblemsChart"></canvas>
                                         </div>
                                     </div>
                                 </div>
@@ -684,7 +643,10 @@
                 alert('Не удалось загрузить данные');
                 return;
             }
+            renderMonthlyChart();
             loadReports();
+            renderExpensesTable();
+            renderProfitTable();
         }
 
         // ========== 4. ОСНОВНАЯ ФУНКЦИЯ ГЕНЕРАЦИИ ОТЧЁТА ==========
@@ -766,6 +728,174 @@
                 mastersPerformance: mp,
                 previousPeriod: calcPreviousPeriodData(dateFrom, dateTo)
             };
+        }
+
+        function renderRevenueChart() {
+            const monthsMap = new Map();
+            orders.forEach(order => {
+                if (!order.created_at) return;
+                const date = new Date(order.created_at);
+                const key = `${date.getFullYear()}-${date.getMonth()+1}`;
+                const monthName = date.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+                if (!monthsMap.has(key)) monthsMap.set(key, { name: monthName, revenue: 0 });
+                monthsMap.get(key).revenue += (order.price || 0);
+            });
+            const sorted = Array.from(monthsMap.keys()).sort();
+            const labels = sorted.map(k => monthsMap.get(k).name);
+            const data = sorted.map(k => monthsMap.get(k).revenue);
+            const ctx = document.getElementById('revenueChart')?.getContext('2d');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: { labels, datasets: [{ label: 'Выручка, ₽', data, borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.1)', fill: true }] },
+                    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+                });
+            }
+        }
+
+        // Функция для расчёта общей выручки из заказов
+        function getTotalRevenue() {
+            return orders.reduce((sum, order) => sum + (order.price || 0), 0);
+        }
+
+        // Функция для заполнения таблицы "Расходы по категориям"
+        function renderExpensesTable() {
+            const totalRevenue = orders.reduce((sum, o) => sum + (o.price || 0), 0);
+            if (totalRevenue === 0) {
+                document.getElementById('expensesTable').innerHTML = '<tr><td colspan="4" class="text-muted">Нет данных для расчёта</td></tr>';
+                return;
+            }
+            // Допустимые проценты (можно настроить)
+            const categories = [
+                { name: 'Зарплата мастеров', percent: 0.30 },
+                { name: 'Аренда помещения', percent: 0.10 },
+                { name: 'Коммунальные услуги', percent: 0.03 },
+                { name: 'Закупка запчастей', percent: 0.20 },
+                { name: 'Прочие расходы', percent: 0.07 }
+            ];
+            const tbody = document.getElementById('expensesTable');
+            tbody.innerHTML = '';
+            let totalExpenses = 0;
+            categories.forEach(cat => {
+                const amount = totalRevenue * cat.percent;
+                totalExpenses += amount;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${cat.name}</td>
+                        <td class="text-end">${amount.toLocaleString()} ₽</td>
+                        <td class="text-end">${(cat.percent * 100).toFixed(1)}%</td>
+                        <td class="text-end">—</td>
+                    </tr>
+                `;
+            });
+            // Итоговая строка
+            tbody.innerHTML += `
+                <tr class="table-active">
+                    <td><strong>Итого расходы</strong></td>
+                    <td class="text-end"><strong>${totalExpenses.toLocaleString()} ₽</strong></td>
+                    <td class="text-end"><strong>${((totalExpenses/totalRevenue)*100).toFixed(1)}%</strong></td>
+                    <td class="text-end"></td>
+                </tr>
+            `;
+        }
+
+        // Функция для заполнения таблицы "Прибыль по месяцам"
+        function renderProfitTable() {
+            const monthsMap = new Map(); // ключ: "YYYY-MM", значение: { name, revenue }
+            orders.forEach(order => {
+                if (!order.created_at) return;
+                const date = new Date(order.created_at);
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const key = `${year}-${month}`;
+                const monthName = date.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+                if (!monthsMap.has(key)) {
+                    monthsMap.set(key, { name: monthName, revenue: 0 });
+                }
+                monthsMap.get(key).revenue += (order.price || 0);
+            });
+            const sortedKeys = Array.from(monthsMap.keys()).sort();
+            const tbody = document.getElementById('profitTable');
+            tbody.innerHTML = '';
+            let totalRevenue = 0, totalExpenses = 0, totalProfit = 0;
+            for (const key of sortedKeys) {
+                const revenue = monthsMap.get(key).revenue;
+                // Расходы принимаем за 45% от выручки (можно изменить)
+                const expenses = revenue * 0.45;
+                const profit = revenue - expenses;
+                const margin = revenue > 0 ? (profit / revenue * 100).toFixed(1) : 0;
+                totalRevenue += revenue;
+                totalExpenses += expenses;
+                totalProfit += profit;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${monthsMap.get(key).name}</td>
+                        <td class="text-end">${revenue.toLocaleString()} ₽</td>
+                        <td class="text-end">${expenses.toLocaleString()} ₽</td>
+                        <td class="text-end">${profit.toLocaleString()} ₽</td>
+                        <td class="text-end">${margin}%</td>
+                    </tr>
+                `;
+            }
+            // Итоговая строка
+            if (sortedKeys.length > 0) {
+                const totalMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100).toFixed(1) : 0;
+                tbody.innerHTML += `
+                    <tr class="table-active">
+                        <td><strong>Итого</strong></td>
+                        <td class="text-end"><strong>${totalRevenue.toLocaleString()} ₽</strong></td>
+                        <td class="text-end"><strong>${totalExpenses.toLocaleString()} ₽</strong></td>
+                        <td class="text-end"><strong>${totalProfit.toLocaleString()} ₽</strong></td>
+                        <td class="text-end"><strong>${totalMargin}%</strong></td>
+                    </tr>
+                `;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-muted">Нет данных о заказах</td></tr>';
+            }
+        }
+
+        function renderMonthlyChart() {
+            // Группируем заказы по месяцам
+            const months = {};
+            orders.forEach(order => {
+                if (!order.created_at) return;
+                const date = new Date(order.created_at);
+                const monthKey = `${date.getFullYear()}-${date.getMonth()+1}`; // "2024-05"
+                const monthName = date.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+                months[monthKey] = months[monthKey] || { name: monthName, count: 0 };
+                months[monthKey].count++;
+            });
+            
+            // Сортируем по дате
+            const sortedMonths = Object.keys(months).sort();
+            const labels = sortedMonths.map(key => months[key].name);
+            const data = sortedMonths.map(key => months[key].count);
+            
+            const ctx = document.getElementById('monthlyOrdersChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Количество заявок',
+                        data: data,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.raw} заявок` } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
         }
 
         // Выручка по месяцам

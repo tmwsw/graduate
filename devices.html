@@ -95,6 +95,9 @@
                         <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#newDeviceModal">
                             <i class="fas fa-plus-circle me-1"></i> Новое устройство
                         </button>
+                        <button type="button" class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#importDevicesModal">
+                            <i class="fas fa-upload me-1"></i> Импорт
+                        </button>
                         <button type="button" class="btn btn-outline-secondary" onclick="exportDevices()">
                             <i class="fas fa-download me-1"></i> Экспорт
                         </button>
@@ -526,7 +529,33 @@
             </button>
         </div>
     </div>
-
+    <!-- Модальное окно импорта устройств -->
+    <div class="modal fade" id="importDevicesModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-upload me-2"></i>Импорт устройств</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="importDevicesForm">
+                        <div class="mb-3">
+                            <label for="importFileDevices" class="form-label">Файл (CSV или Excel)</label>
+                            <input type="file" class="form-control" id="importFileDevices" accept=".csv,.xlsx" required>
+                        </div>
+                        <div class="alert alert-info small">
+                            <strong>Требуемые колонки:</strong> brand, model, device_type, client_phone, serial_number, purchase_year, specifications, warranty_until, status, notes.<br>
+                            <em>Обязательные: brand, model, device_type, client_phone.</em>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="uploadImportFile('http://127.0.0.1:8000/import/devices', 'devices', 'importFileDevices')">Загрузить</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
@@ -558,6 +587,44 @@
         const deviceColors = {
             'notebook': '#3498db', 'pc': '#2ecc71', 'smartphone': '#e74c3c',
             'tablet': '#9b59b6', 'monitor': '#f39c12', 'printer': '#1abc9c', 'other': '#95a5a6'
+        };
+
+        window.uploadImportFile = async function(endpoint, entityType, fileInputId) {
+            if (event) event.preventDefault();
+            const fileInput = document.getElementById(fileInputId);
+            const file = fileInput.files[0];
+            if (!file) {
+                showAlert('danger', 'Выберите файл');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                    body: formData
+                });
+                const result = await response.json();
+                if (result.errors && result.errors.length) {
+                    alert('Ошибки импорта:\n' + result.errors.join('\n'));
+                }
+                if (response.ok) {
+                    showAlert('success', `Импортировано: ${result.imported} записей. Ошибки: ${result.errors.length}`);
+                    if (result.imported > 0) {
+                        if (entityType === 'clients') await loadClients();
+                        else if (entityType === 'masters') await loadMasters();
+                        else if (entityType === 'devices') await loadDevices();
+                    }
+                    const modal = bootstrap.Modal.getInstance(document.getElementById(`import${entityType.charAt(0).toUpperCase() + entityType.slice(1)}Modal`));
+                    if (modal) modal.hide();
+                    fileInput.value = ''; // очистить поле
+                } else {
+                    showAlert('danger', result.detail || 'Ошибка импорта');
+                }
+            } catch (err) {
+                showAlert('danger', 'Ошибка сети: ' + err.message);
+            }
         };
 
         // ======================== 3. ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ========================
