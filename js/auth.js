@@ -326,3 +326,5 @@ document.addEventListener('DOMContentLoaded', applyRoleBasedVisibility);
 document.addEventListener('DOMContentLoaded', () => {
     updateProfileOffcanvas();
 });
+
+window.logout = logout;

@@ -158,7 +158,7 @@
             <div class="modal-body">
                 <form id="newMasterForm">
                     <div class="row"><div class="col-md-6 mb-3"><label for="masterFullName" class="form-label">ФИО *</label><input type="text" class="form-control" id="masterFullName" required placeholder="Иванов Иван Иванович"></div>
-                        <div class="col-md-6 mb-3"><label for="masterPhone" class="form-label">Телефон *</label><input type="tel" class="form-control" id="masterPhone" required placeholder="+7 (XXX) XXX-XX-XX"></div></div>
+                        <div class="col-md-6 mb-3"><label for="masterPhone" class="form-label">Телефон *</label><input type="tel" class="form-control phone-mask" id="masterPhone" required placeholder="+7 999 999 99 99"></div></div>
                     <div class="row"><div class="col-md-6 mb-3"><label for="masterEmail" class="form-label">Email</label><input type="email" class="form-control" id="masterEmail" placeholder="master@example.com"></div>
                         <div class="col-md-6 mb-3"><label for="masterExperience" class="form-label">Опыт работы (лет) *</label><input type="number" class="form-control" id="masterExperience" required min="0" max="50" value="3"></div></div>
                     <div class="mb-3"><label class="form-label">Специализация *</label>
@@ -220,7 +220,7 @@
             <div class="modal-body">
                 <form id="editMasterForm">
                     <div class="row"><div class="col-md-6 mb-3"><label for="editFullName" class="form-label">ФИО *</label><input type="text" class="form-control" id="editFullName" required></div>
-                        <div class="col-md-6 mb-3"><label for="editPhone" class="form-label">Телефон *</label><input type="tel" class="form-control" id="editPhone" required></div></div>
+                        <div class="col-md-6 mb-3"><label for="editPhone" class="form-label">Телефон *</label><input type="tel" class="form-control phone-mask" id="editPhone" required placeholder="+7 999 999 99 99"></div></div>
                     <div class="row"><div class="col-md-6 mb-3"><label for="editEmail" class="form-label">Email</label><input type="email" class="form-control" id="editEmail"></div>
                         <div class="col-md-6 mb-3"><label for="editExperience" class="form-label">Опыт работы (лет) *</label><input type="number" class="form-control" id="editExperience" min="0" max="50" required></div></div>
                     <div class="mb-3"><label class="form-label">Специализация *</label>
@@ -269,6 +269,7 @@
 
     <!-- ======================== ПОДКЛЮЧЕНИЕ СКРИПТОВ ======================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/imask"></script>
     <script type="module">
         import { 
             fetchMasters, createMaster, updateMaster, deleteMaster,
@@ -295,6 +296,25 @@
         const statusColors = { 'active': '#28a745', 'inactive': '#6c757d', 'vacation': '#ffc107', 'sick': '#dc3545' };
         const avatarColors = ['#3498db', '#2ecc71', '#e74c3c', '#9b59b6', '#1abc9c', '#f39c12', '#34495e'];
 
+        // Инициализация маски телефона
+        window.initPhoneMasks = function() {
+            const phoneInputs = document.querySelectorAll('.phone-mask');
+            phoneInputs.forEach(input => {
+                // Уже есть маска? Не пересоздавать
+                if (input._imask) return;
+                const mask = IMask(input, {
+                    mask: '+7 000 000 00 00',
+                    lazy: false,
+                    placeholderChar: '_',
+                    prepare: function (str) {
+                        // Разрешаем только цифры и знак +
+                        return str.replace(/[^\d+]/g, '');
+                    }
+                });
+                input._imask = mask;
+            });
+        };
+
         // ========== 3. ИНИЦИАЛИЗАЦИЯ ==========
         document.addEventListener('DOMContentLoaded', async () => {
             await loadOrders();
@@ -303,6 +323,7 @@
             await loadMasters();
             updateStatistics();
             updateSidebar(); // настраиваем сайдбар под роль (admin)
+            initPhoneMasks();
         });
 
         async function loadOrders() {
@@ -482,6 +503,7 @@
                 if (cb) cb.checked = specValues.includes(cb.value);
             });
             new bootstrap.Modal(document.getElementById('editMasterModal')).show();
+            initPhoneMasks();
         };
 
         window.saveEditedMaster = async function() {
